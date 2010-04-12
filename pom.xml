@@ -127,19 +127,6 @@
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>2.6.1</version>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-remote-resources-plugin</artifactId>
-        <configuration>
-          <appendedResourcesDirectory>../src/main/appended-resources</appendedResourcesDirectory>
-          <resourceBundles>
-            <resourceBundle>org.apache:apache-jar-resource-bundle:1.4</resourceBundle>
-          </resourceBundles>
-          <supplementalModels>
-            <supplementalModel>supplemental-models.xml</supplementalModel>
-          </supplementalModels>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
 
@@ -153,9 +140,9 @@
   </dependencies>
 
   <scm>
-    <connection>scm:svn:https://svn.apache.org/repos/asf/lucene/mahout/tags/mahout-collections-1.0</connection>
+    <connection>scm:svn:http://svn.apache.org/repos/asf/lucene/mahout/tags/mahout-collections-1.0</connection>
     <developerConnection>scm:svn:https://svn.apache.org/repos/asf/lucene/mahout/tags/mahout-collections-1.0</developerConnection>
-    <url>scm:svn:https://svn.apache.org/repos/asf/lucene/mahout/tags/mahout-collections-1.0</url>
+    <url>http://svn.apache.org/repos/asf/lucene/mahout/tags/mahout-collections-1.0</url>
   </scm>
   <repositories>
     <repository>
