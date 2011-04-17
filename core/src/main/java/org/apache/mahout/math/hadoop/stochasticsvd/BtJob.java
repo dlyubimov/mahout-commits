@@ -49,9 +49,13 @@ import org.apache.mahout.math.VectorWritable;
 import org.apache.mahout.math.hadoop.stochasticsvd.QJob.QJobKeyWritable;
 
 /**
- * Bt job. For details, see working notes in MAHOUT-376.
+ * Bt job. For details, see working notes in MAHOUT-376. <P>
+ * 
+ * Uses hadoop deprecated API wherever new api has not been updated (MAHOUT-593), 
+ * hence @SuppressWarning("deprecation"). <P>
  * 
  */
+@SuppressWarnings("deprecation")
 public final class BtJob {
 
   public static final String OUTPUT_Q = "Q";
@@ -127,6 +131,11 @@ public final class BtJob {
       super.cleanup(context);
     }
 
+    @SuppressWarnings("unchecked")
+    private void outputQRow(Writable key, Writable value) throws IOException {
+      outputs.getCollector(OUTPUT_Q, null).collect(key, value);
+    }
+    
     @Override
     protected void map(Writable key, VectorWritable value, Context context) throws IOException, InterruptedException {
       if (mQt != null && cnt++ == r) {
@@ -145,9 +154,9 @@ public final class BtJob {
       for (int j = 0; j < kp; j++) {
         qRow.setQuick(j, mQt[j][qRowIndex]);
       }
-
-      outputs.getCollector(OUTPUT_Q, null).collect(key, qRowValue);
+      
       // make sure Qs are inheriting A row labels.
+      outputQRow(key,qRowValue);
 
       Vector btRow = btValue.get();
       if (!aRow.isDense()) {

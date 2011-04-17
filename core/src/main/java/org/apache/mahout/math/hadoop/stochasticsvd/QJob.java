@@ -50,12 +50,15 @@ import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.VectorWritable;
 
 /**
- * Compute first level of QHat-transpose blocks.
+ * Compute first level of QHat-transpose blocks.<P>
  * 
- * See Mahout-376 woking notes for details.
+ * See Mahout-376 woking notes for details.<P>
  * 
+ * Uses some of Hadoop deprecated api wherever newer api is not available.
+ * Hence, @SuppressWarnings("deprecation") for imports. <P>
  * 
  */
+@SuppressWarnings("deprecation")
 public final class QJob {
 
   public static final String PROP_OMEGA_SEED = "ssvd.omegaseed";
@@ -148,17 +151,23 @@ public final class QJob {
         // for efficiency in most cases. Sure mapper should be able to load
         // the entire split in memory -- and we don't require even that.
         value.setBlock(qSolver.getThinQtTilde());
-        outputs.getCollector(OUTPUT_QHAT, null).collect(key, value);
-        outputs.getCollector(OUTPUT_R, null).collect(
-            key,
-            new VectorWritable(new DenseVector(qSolver.getRTilde().getData(),
-                true)));
+        outputQHat(key, value);
+        outputR(key, new VectorWritable(new DenseVector(qSolver.getRTilde().getData(), true)));
 
       } else {
         secondPass(ctx);
       }
     }
 
+    @SuppressWarnings("unchecked")
+    private void outputQHat ( Writable key, Writable value ) throws IOException { 
+      outputs.getCollector(OUTPUT_QHAT,null).collect(key, value);
+    }
+    
+    @SuppressWarnings("unchecked")
+    private void outputR ( Writable key, Writable value ) throws IOException { 
+      outputs.getCollector(OUTPUT_R,null).collect(key, value);
+    }
     private void secondPass(Context ctx) throws IOException {
       qSolver = null; // release mem
       FileSystem localFs = FileSystem.getLocal(ctx.getConfiguration());
@@ -176,16 +185,13 @@ public final class QJob {
         } else {
           qCnt++;
         }
-        outputs.getCollector(OUTPUT_QHAT, null).collect(key, value);
+        outputQHat(key, value);
       }
 
       assert rSubseq.size() == 1;
 
       // m_value.setR(m_rSubseq.get(0));
-      outputs.getCollector(OUTPUT_R, null).collect(
-          key,
-          new VectorWritable(new DenseVector(rSubseq.get(0).getData(),
-                                             true)));
+      outputR(key, new VectorWritable(new DenseVector(rSubseq.get(0).getData(), true)));
 
     }
 
