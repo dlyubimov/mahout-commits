@@ -28,6 +28,8 @@ import org.apache.mahout.math.Vector.Element;
  */
 public class Omega {
 
+  private static final double UNIFORM_DIVISOR = Math.pow(2d, 64);
+
   private final long seed;
   private final int kp;
 
@@ -48,7 +50,7 @@ public class Omega {
    */
   public double getQuick(int row, int column) {
     long hash = murmur64(row << Integer.SIZE | column, 8, seed);
-    double result = hash / 1E+63;
+    double result = hash / UNIFORM_DIVISOR;
     assert result >= -1d && result < 1d;
     return result;
   }
@@ -108,11 +110,7 @@ public class Omega {
     int r = 47;
     long h = seed ^ (len * m);
 
-    long k = 0;
-    for (int j = 0; j < len; j++, val >>>= 8) {
-      k <<= 8;
-      k |= val & 0xff;
-    }
+    long k = val;
 
     k *= m;
     k ^= k >>> r;
