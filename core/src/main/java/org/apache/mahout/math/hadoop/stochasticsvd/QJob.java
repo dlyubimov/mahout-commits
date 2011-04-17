@@ -53,11 +53,11 @@ import org.apache.mahout.math.VectorWritable;
  * Compute first level of QHat-transpose blocks.
  * <P>
  * 
- * See Mahout-376 woking notes for details.
+ * See Mahout-376 working notes for details.
  * <P>
  * 
  * Uses some of Hadoop deprecated api wherever newer api is not available.
- * Hence, @SuppressWarnings("deprecation") for imports.
+ * Hence, @SuppressWarnings("deprecation") for imports (MAHOUT-593).
  * <P>
  * 
  */
@@ -338,9 +338,8 @@ public final class QJob {
     job.getConfiguration().setInt(PROP_P, p);
 
     // number of reduce tasks doesn't matter. we don't actually
-    // send anything to reducers. in fact, the only reason
-    // we need to configure reduce step is so that combiners can fire.
-    // so reduce here is purely symbolic.
+    // send anything to reducers.
+    
     job.setNumReduceTasks(0 /* numReduceTasks */);
 
     job.submit();
