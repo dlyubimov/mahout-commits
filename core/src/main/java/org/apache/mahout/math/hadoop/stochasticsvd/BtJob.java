@@ -44,15 +44,13 @@ import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.mahout.common.iterator.CopyConstructorIterator;
 import org.apache.mahout.common.iterator.sequencefile.SequenceFileValueIterator;
 import org.apache.mahout.math.DenseVector;
-import org.apache.mahout.math.RandomAccessSparseVector;
-import org.apache.mahout.math.SequentialAccessSparseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 import org.apache.mahout.math.hadoop.stochasticsvd.QJob.QJobKeyWritable;
 
 /**
- * Bt job. For details, see working notes in MAHOUT-376. 
- *
+ * Bt job. For details, see working notes in MAHOUT-376.
+ * 
  */
 public final class BtJob {
 
@@ -76,7 +74,8 @@ public final class BtJob {
     private final VectorWritable btValue = new VectorWritable();
     private int kp;
     private final VectorWritable qRowValue = new VectorWritable();
-    //private int qCount; // debug
+
+    // private int qCount; // debug
 
     void loadNextQt() throws IOException {
       Writable key = new QJobKeyWritable();
@@ -85,8 +84,8 @@ public final class BtJob {
       boolean more = qInput.next(key, v);
       assert more;
 
-      mQt = GivensThinSolver.computeQtHat(v.getBlock(), blockNum == 0 ? 0
-          : 1, new CopyConstructorIterator<UpperTriangular>(mRs.iterator()));
+      mQt = GivensThinSolver.computeQtHat(v.getBlock(), blockNum == 0 ? 0 : 1,
+          new CopyConstructorIterator<UpperTriangular>(mRs.iterator()));
       r = mQt[0].length;
       kp = mQt.length;
       if (btValue.get() == null) {
@@ -114,7 +113,7 @@ public final class BtJob {
       // // it doesn't matter if it overflows.
       // m_outputs.write( OUTPUT_Q, oKey, oV);
       // }
-      //qCount++;
+      // qCount++;
     }
 
     @Override
@@ -141,7 +140,7 @@ public final class BtJob {
       // output Bt outer products
       Vector aRow = value.get();
       int qRowIndex = r - cnt; // because QHats are initially stored in
-                                   // reverse
+                               // reverse
       Vector qRow = qRowValue.get();
       for (int j = 0; j < kp; j++) {
         qRow.setQuick(j, mQt[j][qRowIndex]);
@@ -151,7 +150,7 @@ public final class BtJob {
       // make sure Qs are inheriting A row labels.
 
       Vector btRow = btValue.get();
-      if ((aRow instanceof SequentialAccessSparseVector) || (aRow instanceof RandomAccessSparseVector)) {
+      if (!aRow.isDense()) {
         for (Vector.Element el : aRow) {
           double mul = el.get();
           for (int j = 0; j < kp; j++) {
@@ -160,7 +159,7 @@ public final class BtJob {
           btKey.set(el.index());
           context.write(btKey, btValue);
         }
-      } else { 
+      } else {
         int n = aRow.size();
         for (int i = 0; i < n; i++) {
           double mul = aRow.getQuick(i);
@@ -203,8 +202,8 @@ public final class BtJob {
 
       int block = 0;
       for (FileStatus fstat : rFiles) {
-        SequenceFileValueIterator<VectorWritable> iterator =
-            new SequenceFileValueIterator<VectorWritable>(fstat.getPath(), true, context.getConfiguration());
+        SequenceFileValueIterator<VectorWritable> iterator = new SequenceFileValueIterator<VectorWritable>(
+            fstat.getPath(), true, context.getConfiguration());
         VectorWritable rValue;
         try {
           rValue = iterator.next();
@@ -212,8 +211,7 @@ public final class BtJob {
           iterator.close();
         }
         if (block < blockNum && block > 0) {
-          GivensThinSolver.mergeR(mRs.get(0),
-                                  new UpperTriangular(rValue.get()));
+          GivensThinSolver.mergeR(mRs.get(0), new UpperTriangular(rValue.get()));
         } else {
           mRs.add(new UpperTriangular(rValue.get()));
         }
@@ -229,8 +227,8 @@ public final class BtJob {
     private DenseVector accum;
 
     @Override
-    protected void reduce(IntWritable key, Iterable<VectorWritable> values,
-        Context ctx) throws IOException, InterruptedException {
+    protected void reduce(IntWritable key, Iterable<VectorWritable> values, Context ctx) throws IOException,
+      InterruptedException {
       Iterator<VectorWritable> vwIter = values.iterator();
 
       Vector vec = vwIter.next().get();
@@ -257,13 +255,12 @@ public final class BtJob {
                          int k,
                          int p,
                          int numReduceTasks,
-                         Class<? extends Writable> labelClass)
-    throws ClassNotFoundException, InterruptedException, IOException {
+                         Class<? extends Writable> labelClass) throws ClassNotFoundException, InterruptedException,
+    IOException {
 
     JobConf oldApiJob = new JobConf(conf);
-    MultipleOutputs.addNamedOutput(oldApiJob, OUTPUT_Q,
-        org.apache.hadoop.mapred.SequenceFileOutputFormat.class, labelClass,
-        VectorWritable.class);
+    MultipleOutputs.addNamedOutput(oldApiJob, OUTPUT_Q, org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
+        labelClass, VectorWritable.class);
 
     Job job = new Job(oldApiJob);
     job.setJobName("Bt-job");
@@ -285,8 +282,7 @@ public final class BtJob {
     job.getConfiguration().set("mapreduce.output.basename", OUTPUT_BT);
     FileOutputFormat.setCompressOutput(job, true);
     FileOutputFormat.setOutputCompressorClass(job, DefaultCodec.class);
-    SequenceFileOutputFormat.setOutputCompressionType(job,
-        CompressionType.BLOCK);
+    SequenceFileOutputFormat.setOutputCompressionType(job, CompressionType.BLOCK);
 
     job.setMapOutputKeyClass(IntWritable.class);
     job.setMapOutputValueClass(VectorWritable.class);
