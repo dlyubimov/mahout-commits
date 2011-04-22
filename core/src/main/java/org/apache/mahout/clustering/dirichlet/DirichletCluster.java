@@ -129,7 +129,7 @@ public class DirichletCluster implements Cluster {
   }
 
   @Override
-  public int getNumPoints() {
+  public long getNumPoints() {
     return model.getNumPoints();
   }
 
@@ -144,7 +144,7 @@ public class DirichletCluster implements Cluster {
   }
 
   @Override
-  public int count() {
+  public long count() {
     return model.count();
   }
 
@@ -161,6 +161,11 @@ public class DirichletCluster implements Cluster {
   @Override
   public Model<VectorWritable> sampleFromPosterior() {
     return model.sampleFromPosterior();
+  }
+
+  @Override
+  public void observe(VectorWritable x, double weight) {
+   throw new UnsupportedOperationException();
   }
 
 }

@@ -31,6 +31,10 @@ import org.apache.mahout.common.parameters.Parameter;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 
+/**
+ * 
+ *@deprecated use DistanceMeasureCluster instead
+ */
 public class L1Model implements Cluster {
 
   private static final DistanceMeasure MEASURE = new ManhattanDistanceMeasure();
@@ -73,7 +77,7 @@ public class L1Model implements Cluster {
   }
 
   @Override
-  public int count() {
+  public long count() {
     return counter;
   }
 
@@ -137,13 +141,18 @@ public class L1Model implements Cluster {
   }
 
   @Override
-  public int getNumPoints() {
+  public long getNumPoints() {
     return counter;
   }
 
   @Override
   public Vector getRadius() {
     return null;
+  }
+
+  @Override
+  public void observe(VectorWritable x, double weight) {
+   throw new UnsupportedOperationException();
   }
 
 }
