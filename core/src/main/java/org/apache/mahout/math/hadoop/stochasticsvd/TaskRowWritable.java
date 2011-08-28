@@ -21,6 +21,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.mahout.math.Varint;
 
 /**
  * a key for vectors allowing to identify them by their coordinates in original
@@ -30,24 +32,44 @@ import org.apache.hadoop.io.WritableComparable;
  * prepare side files that come into contact with A, sp that they are sorted and
  * partitioned same way.
  * 
- * @author dmitriy
- * 
  */
 public class TaskRowWritable implements WritableComparable<TaskRowWritable> {
 
   private int taskId;
   private int taskRowOrdinal;
 
+  public TaskRowWritable(Mapper<?, ?, ?, ?>.Context mapperContext) {
+    super();
+    // this is basically a split # if i understand it right
+    taskId = mapperContext.getTaskAttemptID().getTaskID().getId();
+  }
+
+  public TaskRowWritable() {
+    super();
+  }
+
+  public int getTaskId() {
+    return taskId;
+  }
+
+  public int getTaskRowOrdinal() {
+    return taskRowOrdinal;
+  }
+
+  public void incrementRowOrdinal() {
+    taskRowOrdinal++;
+  }
+
   @Override
   public void readFields(DataInput in) throws IOException {
-    taskId = in.readInt();
-    taskRowOrdinal = in.readInt();
+    taskId = Varint.readUnsignedVarInt(in);
+    taskRowOrdinal = Varint.readUnsignedVarInt(in);
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
-    out.writeInt(taskId);
-    out.writeInt(taskRowOrdinal);
+    Varint.writeUnsignedVarInt(taskId, out);
+    Varint.writeUnsignedVarInt(taskRowOrdinal, out);
   }
 
   @Override
