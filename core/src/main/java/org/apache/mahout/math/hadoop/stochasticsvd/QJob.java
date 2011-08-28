@@ -18,16 +18,12 @@
 package org.apache.mahout.math.hadoop.stochasticsvd;
 
 import java.io.Closeable;
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.google.common.collect.Lists;
-import com.google.common.io.Closeables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -35,7 +31,6 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.compress.DefaultCodec;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.lib.MultipleOutputs;
@@ -49,6 +44,9 @@ import org.apache.mahout.common.IOUtils;
 import org.apache.mahout.common.iterator.CopyConstructorIterator;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.VectorWritable;
+
+import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 
 /**
  * Compute first level of QHat-transpose blocks.
@@ -76,44 +74,8 @@ public final class QJob {
   private QJob() {
   }
 
-  // public static final String OUTPUT_Q="Q";
-  // public static final String OUTPUT_BT = "Bt";
-
-  public static class QJobKeyWritable implements WritableComparable<QJobKeyWritable> {
-
-    private int taskId;
-    private int taskRowOrdinal;
-
-    @Override
-    public void readFields(DataInput in) throws IOException {
-      taskId = in.readInt();
-      taskRowOrdinal = in.readInt();
-    }
-
-    @Override
-    public void write(DataOutput out) throws IOException {
-      out.writeInt(taskId);
-      out.writeInt(taskRowOrdinal);
-    }
-
-    @Override
-    public int compareTo(QJobKeyWritable o) {
-      if (taskId < o.taskId) {
-        return -1;
-      } else if (taskId > o.taskId) {
-        return 1;
-      }
-      if (taskRowOrdinal < o.taskRowOrdinal) {
-        return -1;
-      } else if (taskRowOrdinal > o.taskRowOrdinal) {
-        return 1;
-      }
-      return 0;
-    }
-
-  }
-
-  public static class QMapper extends Mapper<Writable, VectorWritable, QJobKeyWritable, VectorWritable> {
+  public static class QMapper extends
+      Mapper<Writable, VectorWritable, TaskRowWritable, VectorWritable> {
 
     private int kp;
     private Omega omega;
@@ -123,7 +85,7 @@ public final class QJob {
     // private int m_reducerCount;
     private int r;
     private final DenseBlockWritable value = new DenseBlockWritable();
-    private final QJobKeyWritable key = new QJobKeyWritable();
+    private final TaskRowWritable key = new TaskRowWritable();
     private final Writable tempKey = new IntWritable();
     private MultipleOutputs outputs;
     private final Deque<Closeable> closeables = new LinkedList<Closeable>();
@@ -138,8 +100,10 @@ public final class QJob {
       rSubseq.add(r);
 
       value.setBlock(qt);
-      getTempQw(context).append(tempKey, value); // this probably should be
-                                                 // a sparse row matrix,
+      getTempQw(context).append(tempKey, value);
+      
+      // this probably should be
+      // a sparse row matrix,
       // but compressor should get it for disk and in memory we want it
       // dense anyway, sparse random implementations would be
       // a mostly a memory management disaster consisting of rehashes and GC
@@ -157,7 +121,8 @@ public final class QJob {
         // the entire split in memory -- and we don't require even that.
         value.setBlock(qSolver.getThinQtTilde());
         outputQHat(key, value);
-        outputR(key, new VectorWritable(new DenseVector(qSolver.getRTilde().getData(), true)));
+        outputR(key, new VectorWritable(new DenseVector(qSolver.getRTilde()
+            .getData(), true)));
 
       } else {
         secondPass(ctx);
@@ -177,7 +142,8 @@ public final class QJob {
     private void secondPass(Context ctx) throws IOException {
       qSolver = null; // release mem
       FileSystem localFs = FileSystem.getLocal(ctx.getConfiguration());
-      SequenceFile.Reader tempQr = new SequenceFile.Reader(localFs, tempQPath, ctx.getConfiguration());
+      SequenceFile.Reader tempQr = new SequenceFile.Reader(localFs, tempQPath,
+          ctx.getConfiguration());
       closeables.addFirst(tempQr);
       int qCnt = 0;
       while (tempQr.next(tempKey, value)) {
@@ -195,13 +161,14 @@ public final class QJob {
 
       assert rSubseq.size() == 1;
 
-      // m_value.setR(m_rSubseq.get(0));
-      outputR(key, new VectorWritable(new DenseVector(rSubseq.get(0).getData(), true)));
+      outputR(key, new VectorWritable(new DenseVector(rSubseq.get(0).getData(),
+          true)));
 
     }
 
     @Override
-    protected void map(Writable key, VectorWritable value, Context context) throws IOException, InterruptedException {
+    protected void map(Writable key, VectorWritable value, Context context) throws IOException,
+        InterruptedException {
       double[] yRow;
       if (yLookahead.size() == kp) {
         if (qSolver.isFull()) {
@@ -221,12 +188,14 @@ public final class QJob {
     }
 
     @Override
-    protected void setup(Context context) throws IOException, InterruptedException {
+    protected void setup(Context context) throws IOException,
+        InterruptedException {
 
       int k = Integer.parseInt(context.getConfiguration().get(PROP_K));
       int p = Integer.parseInt(context.getConfiguration().get(PROP_P));
       kp = k + p;
-      long omegaSeed = Long.parseLong(context.getConfiguration().get(PROP_OMEGA_SEED));
+      long omegaSeed = Long.parseLong(context.getConfiguration().get(
+          PROP_OMEGA_SEED));
       r = Integer.parseInt(context.getConfiguration().get(PROP_AROWBLOCK_SIZE));
       omega = new Omega(omegaSeed, k, p);
       yLookahead = Lists.newArrayListWithCapacity(kp);
@@ -242,7 +211,8 @@ public final class QJob {
     }
 
     @Override
-    protected void cleanup(Context context) throws IOException, InterruptedException {
+    protected void cleanup(Context context) throws IOException,
+        InterruptedException {
       try {
         if (qSolver == null && yLookahead.isEmpty()) {
           return;
@@ -284,10 +254,12 @@ public final class QJob {
         String taskTmpDir = System.getProperty("java.io.tmpdir");
         FileSystem localFs = FileSystem.getLocal(context.getConfiguration());
         tempQPath = new Path(new Path(taskTmpDir), "q-temp.seq");
-        tempQw = SequenceFile.createWriter(localFs, context.getConfiguration(), tempQPath, IntWritable.class,
-            DenseBlockWritable.class, CompressionType.BLOCK);
+        tempQw = SequenceFile.createWriter(localFs, context.getConfiguration(),
+            tempQPath, IntWritable.class, DenseBlockWritable.class,
+            CompressionType.BLOCK);
         closeables.addFirst(tempQw);
-        closeables.addFirst(new IOUtils.DeleteFileOnClose(new File(tempQPath.toString())));
+        closeables.addFirst(new IOUtils.DeleteFileOnClose(new File(tempQPath
+            .toString())));
       }
       return tempQw;
     }
@@ -301,13 +273,17 @@ public final class QJob {
                          int k,
                          int p,
                          long seed,
-                         int numReduceTasks) throws ClassNotFoundException, InterruptedException, IOException {
+                         int numReduceTasks) throws ClassNotFoundException,
+      InterruptedException,
+      IOException {
 
     JobConf oldApiJob = new JobConf(conf);
-    MultipleOutputs.addNamedOutput(oldApiJob, OUTPUT_QHAT, org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
-        QJobKeyWritable.class, DenseBlockWritable.class);
-    MultipleOutputs.addNamedOutput(oldApiJob, OUTPUT_R, org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
-        QJobKeyWritable.class, VectorWritable.class);
+    MultipleOutputs.addNamedOutput(oldApiJob, OUTPUT_QHAT,
+        org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
+        TaskRowWritable.class, DenseBlockWritable.class);
+    MultipleOutputs.addNamedOutput(oldApiJob, OUTPUT_R,
+        org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
+        TaskRowWritable.class, VectorWritable.class);
 
     Job job = new Job(oldApiJob);
     job.setJobName("Q-job");
@@ -323,12 +299,13 @@ public final class QJob {
 
     FileOutputFormat.setCompressOutput(job, true);
     FileOutputFormat.setOutputCompressorClass(job, DefaultCodec.class);
-    SequenceFileOutputFormat.setOutputCompressionType(job, CompressionType.BLOCK);
+    SequenceFileOutputFormat.setOutputCompressionType(job,
+        CompressionType.BLOCK);
 
-    job.setMapOutputKeyClass(QJobKeyWritable.class);
+    job.setMapOutputKeyClass(TaskRowWritable.class);
     job.setMapOutputValueClass(VectorWritable.class);
 
-    job.setOutputKeyClass(QJobKeyWritable.class);
+    job.setOutputKeyClass(TaskRowWritable.class);
     job.setOutputValueClass(VectorWritable.class);
 
     job.setMapperClass(QMapper.class);
@@ -340,7 +317,7 @@ public final class QJob {
 
     // number of reduce tasks doesn't matter. we don't actually
     // send anything to reducers.
-    
+
     job.setNumReduceTasks(0 /* numReduceTasks */);
 
     job.submit();

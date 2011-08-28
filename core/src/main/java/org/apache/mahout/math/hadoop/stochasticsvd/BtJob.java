@@ -22,8 +22,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.common.collect.Lists;
-import com.google.common.io.Closeables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -47,7 +45,9 @@ import org.apache.mahout.common.iterator.sequencefile.SequenceFileValueIterator;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
-import org.apache.mahout.math.hadoop.stochasticsvd.QJob.QJobKeyWritable;
+
+import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 
 /**
  * Bt job. For details, see working notes in MAHOUT-376. <P>
@@ -83,7 +83,7 @@ public final class BtJob {
     // private int qCount; // debug
 
     void loadNextQt() throws IOException {
-      Writable key = new QJobKeyWritable();
+      Writable key = new TaskRowWritable();
       DenseBlockWritable v = new DenseBlockWritable();
 
       boolean more = qInput.next(key, v);
