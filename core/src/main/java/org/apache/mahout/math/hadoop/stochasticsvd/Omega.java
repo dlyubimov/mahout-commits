@@ -52,12 +52,6 @@ public class Omega {
     return hash / UNIFORM_DIVISOR;
   }
 
-  public void accumDots(int aIndex, double aElement, double[] yRow) {
-    for (int i = 0; i < kp; i++) {
-      yRow[i] += getQuick(aIndex, i) * aElement;
-    }
-  }
-
   /**
    * compute YRow=ARow*Omega.
    * 
@@ -101,6 +95,18 @@ public class Omega {
         Element el = iter.next();
         accumDots(el.index(), el.get(), yRow);
       }
+    }
+  }
+
+  protected void accumDots(int aIndex, double aElement, double[] yRow) {
+    for (int i = 0; i < kp; i++) {
+      yRow[i] += getQuick(aIndex, i) * aElement;
+    }
+  }
+
+  protected void accumDots(int aIndex, double aElement, Vector yRow) {
+    for (int i = 0; i < kp; i++) {
+      yRow.setQuick(i, yRow.getQuick(i) + getQuick(aIndex, i) * aElement);
     }
   }
 
