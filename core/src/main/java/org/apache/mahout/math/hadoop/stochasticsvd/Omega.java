@@ -60,6 +60,7 @@ public class Omega {
    * @param yRow
    *          row of matrix Y (result) must be pre-allocated to size of (k+p)
    */
+  @Deprecated
   public void computeYRow(Vector aRow, double[] yRow) {
     // assert yRow.length == kp;
     Arrays.fill(yRow, 0.0);
@@ -81,19 +82,19 @@ public class Omega {
    * matrices
    * 
    * @param aRow
-   * @param yRow
+   * @param yRowOut
    */
-  public void computeYRow(Vector aRow, RandomAccessSparseVector yRow) {
-    yRow.assign(0.0);
+  public void computeYRow(Vector aRow, Vector yRowOut) {
+    yRowOut.assign(0.0);
     if (aRow.isDense()) {
       int n = aRow.size();
       for (int j = 0; j < n; j++) {
-        accumDots(j, aRow.getQuick(j), yRow);
+        accumDots(j, aRow.getQuick(j), yRowOut);
       }
     } else {
       for (Iterator<Element> iter = aRow.iterateNonZero(); iter.hasNext();) {
         Element el = iter.next();
-        accumDots(el.index(), el.get(), yRow);
+        accumDots(el.index(), el.get(), yRowOut);
       }
     }
   }

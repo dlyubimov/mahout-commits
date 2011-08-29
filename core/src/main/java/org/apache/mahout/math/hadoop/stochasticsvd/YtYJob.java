@@ -17,6 +17,7 @@
 package org.apache.mahout.math.hadoop.stochasticsvd;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 import org.apache.commons.lang.Validate;
 import org.apache.hadoop.conf.Configuration;
@@ -32,6 +33,7 @@ import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.mahout.math.DenseVector;
+import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 
 /**
@@ -60,7 +62,7 @@ public class YtYJob {
     // benefits since we must to assume that y would be more often
     // dense than sparse, so for bulk dense operations that would perform
     // somewhat better than a RandomAccessSparse vector frequent updates.
-    private double[] yRow;
+    private Vector yRow;
 
     @Override
     protected void setup(Context context) throws IOException,
@@ -72,26 +74,52 @@ public class YtYJob {
       Validate.isTrue(p > 0, "invalid p parameter");
 
       kp = k + p;
-      long omegaSeed = Long.parseLong(context.getConfiguration().get(
-          PROP_OMEGA_SEED));
+      long omegaSeed = Long.parseLong(context.getConfiguration()
+          .get(PROP_OMEGA_SEED));
 
       omega = new Omega(omegaSeed, k, p);
 
       mYtY = new UpperTriangular(kp);
-      yRow = new double[kp];
+
+      // see which one works better!
+      // yRow = new RandomAccessSparseVector(kp);
+      yRow = new DenseVector(kp);
     }
 
     @Override
-    protected void map(Writable key, VectorWritable value, Context context) throws IOException,
-        InterruptedException {
+    protected void map(Writable key, VectorWritable value, Context context)
+        throws IOException, InterruptedException {
       omega.computeYRow(value.get(), yRow);
       // compute outer product update for YtY
-      for (int i = 0; i < kp; i++) {
-        if (yRow[i] == 0.0)
-          continue; // avoid densing up here unnecessarily
-        for (int j = i; j < kp; j++)
-          if (yRow[j] != 0.0)
-            mYtY.setQuick(i, j, mYtY.getQuick(i, j) + yRow[i] * yRow[j]);
+
+      if (yRow.isDense()) {
+        for (int i = 0; i < kp; i++) {
+          double yi;
+          if ((yi = yRow.getQuick(i)) == 0.0)
+            continue; // avoid densing up here unnecessarily
+          for (int j = i; j < kp; j++) {
+            double yj;
+            if ((yj = yRow.getQuick(j)) != 0.0)
+              mYtY.setQuick(i, j, mYtY.getQuick(i, j) + yi * yj);
+          }
+        }
+      } else {
+        // the disadvantage of using sparse vector (aside from the fact that we
+        // are creating some short-lived references) here is that we obviously
+        // do two times more iterations then necessary if y row is pretty dense.
+        for (Iterator<Vector.Element> iterI = yRow.iterateNonZero(); iterI
+            .hasNext();) {
+          Vector.Element eli = iterI.next();
+          int i = eli.index();
+          for (Iterator<Vector.Element> iterJ = yRow.iterateNonZero(); iterJ
+              .hasNext();) {
+            Vector.Element elj = iterJ.next();
+            int j = elj.index();
+            if (j < i)
+              continue;
+            mYtY.setQuick(i, j, mYtY.getQuick(i, j) + eli.get() * elj.get());
+          }
+        }
       }
     }
 
@@ -126,24 +154,16 @@ public class YtYJob {
     }
 
     @Override
-    protected void reduce(IntWritable key,
-                          Iterable<VectorWritable> values,
-                          Context arg2) throws IOException,
-        InterruptedException {
+    protected void reduce(IntWritable key, Iterable<VectorWritable> values,
+        Context arg2) throws IOException, InterruptedException {
       for (VectorWritable vw : values)
         acc.addAll(vw.get());
     }
   }
 
-  public static void run(Configuration conf,
-                         Path[] inputPaths,
-                         Path outputPath,
-                         int k,
-                         int p,
-                         long seed,
-                         int numReduceTasks) throws ClassNotFoundException,
-      InterruptedException,
-      IOException {
+  public static void run(Configuration conf, Path[] inputPaths,
+      Path outputPath, int k, int p, long seed, int numReduceTasks)
+      throws ClassNotFoundException, InterruptedException, IOException {
 
     Job job = new Job(conf);
     job.setJobName("YtY-job");
@@ -154,7 +174,7 @@ public class YtYJob {
     FileOutputFormat.setOutputPath(job, outputPath);
 
     SequenceFileOutputFormat.setOutputCompressionType(job,
-        CompressionType.BLOCK);
+                                                      CompressionType.BLOCK);
 
     job.setMapOutputKeyClass(IntWritable.class);
     job.setMapOutputValueClass(VectorWritable.class);
