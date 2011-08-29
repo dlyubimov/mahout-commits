@@ -37,8 +37,6 @@ import org.apache.mahout.math.VectorWritable;
 /**
  * Job that accumulates Y'Y output
  * 
- * @author dmitriy
- * 
  */
 public class YtYJob {
 
@@ -46,8 +44,8 @@ public class YtYJob {
   public static final String PROP_K = "ssvd.k";
   public static final String PROP_P = "ssvd.p";
 
-  // we have single output, so we use standard output 
-  public static final String OUTPUT_YtY = "part-"; 
+  // we have single output, so we use standard output
+  public static final String OUTPUT_YtY = "part-";
 
   public static class YtYMapper extends
       Mapper<Writable, VectorWritable, IntWritable, VectorWritable> {
@@ -92,7 +90,8 @@ public class YtYJob {
         if (yRow[i] == 0.0)
           continue; // avoid densing up here unnecessarily
         for (int j = i; j < kp; j++)
-          mYtY.setQuick(i, j, mYtY.getQuick(i, j) + yRow[i] * yRow[j]);
+          if (yRow[j] != 0.0)
+            mYtY.setQuick(i, j, mYtY.getQuick(i, j) + yRow[i] * yRow[j]);
       }
     }
 
@@ -132,7 +131,7 @@ public class YtYJob {
                           Context arg2) throws IOException,
         InterruptedException {
       for (VectorWritable vw : values)
-        ((DenseVector) acc).addAll(vw.get());
+        acc.addAll(vw.get());
     }
   }
 

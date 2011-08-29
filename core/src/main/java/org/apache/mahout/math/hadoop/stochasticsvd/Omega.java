@@ -18,7 +18,9 @@
 package org.apache.mahout.math.hadoop.stochasticsvd;
 
 import java.util.Arrays;
+import java.util.Iterator;
 
+import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.Vector.Element;
 
@@ -40,8 +42,10 @@ public class Omega {
   /**
    * Get omega element at (x,y) uniformly distributed within [-1...1)
    * 
-   * @param row omega row
-   * @param column omega column
+   * @param row
+   *          omega row
+   * @param column
+   *          omega column
    */
   public double getQuick(int row, int column) {
     long hash = murmur64((long) row << Integer.SIZE | column, 8, seed);
@@ -63,7 +67,7 @@ public class Omega {
    *          row of matrix Y (result) must be pre-allocated to size of (k+p)
    */
   public void computeYRow(Vector aRow, double[] yRow) {
-    //assert yRow.length == kp;
+    // assert yRow.length == kp;
     Arrays.fill(yRow, 0.0);
     if (aRow.isDense()) {
       int n = aRow.size();
@@ -71,29 +75,50 @@ public class Omega {
         accumDots(j, aRow.getQuick(j), yRow);
       }
     } else {
-      for (Element el : aRow) {
+      for (Iterator<Element> iter = aRow.iterateNonZero(); iter.hasNext();) {
+        Element el = iter.next();
         accumDots(el.index(), el.get(), yRow);
       }
     }
-
   }
 
   /**
-   * Shortened version for data < 8 bytes packed into {@code len} lowest
-   * bytes of {@code val}.
-   *
+   * A version to compute yRow as a sparse vector in case of extremely sparse
+   * matrices
+   * 
+   * @param aRow
+   * @param yRow
+   */
+  public void computeYRow(Vector aRow, RandomAccessSparseVector yRow) {
+    yRow.assign(0.0);
+    if (aRow.isDense()) {
+      int n = aRow.size();
+      for (int j = 0; j < n; j++) {
+        accumDots(j, aRow.getQuick(j), yRow);
+      }
+    } else {
+      for (Iterator<Element> iter = aRow.iterateNonZero(); iter.hasNext();) {
+        Element el = iter.next();
+        accumDots(el.index(), el.get(), yRow);
+      }
+    }
+  }
+
+  /**
+   * Shortened version for data < 8 bytes packed into {@code len} lowest bytes
+   * of {@code val}.
+   * 
    * @param val
    *          the value
    * @param len
-   *          the length of data packed into this many low bytes of
-   *          {@code val}
+   *          the length of data packed into this many low bytes of {@code val}
    * @param seed
    *          the seed to use
    * @return murmur hash
    */
   public static long murmur64(long val, int len, long seed) {
 
-    //assert len > 0 && len <= 8;
+    // assert len > 0 && len <= 8;
     long m = 0xc6a4a7935bd1e995L;
     long h = seed ^ len * m;
 
