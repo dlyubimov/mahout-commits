@@ -49,6 +49,7 @@ import org.apache.mahout.common.IOUtils;
 import org.apache.mahout.common.iterator.CopyConstructorIterator;
 import org.apache.mahout.common.iterator.sequencefile.SequenceFileValueIterator;
 import org.apache.mahout.math.DenseVector;
+import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 
@@ -85,6 +86,8 @@ public final class BtJob {
   public static final String PROP_QJOB_PATH = "ssvd.QJob.path";
   public static final String PROP_OUPTUT_BBT_PRODUCTS =
     "ssvd.BtJob.outputBBtProducts";
+
+  private static final double SPARSE_ZEROS_PCT_THRESHOLD = 0.1;
 
   private BtJob() {
   }
@@ -257,6 +260,9 @@ public final class BtJob {
     protected final VectorWritable outValue = new VectorWritable();
     protected DenseVector accum;
     protected Deque<Closeable> closeables = new ArrayDeque<Closeable>();
+    protected int sparseThresholdZeroCnt;
+    protected RandomAccessSparseVector sparseAccum;
+    protected int accumSize;
 
     @Override
     protected void reduce(IntWritable key,
@@ -267,7 +273,11 @@ public final class BtJob {
       Vector vec = vwIter.next().get();
       if (accum == null || accum.size() != vec.size()) {
         accum = new DenseVector(vec);
-        outValue.set(accum);
+        accumSize = accum.size();
+        sparseAccum = new RandomAccessSparseVector(accumSize);
+        sparseThresholdZeroCnt =
+          (int) Math.ceil(SPARSE_ZEROS_PCT_THRESHOLD * accum.size());
+        // outValue.set(accum);
       } else {
         accum.assign(vec);
       }
@@ -276,6 +286,27 @@ public final class BtJob {
         accum.addAll(vwIter.next().get());
       }
 
+      // try to detect some 0s, although not terribly likely here,
+      // unless there are some items that have never been rated -- even then
+      // though. Frankly, i tried to run sparse matrices as sparse as 0.05%
+      // (5E-4)
+      // and B' rows still never come up as sparse. If there're some items that
+      // are never rated, probably it will create some B' rows that are
+      // completely 0'd although i am not sure.
+      boolean sparsify = false;
+      int zeroCnt = 0;
+      for (int i = 0; i < accumSize; i++) {
+        if (accum.get(i) == 0.0 && ++zeroCnt >= sparseThresholdZeroCnt) {
+          sparsify = true;
+          break;
+        }
+      }
+
+      if (sparsify) {
+        outValue.set(sparseAccum.assign(accum));
+      } else {
+        outValue.set(accum);
+      }
       ctx.write(key, outValue);
     }
 

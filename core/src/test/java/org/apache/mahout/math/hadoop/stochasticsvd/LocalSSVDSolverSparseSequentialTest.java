@@ -88,7 +88,7 @@ public class LocalSSVDSolverSparseSequentialTest extends MahoutTestCase {
     int ablockRows = 867;
     int p = 60;
     int k = 40;
-    int percent = 5;
+    double percent = 5;
 
     VectorWritable vw = new VectorWritable();
     IntWritable roww = new IntWritable();
