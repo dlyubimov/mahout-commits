@@ -21,6 +21,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.mahout.math.Varint;
 
@@ -31,20 +32,30 @@ import org.apache.mahout.math.Varint;
  * We assume all passes over A results in the same splits, thus, we can always
  * prepare side files that come into contact with A, sp that they are sorted and
  * partitioned same way.
+ * <P>
+ * 
+ * Hashcode is defined the way that all records of the same split go to the same
+ * reducer.
+ * <P>
+ * 
+ * In addition, we are defining a grouping comparator allowing group one split
+ * into the same reducer group.
+ * <P>
  * 
  */
-public class TaskRowWritable implements WritableComparable<TaskRowWritable> {
+public class SplitPartitionedWritable implements
+    WritableComparable<SplitPartitionedWritable> {
 
   private int taskId;
   private int taskRowOrdinal;
 
-  public TaskRowWritable(Mapper<?, ?, ?, ?>.Context mapperContext) {
+  public SplitPartitionedWritable(Mapper<?, ?, ?, ?>.Context mapperContext) {
     super();
     // this is basically a split # if i understand it right
     taskId = mapperContext.getTaskAttemptID().getTaskID().getId();
   }
 
-  public TaskRowWritable() {
+  public SplitPartitionedWritable() {
     super();
   }
 
@@ -73,7 +84,29 @@ public class TaskRowWritable implements WritableComparable<TaskRowWritable> {
   }
 
   @Override
-  public int compareTo(TaskRowWritable o) {
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + taskId;
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    SplitPartitionedWritable other = (SplitPartitionedWritable) obj;
+    if (taskId != other.taskId)
+      return false;
+    return true;
+  }
+
+  @Override
+  public int compareTo(SplitPartitionedWritable o) {
     if (taskId < o.taskId) {
       return -1;
     } else if (taskId > o.taskId) {
@@ -85,6 +118,27 @@ public class TaskRowWritable implements WritableComparable<TaskRowWritable> {
       return 1;
     }
     return 0;
+  }
+
+  public static final class SplitGroupingComparator extends WritableComparator {
+
+    public SplitGroupingComparator() {
+      super(SplitPartitionedWritable.class);
+    }
+
+    @Override
+    public int compare(Object a, Object b) {
+      SplitPartitionedWritable o1 = (SplitPartitionedWritable) a;
+      SplitPartitionedWritable o2 = (SplitPartitionedWritable) b;
+
+      if (o1.taskId < o2.taskId) {
+        return -1;
+      } else if (o1.taskId > o2.taskId) {
+        return 1;
+      }
+      return 0;
+    }
+
   }
 
 }

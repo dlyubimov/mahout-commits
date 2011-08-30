@@ -107,7 +107,7 @@ public final class BtJob {
     // private int qCount; // debug
 
     void loadNextQt() throws IOException {
-      Writable key = new TaskRowWritable();
+      Writable key = new SplitPartitionedWritable();
       DenseBlockWritable v = new DenseBlockWritable();
 
       boolean more = qInput.next(key, v);

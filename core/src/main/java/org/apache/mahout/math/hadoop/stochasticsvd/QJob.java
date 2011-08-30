@@ -75,7 +75,7 @@ public final class QJob {
   }
 
   public static class QMapper extends
-      Mapper<Writable, VectorWritable, TaskRowWritable, VectorWritable> {
+      Mapper<Writable, VectorWritable, SplitPartitionedWritable, VectorWritable> {
 
     private int kp;
     private Omega omega;
@@ -85,7 +85,7 @@ public final class QJob {
     // private int m_reducerCount;
     private int r;
     private final DenseBlockWritable value = new DenseBlockWritable();
-    private final TaskRowWritable key = new TaskRowWritable();
+    private final SplitPartitionedWritable key = new SplitPartitionedWritable();
     private final Writable tempKey = new IntWritable();
     private MultipleOutputs outputs;
     private final Deque<Closeable> closeables = new LinkedList<Closeable>();
@@ -280,10 +280,10 @@ public final class QJob {
     JobConf oldApiJob = new JobConf(conf);
     MultipleOutputs.addNamedOutput(oldApiJob, OUTPUT_QHAT,
         org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
-        TaskRowWritable.class, DenseBlockWritable.class);
+        SplitPartitionedWritable.class, DenseBlockWritable.class);
     MultipleOutputs.addNamedOutput(oldApiJob, OUTPUT_R,
         org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
-        TaskRowWritable.class, VectorWritable.class);
+        SplitPartitionedWritable.class, VectorWritable.class);
 
     Job job = new Job(oldApiJob);
     job.setJobName("Q-job");
@@ -302,10 +302,10 @@ public final class QJob {
     SequenceFileOutputFormat.setOutputCompressionType(job,
         CompressionType.BLOCK);
 
-    job.setMapOutputKeyClass(TaskRowWritable.class);
+    job.setMapOutputKeyClass(SplitPartitionedWritable.class);
     job.setMapOutputValueClass(VectorWritable.class);
 
-    job.setOutputKeyClass(TaskRowWritable.class);
+    job.setOutputKeyClass(SplitPartitionedWritable.class);
     job.setOutputValueClass(VectorWritable.class);
 
     job.setMapperClass(QMapper.class);
