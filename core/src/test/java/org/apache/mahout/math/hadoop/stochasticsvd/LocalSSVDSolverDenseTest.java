@@ -28,7 +28,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.mahout.common.MahoutTestCase;
 import org.apache.mahout.math.DenseMatrix;
 import org.apache.mahout.math.DenseVector;
-import org.apache.mahout.math.SingularValueDecomposition;
 import org.junit.Test;
 
 /**
