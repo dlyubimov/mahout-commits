@@ -41,8 +41,12 @@ import org.junit.Test;
 public class LocalSSVDSolverDenseTest extends MahoutTestCase {
 
   private static final double s_epsilon = 1.0E-10d;
-  private static final double s_precisionPct = 5; // 5% precision for assertion
-                                                  // of singular values.
+
+  // I actually never saw errors more than 3% worst case for this test,
+  // but since it's non-deterministic test, it still may ocasionally produce
+  // bad results with a non-zero probability, so i put this pct% for error
+  // margin higher so it never fails.
+  private static final double s_precisionPct = 10;
 
   @Test
   public void testSSVDSolver() throws IOException {
@@ -68,7 +72,9 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
     // VectorWritable.class, CompressionType.NONE, new DefaultCodec());
     // closeables.addFirst(w);
 
-    // make input equivalent to 20 mln non-zero elements
+    // make input equivalent to 20 mln non-zero elements.
+    // With 100mln the precision turns out to be only better (LLN law i guess)
+    // With oversampling of 100, i don't get any error at all.
     int n = 1000;
     int m = 20000;
     int ablockRows = 867;
