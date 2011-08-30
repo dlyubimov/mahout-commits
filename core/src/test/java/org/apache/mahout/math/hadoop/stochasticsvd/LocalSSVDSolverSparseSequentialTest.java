@@ -73,19 +73,30 @@ public class LocalSSVDSolverSparseSequentialTest extends MahoutTestCase {
     Path aLocPath = new Path(getTestTempDirPath("svdtmp/A"), "A.seq");
 
     // create distributed row matrix-like struct
-    SequenceFile.Writer w = SequenceFile.createWriter(FileSystem.getLocal(conf), conf, aLocPath, IntWritable.class,
-        VectorWritable.class, CompressionType.BLOCK, new DefaultCodec());
+    SequenceFile.Writer w =
+      SequenceFile.createWriter(FileSystem.getLocal(conf),
+                                conf,
+                                aLocPath,
+                                IntWritable.class,
+                                VectorWritable.class,
+                                CompressionType.BLOCK,
+                                new DefaultCodec());
     closeables.addFirst(w);
 
     int n = 100;
+    int m = 20000;
+    int ablockRows = 867;
+    int p = 60;
+    int k = 40;
+    int percent = 5;
+
     VectorWritable vw = new VectorWritable();
     IntWritable roww = new IntWritable();
 
     double muAmplitude = 50.0;
-    int m = 1000;
     for (int i = 0; i < m; i++) {
       Vector dv = new SequentialAccessSparseVector(n);
-      for (int j = 0; j < n / 5; j++) {
+      for (int j = 0; j < n * percent / 100; j++) {
         dv.setQuick(rnd.nextInt(n), muAmplitude * (rnd.nextDouble() - 0.5));
       }
       roww.set(i);
@@ -93,7 +104,7 @@ public class LocalSSVDSolverSparseSequentialTest extends MahoutTestCase {
       w.append(roww, vw);
     }
     closeables.remove(w);
-    Closeables.closeQuietly(w);
+    Closeables.close(w, true);
 
     FileSystem fs = FileSystem.get(conf);
 
@@ -106,10 +117,17 @@ public class LocalSSVDSolverSparseSequentialTest extends MahoutTestCase {
     // make sure we wipe out previous test results, just a convenience
     fs.delete(svdOutPath, true);
 
-    int ablockRows = 251;
-    int p = 60;
-    int k = 40;
-    SSVDSolver ssvd = new SSVDSolver(conf, new Path[] { aPath }, svdOutPath, ablockRows, k, p, 3);
+    // Solver starts here:
+    System.out.println("Input prepared, starting solver...");
+
+    SSVDSolver ssvd =
+      new SSVDSolver(conf,
+                     new Path[] { aPath },
+                     svdOutPath,
+                     ablockRows,
+                     k,
+                     p,
+                     3);
     // ssvd.setcUHalfSigma(true);
     // ssvd.setcVHalfSigma(true);
     ssvd.setOverwrite(true);
@@ -125,7 +143,8 @@ public class LocalSSVDSolverSparseSequentialTest extends MahoutTestCase {
 
     // SingularValueDecompositionImpl svd=new SingularValueDecompositionImpl(new
     // Array2DRowRealMatrix(a));
-    SingularValueDecomposition svd2 = new SingularValueDecomposition(new DenseMatrix(a));
+    SingularValueDecomposition svd2 =
+      new SingularValueDecomposition(new DenseMatrix(a));
 
     a = null;
 
@@ -133,20 +152,31 @@ public class LocalSSVDSolverSparseSequentialTest extends MahoutTestCase {
     dumpSv(svalues2);
 
     for (int i = 0; i < k + p; i++) {
-      Assert.assertTrue(Math.abs(svalues2[i] - stochasticSValues[i]) <= s_epsilon);
+      Assert
+        .assertTrue(Math.abs(svalues2[i] - stochasticSValues[i]) <= s_epsilon);
     }
 
-    double[][] q = SSVDSolver.loadDistributedRowMatrix(fs, new Path(svdOutPath, "Bt-job/" + BtJob.OUTPUT_Q + "-*"),
-        conf);
+    double[][] q =
+      SSVDSolver.loadDistributedRowMatrix(fs, new Path(svdOutPath, "Bt-job/"
+          + BtJob.OUTPUT_Q + "-*"), conf);
 
-    SSVDPrototypeTest.assertOrthonormality(new DenseMatrix(q), false, s_epsilon);
+    SSVDPrototypeTest
+      .assertOrthonormality(new DenseMatrix(q), false, s_epsilon);
 
-    double[][] u = SSVDSolver.loadDistributedRowMatrix(fs, new Path(svdOutPath, "U/[^_]*"), conf);
+    double[][] u =
+      SSVDSolver.loadDistributedRowMatrix(fs,
+                                          new Path(svdOutPath, "U/[^_]*"),
+                                          conf);
 
-    SSVDPrototypeTest.assertOrthonormality(new DenseMatrix(u), false, s_epsilon);
-    double[][] v = SSVDSolver.loadDistributedRowMatrix(fs, new Path(svdOutPath, "V/[^_]*"), conf);
+    SSVDPrototypeTest
+      .assertOrthonormality(new DenseMatrix(u), false, s_epsilon);
+    double[][] v =
+      SSVDSolver.loadDistributedRowMatrix(fs,
+                                          new Path(svdOutPath, "V/[^_]*"),
+                                          conf);
 
-    SSVDPrototypeTest.assertOrthonormality(new DenseMatrix(v), false, s_epsilon);
+    SSVDPrototypeTest
+      .assertOrthonormality(new DenseMatrix(v), false, s_epsilon);
   }
 
   static void dumpSv(double[] s) {

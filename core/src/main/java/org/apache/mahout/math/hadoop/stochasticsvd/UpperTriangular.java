@@ -75,7 +75,7 @@ public class UpperTriangular extends AbstractMatrix {
 
   private UpperTriangular(int n, int rows) {
     super(rows, rows);
-    this.n = n;
+    this.n = rows;
   }
 
   private static int elementsToMatrixSize(int size) {
