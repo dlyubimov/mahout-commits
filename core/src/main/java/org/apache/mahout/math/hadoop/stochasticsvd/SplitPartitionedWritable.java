@@ -71,6 +71,10 @@ public class SplitPartitionedWritable implements
     taskRowOrdinal++;
   }
 
+  public void setTaskRowOrdinal(int taskRowOrdinal) {
+    this.taskRowOrdinal = taskRowOrdinal;
+  }
+
   @Override
   public void readFields(DataInput in) throws IOException {
     taskId = Varint.readUnsignedVarInt(in);

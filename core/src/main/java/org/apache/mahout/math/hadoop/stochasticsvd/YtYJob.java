@@ -199,7 +199,7 @@ public class YtYJob {
     job.waitForCompletion(false);
 
     if (!job.isSuccessful()) {
-      throw new IOException("Q job unsuccessful.");
+      throw new IOException("YtY job unsuccessful.");
     }
 
   }

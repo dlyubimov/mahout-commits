@@ -87,7 +87,7 @@ public final class BtJob {
   public static final String PROP_OUPTUT_BBT_PRODUCTS =
     "ssvd.BtJob.outputBBtProducts";
 
-  private static final double SPARSE_ZEROS_PCT_THRESHOLD = 0.1;
+  static final double SPARSE_ZEROS_PCT_THRESHOLD = 0.1;
 
   private BtJob() {
   }

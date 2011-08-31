@@ -20,7 +20,6 @@ package org.apache.mahout.math.hadoop.stochasticsvd;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.Vector.Element;
 
