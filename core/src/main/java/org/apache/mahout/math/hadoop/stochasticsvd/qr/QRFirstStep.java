@@ -26,7 +26,6 @@ import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 import org.apache.mahout.math.hadoop.stochasticsvd.DenseBlockWritable;
-import org.apache.mahout.math.hadoop.stochasticsvd.GivensThinSolver;
 import org.apache.mahout.math.hadoop.stochasticsvd.UpperTriangular;
 
 import com.google.common.collect.Lists;

@@ -52,6 +52,7 @@ import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
+import org.apache.mahout.math.hadoop.stochasticsvd.qr.GivensThinSolver;
 
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
