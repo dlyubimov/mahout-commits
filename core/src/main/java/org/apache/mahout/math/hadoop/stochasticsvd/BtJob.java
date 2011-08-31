@@ -220,7 +220,7 @@ public final class BtJob {
       blockNum = context.getTaskAttemptID().getTaskID().getId();
 
       // read all r files _in order of task ids_, i.e. partitions
-      Path rPath = new Path(qJobPath, QJob.OUTPUT_R + "-*");
+      Path rPath = new Path(qJobPath, QJob.OUTPUT_RHAT + "-*");
       FileStatus[] rFiles = fs.globStatus(rPath);
 
       if (rFiles == null) {

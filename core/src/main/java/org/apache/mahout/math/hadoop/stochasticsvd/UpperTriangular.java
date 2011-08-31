@@ -162,7 +162,7 @@ public class UpperTriangular extends AbstractMatrix {
     return new MatrixView(this, offset, size);
   }
 
-  double[] getData() {
+  public double[] getData() {
     return values;
   }
 

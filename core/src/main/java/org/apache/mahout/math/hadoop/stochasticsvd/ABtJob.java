@@ -272,7 +272,7 @@ public class ABtJob {
 
     MultipleOutputs
       .addNamedOutput(oldApiJob,
-                      QJob.OUTPUT_R,
+                      QJob.OUTPUT_RHAT,
                       org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
                       SplitPartitionedWritable.class,
                       VectorWritable.class);
