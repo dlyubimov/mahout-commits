@@ -59,17 +59,18 @@ public class QRFirstStep implements Closeable,
   private Path tempQPath;
   private final List<UpperTriangular> rSubseq = Lists.newArrayList();
   private Configuration jobConf;
-  
-  private OutputCollector<?super Writable, ?super DenseBlockWritable > qtHatOut;
-  private OutputCollector<?super Writable, ?super VectorWritable > rHatOut;
 
-  public QRFirstStep(Configuration jobConf, OutputCollector<?super Writable, ?super DenseBlockWritable > qtHatOut,
-                     OutputCollector<?super Writable,?super VectorWritable> rHatOut ) throws IOException,
+  private OutputCollector<? super Writable, ? super DenseBlockWritable> qtHatOut;
+  private OutputCollector<? super Writable, ? super VectorWritable> rHatOut;
+
+  public QRFirstStep(Configuration jobConf,
+                     OutputCollector<? super Writable, ? super DenseBlockWritable> qtHatOut,
+                     OutputCollector<? super Writable, ? super VectorWritable> rHatOut) throws IOException,
     InterruptedException {
     super();
     this.jobConf = jobConf;
-    this.qtHatOut=qtHatOut;
-    this.rHatOut=rHatOut;
+    this.qtHatOut = qtHatOut;
+    this.rHatOut = rHatOut;
     setup();
   }
 
@@ -106,20 +107,20 @@ public class QRFirstStep implements Closeable,
       // the entire split in memory -- and we don't require even that.
       value.setBlock(qSolver.getThinQtTilde());
       outputQHat(value);
-      outputR( new VectorWritable(new DenseVector(qSolver.getRTilde()
-        .getData(), true)));
+      outputR(new VectorWritable(new DenseVector(qSolver.getRTilde().getData(),
+                                                 true)));
 
     } else {
       secondPass();
     }
   }
 
-  private void outputQHat( DenseBlockWritable value) throws IOException {
+  private void outputQHat(DenseBlockWritable value) throws IOException {
     qtHatOut.collect(NullWritable.get(), value);
   }
 
   private void outputR(VectorWritable value) throws IOException {
-    rHatOut.collect(NullWritable.get(),value);
+    rHatOut.collect(NullWritable.get(), value);
   }
 
   private void secondPass() throws IOException {
@@ -142,13 +143,12 @@ public class QRFirstStep implements Closeable,
       } else {
         qCnt++;
       }
-      outputQHat( value);
+      outputQHat(value);
     }
 
     assert rSubseq.size() == 1;
 
-    outputR(new VectorWritable(new DenseVector(rSubseq.get(0).getData(),
-                                                    true)));
+    outputR(new VectorWritable(new DenseVector(rSubseq.get(0).getData(), true)));
 
   }
 

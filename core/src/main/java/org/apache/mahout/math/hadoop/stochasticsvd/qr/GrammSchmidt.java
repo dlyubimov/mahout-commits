@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.mahout.math.hadoop.stochasticsvd;
+package org.apache.mahout.math.hadoop.stochasticsvd.qr;
 
 import org.apache.mahout.math.Matrix;
 import org.apache.mahout.math.Vector;
