@@ -3,7 +3,9 @@ package org.apache.mahout.math.hadoop.stochasticsvd.qr;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -21,10 +23,10 @@ import org.apache.hadoop.mapred.lib.MultipleOutputs;
 import org.apache.mahout.common.IOUtils;
 import org.apache.mahout.common.iterator.CopyConstructorIterator;
 import org.apache.mahout.math.DenseVector;
+import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 import org.apache.mahout.math.hadoop.stochasticsvd.DenseBlockWritable;
 import org.apache.mahout.math.hadoop.stochasticsvd.GivensThinSolver;
-import org.apache.mahout.math.hadoop.stochasticsvd.Omega;
 import org.apache.mahout.math.hadoop.stochasticsvd.UpperTriangular;
 
 import com.google.common.collect.Lists;
@@ -38,15 +40,13 @@ import com.google.common.io.Closeables;
  */
 @SuppressWarnings("deprecation")
 public class QRFirstStep implements Closeable,
-    OutputCollector<Writable, VectorWritable> {
+    OutputCollector<Writable, Vector> {
 
-  public static final String PROP_OMEGA_SEED = "ssvd.omegaseed";
   public static final String PROP_K = "ssvd.k";
   public static final String PROP_P = "ssvd.p";
   public static final String PROP_AROWBLOCK_SIZE = "ssvd.arowblock.size";
 
   private int kp;
-  private Omega omega;
   private List<double[]> yLookahead;
   private GivensThinSolver qSolver;
   private int blockCnt;
@@ -152,7 +152,7 @@ public class QRFirstStep implements Closeable,
 
   }
 
-  protected void map(Writable key, VectorWritable value) throws IOException {
+  protected void map(Writable key, Vector incomingYRow) throws IOException {
     double[] yRow;
     if (yLookahead.size() == kp) {
       if (qSolver.isFull()) {
@@ -167,18 +167,29 @@ public class QRFirstStep implements Closeable,
     } else {
       yRow = new double[kp];
     }
-    omega.computeYRow(value.get(), yRow);
+
+    if (incomingYRow.isDense()) {
+      for (int i = 0; i < kp; i++)
+        yRow[i] = incomingYRow.get(i);
+    } else {
+      Arrays.fill(yRow, 0);
+      for (Iterator<Vector.Element> yIter = incomingYRow.iterateNonZero(); yIter
+        .hasNext();) {
+        Vector.Element yEl = yIter.next();
+        yRow[yEl.index()] = yEl.get();
+      }
+    }
+
     yLookahead.add(yRow);
   }
 
   protected void setup() throws IOException, InterruptedException {
 
+    r = Integer.parseInt(jobConf.get(PROP_AROWBLOCK_SIZE));
     int k = Integer.parseInt(jobConf.get(PROP_K));
     int p = Integer.parseInt(jobConf.get(PROP_P));
     kp = k + p;
-    long omegaSeed = Long.parseLong(jobConf.get(PROP_OMEGA_SEED));
-    r = Integer.parseInt(jobConf.get(PROP_AROWBLOCK_SIZE));
-    omega = new Omega(omegaSeed, k, p);
+
     yLookahead = Lists.newArrayListWithCapacity(kp);
     qSolver = new GivensThinSolver(r, kp);
     outputs = new MultipleOutputs(new JobConf(jobConf));
@@ -248,7 +259,7 @@ public class QRFirstStep implements Closeable,
   }
 
   @Override
-  public void collect(Writable key, VectorWritable vw) throws IOException {
+  public void collect(Writable key, Vector vw) throws IOException {
     map(key, vw);
 
   }

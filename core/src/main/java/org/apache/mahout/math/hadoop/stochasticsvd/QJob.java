@@ -37,6 +37,8 @@ import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.mahout.common.IOUtils;
+import org.apache.mahout.math.DenseVector;
+import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 import org.apache.mahout.math.hadoop.stochasticsvd.qr.QRFirstStep;
 
@@ -56,9 +58,9 @@ import org.apache.mahout.math.hadoop.stochasticsvd.qr.QRFirstStep;
 public final class QJob {
 
   public static final String PROP_OMEGA_SEED = "ssvd.omegaseed";
-  public static final String PROP_K = "ssvd.k";
-  public static final String PROP_P = "ssvd.p";
-  public static final String PROP_AROWBLOCK_SIZE = "ssvd.arowblock.size";
+  public static final String PROP_K = QRFirstStep.PROP_K;
+  public static final String PROP_P = QRFirstStep.PROP_P;
+  public static final String PROP_AROWBLOCK_SIZE = QRFirstStep.PROP_AROWBLOCK_SIZE;
 
   public static final String OUTPUT_RHAT = "R";
   public static final String OUTPUT_QHAT = "QHat";
@@ -74,12 +76,22 @@ public final class QJob {
     private final Deque<Closeable> closeables = new LinkedList<Closeable>();
     private SplitPartitionedWritable qHatKey;
     private SplitPartitionedWritable rHatKey;
+    private Vector yRow;
+    private Omega omega;
+    private int kp;
+
 
     private QRFirstStep qr;
 
     @Override
     protected void setup(Context context) throws IOException,
       InterruptedException {
+      
+      int k = Integer.parseInt(context.getConfiguration().get(PROP_K));
+      int p = Integer.parseInt(context.getConfiguration().get(PROP_P));
+      kp = k + p;
+      long omegaSeed = Long.parseLong(context.getConfiguration().get(PROP_OMEGA_SEED));
+      omega = new Omega(omegaSeed, k, p);
 
       outputs = new MultipleOutputs(new JobConf(context.getConfiguration()));
       closeables.addFirst(new Closeable() {
@@ -119,12 +131,15 @@ public final class QJob {
                         qhatCollector,
                         rhatCollector);
       closeables.addFirst(qr);// important: qr closes first!!
+      yRow=new DenseVector(kp);
     }
     
     @Override
     protected void map(Writable key, VectorWritable value, Context context)
       throws IOException, InterruptedException {
-      qr.collect(key, value);
+      // omega.computeYRow(value.get(), yRow);
+      omega.computeYRow(value.get(), yRow);
+      qr.collect(key, yRow);
     }
 
 
