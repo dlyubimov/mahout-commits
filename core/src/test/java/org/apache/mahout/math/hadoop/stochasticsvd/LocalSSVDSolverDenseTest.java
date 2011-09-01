@@ -72,14 +72,15 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
     // VectorWritable.class, CompressionType.NONE, new DefaultCodec());
     // closeables.addFirst(w);
 
-    // make input equivalent to 20 mln non-zero elements.
+    // make input equivalent to 2 mln non-zero elements.
     // With 100mln the precision turns out to be only better (LLN law i guess)
     // With oversampling of 100, i don't get any error at all.
     int n = 1000;
-    int m = 20000;
+    int m = 2000;
     int ablockRows = 867;
     int p = 10;
     int k = 3;
+    int q = 0;
     DenseVector singularValues =
       new DenseVector(new double[] { 10, 4, 1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
           0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
@@ -117,6 +118,7 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
     // ssvd.setcUHalfSigma(true);
     // ssvd.setcVHalfSigma(true);
     ssvd.setOverwrite(true);
+    ssvd.setQ(q);
     ssvd.run();
 
     double[] stochasticSValues = ssvd.getSingularValues();
@@ -156,12 +158,12 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
             / singularValues.getQuick(i)) <= s_precisionPct / 100);
     }
 
-    double[][] q =
+    double[][] mQ =
       SSVDSolver.loadDistributedRowMatrix(fs, new Path(svdOutPath, "Bt-job/"
           + BtJob.OUTPUT_Q + "-*"), conf);
 
     SSVDPrototypeTest
-      .assertOrthonormality(new DenseMatrix(q), false, s_epsilon);
+      .assertOrthonormality(new DenseMatrix(mQ), false, s_epsilon);
 
     double[][] u =
       SSVDSolver.loadDistributedRowMatrix(fs,

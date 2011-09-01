@@ -20,18 +20,13 @@ package org.apache.mahout.math.hadoop.stochasticsvd;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.Iterator;
-import java.util.List;
 
 import org.apache.commons.lang.Validate;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.compress.DefaultCodec;
@@ -46,16 +41,14 @@ import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.mahout.common.IOUtils;
-import org.apache.mahout.common.iterator.CopyConstructorIterator;
+import org.apache.mahout.common.iterator.sequencefile.PathType;
+import org.apache.mahout.common.iterator.sequencefile.SequenceFileDirValueIterator;
 import org.apache.mahout.common.iterator.sequencefile.SequenceFileValueIterator;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
-import org.apache.mahout.math.hadoop.stochasticsvd.qr.GivensThinSolver;
-
-import com.google.common.collect.Lists;
-import com.google.common.io.Closeables;
+import org.apache.mahout.math.hadoop.stochasticsvd.qr.QRLastStep;
 
 /**
  * Bt job. For details, see working notes in MAHOUT-376.
@@ -96,52 +89,19 @@ public final class BtJob {
   public static class BtMapper extends
       Mapper<Writable, VectorWritable, IntWritable, VectorWritable> {
 
-    private SequenceFile.Reader qInput;
-    private final List<UpperTriangular> mRs = Lists.newArrayList();
+    private QRLastStep qr;
+    private Deque<Closeable> closeables = new ArrayDeque<Closeable>();
+
     private int blockNum;
-    private double[][] mQt;
-    private int cnt;
-    private int r;
     private MultipleOutputs outputs;
     private final IntWritable btKey = new IntWritable();
     private final VectorWritable btValue = new VectorWritable();
-    private int kp;
     private final VectorWritable qRowValue = new VectorWritable();
-
-    // private int qCount; // debug
-
-    void loadNextQt() throws IOException {
-      Writable key = new SplitPartitionedWritable();
-      DenseBlockWritable v = new DenseBlockWritable();
-
-      boolean more = qInput.next(key, v);
-      assert more;
-
-      mQt =
-        GivensThinSolver
-          .computeQtHat(v.getBlock(),
-                        blockNum == 0 ? 0 : 1,
-                        new CopyConstructorIterator<UpperTriangular>(mRs
-                          .iterator()));
-      r = mQt[0].length;
-      kp = mQt.length;
-      if (btValue.get() == null) {
-        btValue.set(new DenseVector(kp));
-      }
-      if (qRowValue.get() == null) {
-        qRowValue.set(new DenseVector(kp));
-      }
-
-    }
 
     @Override
     protected void cleanup(Context context) throws IOException,
       InterruptedException {
-      Closeables.closeQuietly(qInput);
-      if (outputs != null) {
-        outputs.close();
-      }
-      super.cleanup(context);
+      IOUtils.close(closeables);
     }
 
     @SuppressWarnings("unchecked")
@@ -149,30 +109,31 @@ public final class BtJob {
       outputs.getCollector(OUTPUT_Q, null).collect(key, value);
     }
 
+    /**
+     * We maintain A and QtHat inputs partitioned the same way, so we
+     * essentially are performing map-side merge here of A and QtHats except
+     * QtHat is stored not row-wise but block-wise.
+     */
     @Override
     protected void map(Writable key, VectorWritable value, Context context)
       throws IOException, InterruptedException {
-      if (mQt != null && cnt++ == r) {
-        mQt = null;
-      }
-      if (mQt == null) {
-        loadNextQt();
-        cnt = 1;
-      }
 
       // output Bt outer products
       Vector aRow = value.get();
-      int qRowIndex = r - cnt; // because QHats are initially stored in
-                               // reverse
-      Vector qRow = qRowValue.get();
-      for (int j = 0; j < kp; j++) {
-        qRow.setQuick(j, mQt[j][qRowIndex]);
-      }
+
+      Vector qRow = qr.next();
+      int kp = qRow.size();
+      qRowValue.set(qRow);
 
       // make sure Qs are inheriting A row labels.
       outputQRow(key, qRowValue);
 
       Vector btRow = btValue.get();
+      if (btRow == null) {
+        btRow = new DenseVector(kp);
+        btValue.set(btRow);
+      }
+
       if (!aRow.isDense()) {
         for (Iterator<Vector.Element> iter = aRow.iterateNonZero(); iter
           .hasNext();) {
@@ -205,7 +166,6 @@ public final class BtJob {
 
       Path qJobPath = new Path(context.getConfiguration().get(PROP_QJOB_PATH));
 
-      FileSystem fs = FileSystem.get(context.getConfiguration());
       // actually this is kind of dangerous
       // becuase this routine thinks we need to create file name for
       // our current job and this will use -m- so it's just serendipity we are
@@ -215,43 +175,41 @@ public final class BtJob {
         new Path(qJobPath, FileOutputFormat.getUniqueFile(context,
                                                           QJob.OUTPUT_QHAT,
                                                           ""));
-      qInput =
-        new SequenceFile.Reader(fs, qInputPath, context.getConfiguration());
-
       blockNum = context.getTaskAttemptID().getTaskID().getId();
 
-      // read all r files _in order of task ids_, i.e. partitions
+      SequenceFileValueIterator<DenseBlockWritable> qhatInput =
+        new SequenceFileValueIterator<DenseBlockWritable>(qInputPath,
+                                                          true,
+                                                          context
+                                                            .getConfiguration());
+      closeables.addFirst(qhatInput);
+
+      // read all r files _in order of task ids_, i.e. partitions (aka group
+      // nums)
+
       Path rPath = new Path(qJobPath, QJob.OUTPUT_RHAT + "-*");
-      FileStatus[] rFiles = fs.globStatus(rPath);
 
-      if (rFiles == null) {
-        throw new IOException("Can't find R inputs ");
-      }
-
-      Arrays.sort(rFiles, SSVDSolver.PARTITION_COMPARATOR);
-
-      int block = 0;
-      for (FileStatus fstat : rFiles) {
-        SequenceFileValueIterator<VectorWritable> iterator =
-          new SequenceFileValueIterator<VectorWritable>(fstat.getPath(),
-                                                        true,
-                                                        context
-                                                          .getConfiguration());
-        VectorWritable rValue;
-        try {
-          rValue = iterator.next();
-        } finally {
-          Closeables.closeQuietly(iterator);
-        }
-        if (block < blockNum && block > 0) {
-          GivensThinSolver
-            .mergeR(mRs.get(0), new UpperTriangular(rValue.get()));
-        } else {
-          mRs.add(new UpperTriangular(rValue.get()));
-        }
-        block++;
-      }
+      SequenceFileDirValueIterator<VectorWritable> rhatInput =
+        new SequenceFileDirValueIterator<VectorWritable>(rPath,
+                                                         PathType.GLOB,
+                                                         null,
+                                                         SSVDSolver.PARTITION_COMPARATOR,
+                                                         true,
+                                                         context
+                                                           .getConfiguration());
+      closeables.addFirst(rhatInput);
       outputs = new MultipleOutputs(new JobConf(context.getConfiguration()));
+      closeables.addFirst(new IOUtils.MultipleOutputsCloseableAdapter(outputs));
+
+      qr = new QRLastStep(qhatInput, rhatInput, blockNum);
+      // it's so happens that current QRLastStep's implementation
+      // preloads R sequence into memory in the constructor
+      // so it's ok to close rhat input now.
+      if (!rhatInput.hasNext()) {
+        closeables.remove(rhatInput);
+        rhatInput.close();
+      }
+
     }
   }
 

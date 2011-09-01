@@ -108,6 +108,7 @@ public class SSVDSolver {
   private final int ablockRows;
   private final int k;
   private final int p;
+  private int q;
   private final int reduceTasks;
   private int minSplitSize = -1;
   private boolean cUHalfSigma;
@@ -160,6 +161,20 @@ public class SSVDSolver {
 
   public void setcVHalfSigma(boolean cVHat) {
     this.cVHalfSigma = cVHat;
+  }
+
+  public int getQ() {
+    return q;
+  }
+
+  /**
+   * sets q, amount of additional power iterations to increase precision
+   * (0..2!). Defaults to 0.
+   * 
+   * @param q
+   */
+  public void setQ(int q) {
+    this.q = q;
   }
 
   /**
@@ -272,9 +287,9 @@ public class SSVDSolver {
                seed,
                reduceTasks);
 
-      // restrict number of reducers to a reasonable number 
-      // so we don't have to run too many additions in the frontend. 
-      
+      // restrict number of reducers to a reasonable number
+      // so we don't have to run too many additions in the frontend.
+
       BtJob.run(conf,
                 inputPath,
                 qPath,
@@ -282,17 +297,44 @@ public class SSVDSolver {
                 minSplitSize,
                 k,
                 p,
-                reduceTasks>1000?1000:reduceTasks,
+                reduceTasks > 1000 ? 1000 : reduceTasks,
                 labelType,
-                true);
+                q > 0 ? false : true);
+
+      // power iterations
+      for (int i = 0; i < q; q--) {
+
+        qPath = new Path(outputPath, String.format("ABt-job-%d", i + 1));
+        ABtJob.run(conf,
+                   inputPath,
+                   new Path(btPath, BtJob.OUTPUT_BT + "-*"),
+                   qPath,
+                   ablockRows,
+                   minSplitSize,
+                   k,
+                   p,
+                   reduceTasks);
+
+        btPath = new Path(outputPath, String.format("Bt-job-%d", i + 1));
+
+        BtJob.run(conf,
+                  inputPath,
+                  qPath,
+                  btPath,
+                  minSplitSize,
+                  k,
+                  p,
+                  reduceTasks > 1000 ? 1000 : reduceTasks,
+                  labelType,
+                  i == q - 1 ? true : false);
+      }
 
       // we don't need BBt now.
       // BBtJob.run(conf, new Path(btPath, BtJob.OUTPUT_BT + "-*"), bbtPath, 1);
 
       UpperTriangular bbt =
-        loadAndSumUpperTriangularMatrices(fs,
-                                  new Path(btPath, BtJob.OUTPUT_BBT + "-*"),
-                                  conf);
+        loadAndSumUpperTriangularMatrices(fs, new Path(btPath, BtJob.OUTPUT_BBT
+            + "-*"), conf);
 
       // convert bbt to something our eigensolver could understand
       assert bbt.columnSize() == k + p;
@@ -507,7 +549,7 @@ public class SSVDSolver {
   }
 
   /**
-   * Load multiplel upper triangular matrices and sum them up. 
+   * Load multiplel upper triangular matrices and sum them up.
    * 
    * @param fs
    * @param glob

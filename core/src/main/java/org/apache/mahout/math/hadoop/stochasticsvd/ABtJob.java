@@ -44,6 +44,7 @@ import org.apache.mahout.common.iterator.sequencefile.PathType;
 import org.apache.mahout.common.iterator.sequencefile.SequenceFileDirIterator;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.RandomAccessSparseVector;
+import org.apache.mahout.math.SequentialAccessSparseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 
@@ -103,17 +104,17 @@ public class ABtJob {
     private void extendAColIfNeeded(int col, int rowCount) {
       if (aCols[col] == null)
         aCols[col] =
-          new RandomAccessSparseVector(rowCount < 10000 ? 10000 : rowCount);
+          new SequentialAccessSparseVector(rowCount < 10000 ? 10000 : rowCount);
       else if (aCols[col].size() < aRowCount) {
-        RandomAccessSparseVector newVec =
-          new RandomAccessSparseVector(aRowCount << 1);
-        // this doesn't have sparse implementation!
-        // newVec.viewPart(0, aRowCount).assign(aCols[i]);
-        for (Iterator<Vector.Element> colIter = aCols[col].iterateNonZero(); colIter
-          .hasNext();) {
-          Vector.Element el = colIter.next();
-          newVec.set(el.index(), el.get());
-        }
+        SequentialAccessSparseVector newVec =
+          new SequentialAccessSparseVector(aRowCount << 1);
+        newVec.viewPart(0, aRowCount).assign(aCols[col]);
+        // for (Iterator<Vector.Element> colIter = aCols[col].iterateNonZero();
+        // colIter
+        // .hasNext();) {
+        // Vector.Element el = colIter.next();
+        // newVec.set(el.index(), el.get());
+        // }
         aCols[col] = newVec;
       }
     }
@@ -257,7 +258,6 @@ public class ABtJob {
                          int minSplitSize,
                          int k,
                          int p,
-                         long seed,
                          int numReduceTasks) throws ClassNotFoundException,
     InterruptedException, IOException {
 
