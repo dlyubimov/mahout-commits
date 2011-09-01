@@ -166,13 +166,14 @@ public class ABtJob {
                                                                  context
                                                                    .getConfiguration());
       // TODO: how do i release all that stuff??
-      // closeables.addFirst(btInput);
+      closeables.addFirst(btInput);
 
     }
 
   }
 
-  public static class ABtCombiner extends
+  public static class ABtCombiner
+      extends
       Reducer<SplitPartitionedWritable, VectorWritable, SplitPartitionedWritable, VectorWritable> {
 
     protected final VectorWritable outValue = new VectorWritable();
@@ -227,7 +228,7 @@ public class ABtJob {
       }
       ctx.write(key, outValue);
     }
-    
+
     @Override
     protected void cleanup(Context context) throws IOException,
       InterruptedException {
@@ -235,14 +236,17 @@ public class ABtJob {
       IOUtils.close(closeables);
     }
   }
-  
+
   /**
-   * so incoming splits are coming 
+   * so incoming splits are coming
+   * 
    * @author dmitriy
-   *
+   * 
    */
-  public static class QRReducer extends Reducer<SplitPartitionedWritable, VectorWritable, SplitPartitionedWritable, VectorWritable> { 
-    
+  public static class QRReducer
+      extends
+      Reducer<SplitPartitionedWritable, VectorWritable, SplitPartitionedWritable, VectorWritable> {
+
   }
 
   public static void run(Configuration conf,
