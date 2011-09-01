@@ -18,19 +18,24 @@ package org.apache.mahout.math.hadoop.stochasticsvd;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.regex.Matcher;
 
 import org.apache.commons.lang.Validate;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.lib.MultipleOutputs;
+import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -47,6 +52,7 @@ import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.SequentialAccessSparseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
+import org.apache.mahout.math.hadoop.stochasticsvd.qr.QRFirstStep;
 
 /**
  * Computes ABt products, then first step of QR which is pushed down to the
@@ -60,6 +66,23 @@ public class ABtJob {
 
   public static final String PROP_BT_PATH = "ssvd.Bt.path";
 
+  /**
+   * So, here, i preload A block into memory.
+   * <P>
+   * 
+   * A sparse matrix seems to be ideal for that but there are two reasons why i
+   * am not using it:
+   * <UL>
+   * <LI>1) I don't know the full block height. so i may need to reallocate it
+   * from time to time. Although this probably not a showstopper.
+   * <LI>2) I found that RandomAccessSparseVectors seem to take much more memory
+   * than the SequentialAccessSparseVectors.
+   * </UL>
+   * <P>
+   * 
+   * @author dmitriy
+   * 
+   */
   public static class ABtMapper
       extends
       Mapper<Writable, VectorWritable, SplitPartitionedWritable, VectorWritable> {
@@ -109,12 +132,6 @@ public class ABtJob {
         SequentialAccessSparseVector newVec =
           new SequentialAccessSparseVector(aRowCount << 1);
         newVec.viewPart(0, aRowCount).assign(aCols[col]);
-        // for (Iterator<Vector.Element> colIter = aCols[col].iterateNonZero();
-        // colIter
-        // .hasNext();) {
-        // Vector.Element el = colIter.next();
-        // newVec.set(el.index(), el.get());
-        // }
         aCols[col] = newVec;
       }
     }
@@ -197,7 +214,6 @@ public class ABtJob {
         sparseAccum = new RandomAccessSparseVector(accumSize);
         sparseThresholdZeroCnt =
           (int) Math.ceil(BtJob.SPARSE_ZEROS_PCT_THRESHOLD * accum.size());
-        // outValue.set(accum);
       } else {
         accum.assign(vec);
       }
@@ -239,7 +255,7 @@ public class ABtJob {
   }
 
   /**
-   * so incoming splits are coming
+   * QR first step pushed down to reducer.
    * 
    * @author dmitriy
    * 
@@ -247,6 +263,140 @@ public class ABtJob {
   public static class QRReducer
       extends
       Reducer<SplitPartitionedWritable, VectorWritable, SplitPartitionedWritable, VectorWritable> {
+
+    // hack: partition number formats in hadoop, copied. this may stop working
+    // if it gets
+    // out of sync with newer hadoop version. But unfortunately rules of forming
+    // output file names are not sufficiently exposed so we need to hack it
+    // if we write the same split output from either mapper or reducer.
+    // alternatively, we probably can replace it by our own output file namnig
+    // management
+    // completely and bypass MultipleOutputs entirely.
+
+    private static final NumberFormat NUMBER_FORMAT = NumberFormat
+      .getInstance();
+    static {
+      NUMBER_FORMAT.setMinimumIntegerDigits(5);
+      NUMBER_FORMAT.setGroupingUsed(false);
+    }
+
+    private final Deque<Closeable> closeables = new LinkedList<Closeable>();
+    protected DenseVector accum;
+    protected int accumSize;
+    protected int lastTaskId = -1;
+
+    protected OutputCollector<Writable, DenseBlockWritable> qhatCollector;
+    protected OutputCollector<Writable, VectorWritable> rhatCollector;
+    protected QRFirstStep qr;
+
+    @Override
+    protected void setup(Context context) throws IOException,
+      InterruptedException {
+    }
+
+    protected void setupBlock(Context context, SplitPartitionedWritable spw)
+      throws InterruptedException, IOException {
+      IOUtils.close(closeables);
+      qhatCollector =
+        createOutputCollector(QJob.OUTPUT_QHAT,
+                              spw,
+                              context,
+                              DenseBlockWritable.class);
+      rhatCollector =
+        createOutputCollector(QJob.OUTPUT_RHAT,
+                              spw,
+                              context,
+                              VectorWritable.class);
+      qr =
+        new QRFirstStep(context.getConfiguration(),
+                        qhatCollector,
+                        rhatCollector);
+      closeables.addFirst(qr);
+      lastTaskId = spw.getTaskId();
+
+    }
+
+    @Override
+    protected void reduce(SplitPartitionedWritable key,
+                          Iterable<VectorWritable> values,
+                          Context context) throws IOException,
+      InterruptedException {
+
+      Iterator<VectorWritable> vwIter = values.iterator();
+      Vector vec = vwIter.next().get();
+      if (accum == null || accum.size() != vec.size()) {
+        accum = new DenseVector(vec);
+        accumSize = accum.size();
+      } else {
+        accum.assign(vec);
+      }
+
+      while (vwIter.hasNext()) {
+        accum.addAll(vwIter.next().get());
+      }
+
+      if (key.getTaskId() != lastTaskId) {
+        setupBlock(context, key);
+      }
+      qr.collect(key, accum);
+
+    }
+
+    private Path getSplitFilePath(String name,
+                                  SplitPartitionedWritable spw,
+                                  Context context) throws InterruptedException,
+      IOException {
+      String uniqueFileName = FileOutputFormat.getUniqueFile(context, name, "");
+      uniqueFileName = uniqueFileName.replaceFirst("-r-", "-m-");
+      uniqueFileName =
+        uniqueFileName.replaceFirst("\\d+$", Matcher
+          .quoteReplacement(NUMBER_FORMAT.format(spw.getTaskId())));
+      return new Path(FileOutputFormat.getWorkOutputPath(context),
+                      uniqueFileName);
+    }
+
+    /**
+     * key doesn't matter here, only value does. key always gets substituted by
+     * SPW.
+     * 
+     * @param <K>
+     *          bogus
+     * @param <V>
+     * @param name
+     * @param spw
+     * @param ctx
+     * @param valueClass
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    private <K, V> OutputCollector<K, V>
+        createOutputCollector(String name,
+                              final SplitPartitionedWritable spw,
+                              Context ctx,
+                              Class<V> valueClass) throws IOException,
+          InterruptedException {
+      final Path outputPath = getSplitFilePath(name, spw, ctx);
+      final SequenceFile.Writer w =
+        SequenceFile.createWriter(FileSystem.get(ctx.getConfiguration()),
+                                  ctx.getConfiguration(),
+                                  outputPath,
+                                  SplitPartitionedWritable.class,
+                                  valueClass);
+      closeables.addFirst(w);
+      return new OutputCollector<K, V>() {
+        @Override
+        public void collect(K key, V val) throws IOException {
+          w.append(spw, val);
+        }
+      };
+    }
+
+    @Override
+    protected void cleanup(Context context) throws IOException,
+      InterruptedException {
+      IOUtils.close(closeables);
+    }
 
   }
 
@@ -263,19 +413,19 @@ public class ABtJob {
 
     JobConf oldApiJob = new JobConf(conf);
 
-    MultipleOutputs
-      .addNamedOutput(oldApiJob,
-                      QJob.OUTPUT_QHAT,
-                      org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
-                      SplitPartitionedWritable.class,
-                      DenseBlockWritable.class);
-
-    MultipleOutputs
-      .addNamedOutput(oldApiJob,
-                      QJob.OUTPUT_RHAT,
-                      org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
-                      SplitPartitionedWritable.class,
-                      VectorWritable.class);
+    // MultipleOutputs
+    // .addNamedOutput(oldApiJob,
+    // QJob.OUTPUT_QHAT,
+    // org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
+    // SplitPartitionedWritable.class,
+    // DenseBlockWritable.class);
+    //
+    // MultipleOutputs
+    // .addNamedOutput(oldApiJob,
+    // QJob.OUTPUT_RHAT,
+    // org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
+    // SplitPartitionedWritable.class,
+    // VectorWritable.class);
 
     Job job = new Job(oldApiJob);
     job.setJobName("ABt-job");
@@ -303,8 +453,8 @@ public class ABtJob {
     job.setReducerClass(QRReducer.class);
 
     job.getConfiguration().setInt(QJob.PROP_AROWBLOCK_SIZE, aBlockRows);
-    job.getConfiguration().setInt(QJob.PROP_K, k);
-    job.getConfiguration().setInt(QJob.PROP_P, p);
+    job.getConfiguration().setInt(QRFirstStep.PROP_K, k);
+    job.getConfiguration().setInt(QRFirstStep.PROP_P, p);
     job.getConfiguration().set(PROP_BT_PATH, inputBtGlob.toString());
 
     // number of reduce tasks doesn't matter. we don't actually

@@ -127,7 +127,7 @@ public class SplitPartitionedWritable implements
   public static final class SplitGroupingComparator extends WritableComparator {
 
     public SplitGroupingComparator() {
-      super(SplitPartitionedWritable.class);
+      super(SplitPartitionedWritable.class, true);
     }
 
     @Override
