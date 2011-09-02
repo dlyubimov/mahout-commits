@@ -58,8 +58,6 @@ import org.apache.mahout.math.hadoop.stochasticsvd.qr.QRFirstStep;
  * Computes ABt products, then first step of QR which is pushed down to the
  * reducer.
  * 
- * @author dmitriy
- * 
  */
 @SuppressWarnings("deprecation")
 public class ABtJob {
@@ -79,8 +77,6 @@ public class ABtJob {
    * than the SequentialAccessSparseVectors.
    * </UL>
    * <P>
-   * 
-   * @author dmitriy
    * 
    */
   public static class ABtMapper
@@ -131,7 +127,7 @@ public class ABtJob {
       else if (aCols[col].size() < aRowCount) {
         SequentialAccessSparseVector newVec =
           new SequentialAccessSparseVector(aRowCount << 1);
-        newVec.viewPart(0, aRowCount).assign(aCols[col]);
+        newVec.viewPart(0, aCols[col].size()).assign(aCols[col]);
         aCols[col] = newVec;
       }
     }
@@ -256,8 +252,6 @@ public class ABtJob {
 
   /**
    * QR first step pushed down to reducer.
-   * 
-   * @author dmitriy
    * 
    */
   public static class QRReducer

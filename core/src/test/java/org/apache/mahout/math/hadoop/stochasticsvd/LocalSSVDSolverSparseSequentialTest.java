@@ -19,6 +19,7 @@ package org.apache.mahout.math.hadoop.stochasticsvd;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.Random;
@@ -55,7 +56,16 @@ public class LocalSSVDSolverSparseSequentialTest extends MahoutTestCase {
   private static final double s_epsilon = 1.0E-10d;
 
   @Test
-  public void testSSVDSolver() throws Exception {
+  public void testSSVDSolverSparse() throws IOException { 
+    runSSVDSolver(0);
+  }
+  
+  @Test
+  public void testSSVDSolverPowerIterations1() throws IOException { 
+    runSSVDSolver(1);
+  }
+  
+  public void runSSVDSolver(int q) throws IOException {
 
     Configuration conf = new Configuration();
     conf.set("mapred.job.tracker", "local");
@@ -131,6 +141,7 @@ public class LocalSSVDSolverSparseSequentialTest extends MahoutTestCase {
     // ssvd.setcUHalfSigma(true);
     // ssvd.setcVHalfSigma(true);
     ssvd.setOverwrite(true);
+    ssvd.setQ(q);
     ssvd.run();
 
     double[] stochasticSValues = ssvd.getSingularValues();
@@ -156,12 +167,12 @@ public class LocalSSVDSolverSparseSequentialTest extends MahoutTestCase {
         .assertTrue(Math.abs(svalues2[i] - stochasticSValues[i]) <= s_epsilon);
     }
 
-    double[][] q =
+    double[][] mQ =
       SSVDSolver.loadDistributedRowMatrix(fs, new Path(svdOutPath, "Bt-job/"
           + BtJob.OUTPUT_Q + "-*"), conf);
 
     SSVDPrototypeTest
-      .assertOrthonormality(new DenseMatrix(q), false, s_epsilon);
+      .assertOrthonormality(new DenseMatrix(mQ), false, s_epsilon);
 
     double[][] u =
       SSVDSolver.loadDistributedRowMatrix(fs,

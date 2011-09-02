@@ -49,7 +49,16 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
   private static final double s_precisionPct = 10;
 
   @Test
-  public void testSSVDSolver() throws IOException {
+  public void testSSVDSolverDense() throws IOException { 
+    runSSVDSolver(0);
+  }
+  
+  @Test
+  public void testSSVDSolverPowerIterations1() throws IOException { 
+    runSSVDSolver(1);
+  }
+  
+  public void runSSVDSolver(int q) throws IOException {
 
     Configuration conf = new Configuration();
     conf.set("mapred.job.tracker", "local");
@@ -80,7 +89,6 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
     int ablockRows = 867;
     int p = 10;
     int k = 3;
-    int q = 0;
     DenseVector singularValues =
       new DenseVector(new double[] { 10, 4, 1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
           0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,

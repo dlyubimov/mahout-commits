@@ -62,13 +62,6 @@ public class UpperTriangular extends AbstractMatrix {
   public UpperTriangular(Vector data) {
     this(data.size(), elementsToMatrixSize(data.size()));
 
-
-  public UpperTriangular(double[] data, boolean shallow) {
-    this((int) Math.round((-1 + Math.sqrt(1 + 8 * data.length)) / 2), data, shallow);
-  }
-
-  private UpperTriangular(int rows, Vector data) {
-    super(rows, rows);
     values = new double[n * (n + 1) / 2];
     n = data.size();
     // if ( data instanceof DenseVector )
