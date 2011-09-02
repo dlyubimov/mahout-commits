@@ -69,6 +69,7 @@ public class SSVDCli extends AbstractJob {
     int k = Integer.parseInt(pargs.get("--rank"));
     int p = Integer.parseInt(pargs.get("--oversampling"));
     int r = Integer.parseInt(pargs.get("--blockHeight"));
+    int q = Integer.parseInt(pargs.get("--powerIter"));
     int minSplitSize = Integer.parseInt(pargs.get("--minSplitSize"));
     boolean computeU = Boolean.parseBoolean(pargs.get("--computeU"));
     boolean computeV = Boolean.parseBoolean(pargs.get("--computeV"));
@@ -88,6 +89,7 @@ public class SSVDCli extends AbstractJob {
     solver.setComputeV(computeV);
     solver.setcUHalfSigma(cUHalfSigma);
     solver.setcVHalfSigma(cVHalfSigma);
+    solver.setQ(q);
     solver.setOverwrite(overwrite);
 
     solver.run();
