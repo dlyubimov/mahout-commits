@@ -135,8 +135,6 @@ public class QRLastStep implements Closeable, Iterator<Vector> {
   public void close() throws IOException {
     mQt = null;
 
-    assert mRs.size() == 1; // only for a happy path.
-
     mRs.clear();
   }
 
