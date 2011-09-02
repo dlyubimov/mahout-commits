@@ -124,10 +124,13 @@ public class ABtJob {
     private void extendAColIfNeeded(int col, int rowCount) {
       if (aCols[col] == null)
         aCols[col] =
-          new SequentialAccessSparseVector(rowCount < 10000 ? 10000 : rowCount);
+          new SequentialAccessSparseVector(rowCount < 10000 ? 10000 : rowCount,
+                                           16);
       else if (aCols[col].size() < rowCount) {
         SequentialAccessSparseVector newVec =
-          new SequentialAccessSparseVector(rowCount << 1);
+          new SequentialAccessSparseVector(rowCount << 1,
+                                           aCols[col]
+                                             .getNumNondefaultElements() << 1);
         newVec.viewPart(0, aCols[col].size()).assign(aCols[col]);
         aCols[col] = newVec;
       }
