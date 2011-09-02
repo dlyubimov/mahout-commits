@@ -202,6 +202,7 @@ public final class BtJob {
       closeables.addFirst(new IOUtils.MultipleOutputsCloseableAdapter(outputs));
 
       qr = new QRLastStep(qhatInput, rhatInput, blockNum);
+      closeables.addFirst(qr);
       // it's so happens that current QRLastStep's implementation
       // preloads R sequence into memory in the constructor
       // so it's ok to close rhat input now.

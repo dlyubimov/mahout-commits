@@ -90,6 +90,7 @@ public class ABtJob {
     // private Vector[] yiRows;
     private VectorWritable outValue = new VectorWritable();
     private int aRowCount;
+    private int kp;
 
     @Override
     protected void map(Writable key, VectorWritable value, Context context)
@@ -105,7 +106,7 @@ public class ABtJob {
 
       if (vec.isDense()) {
         for (int i = 0; i < vecSize; i++) {
-          extendAColIfNeeded(i, aRowCount);
+          extendAColIfNeeded(i, aRowCount + 1);
           aCols[i].setQuick(aRowCount, vec.getQuick(i));
         }
       } else {
@@ -113,7 +114,7 @@ public class ABtJob {
           .hasNext();) {
           Vector.Element vecEl = vecIter.next();
           int i = vecEl.index();
-          extendAColIfNeeded(i, aRowCount);
+          extendAColIfNeeded(i, aRowCount + 1);
           aCols[i].setQuick(aRowCount, vecEl.get());
         }
       }
@@ -124,9 +125,9 @@ public class ABtJob {
       if (aCols[col] == null)
         aCols[col] =
           new SequentialAccessSparseVector(rowCount < 10000 ? 10000 : rowCount);
-      else if (aCols[col].size() < aRowCount) {
+      else if (aCols[col].size() < rowCount) {
         SequentialAccessSparseVector newVec =
-          new SequentialAccessSparseVector(aRowCount << 1);
+          new SequentialAccessSparseVector(rowCount << 1);
         newVec.viewPart(0, aCols[col].size()).assign(aCols[col]);
         aCols[col] = newVec;
       }
@@ -138,6 +139,8 @@ public class ABtJob {
       try {
         // yiRows= new Vector[aRowCount];
 
+        int lastRowIndex = -1;
+
         for (; btInput.hasNext();) {
           Pair<IntWritable, VectorWritable> btRec = btInput.next();
           int btIndex = btRec.getFirst().get();
@@ -145,18 +148,34 @@ public class ABtJob {
           Vector aCol;
           if (btIndex > aCols.length || null == (aCol = aCols[btIndex]))
             continue;
+          int j = -1;
           for (Iterator<Vector.Element> aColIter = aCol.iterateNonZero(); aColIter
             .hasNext();) {
             Vector.Element aEl = aColIter.next();
-            int j = aEl.index();
+            j = aEl.index();
 
             outKey.setTaskRowOrdinal(j);
             outValue.set(btVec.times(aEl.get())); // assign might work better
                                                   // with memory after all.
             context.write(outKey, outValue);
           }
+          if (lastRowIndex < j)
+            lastRowIndex = j;
         }
         aCols = null;
+
+        // output empty rows if we never output partial products for them
+        // this happens in sparse matrices when last rows are all zeros
+        // and is subsequently causing shorter Q matrix row count which we
+        // probably don't want to repair there but rather here.
+        SequentialAccessSparseVector yDummy =
+          new SequentialAccessSparseVector(kp);
+        outValue.set(yDummy);
+        for (lastRowIndex += 1; lastRowIndex < aRowCount; lastRowIndex++) {
+          outKey.setTaskRowOrdinal(lastRowIndex);
+          context.write(outKey, outValue);
+        }
+
       } finally {
         IOUtils.close(closeables);
       }
@@ -165,6 +184,12 @@ public class ABtJob {
     @Override
     protected void setup(Context context) throws IOException,
       InterruptedException {
+
+      int k =
+        Integer.parseInt(context.getConfiguration().get(QRFirstStep.PROP_K));
+      int p =
+        Integer.parseInt(context.getConfiguration().get(QRFirstStep.PROP_P));
+      kp = k + p;
 
       outKey = new SplitPartitionedWritable(context);
       String propBtPathStr = context.getConfiguration().get(PROP_BT_PATH);
@@ -389,6 +414,7 @@ public class ABtJob {
     @Override
     protected void cleanup(Context context) throws IOException,
       InterruptedException {
+
       IOUtils.close(closeables);
     }
 

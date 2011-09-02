@@ -94,6 +94,10 @@ public class QRFirstStep implements Closeable,
     cleanup();
   }
 
+  public int getKP() {
+    return kp;
+  }
+
   private void flushSolver() throws IOException {
     UpperTriangular r = qSolver.getRTilde();
     double[][] qt = qSolver.getThinQtTilde();
