@@ -144,13 +144,15 @@ public class SSVDSolver {
                     Path[] inputPath,
                     Path outputPath,
                     int ablockRows,
+                    int outerBlockHeight,
                     int k,
                     int p,
                     int reduceTasks) {
     this.conf = conf;
     this.inputPath = inputPath;
     this.outputPath = outputPath;
-    this.outerBlockHeight = this.ablockRows = ablockRows;
+    this.outerBlockHeight = outerBlockHeight;
+    this.ablockRows = ablockRows;
     this.k = k;
     this.p = p;
     this.reduceTasks = reduceTasks;
