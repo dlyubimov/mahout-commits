@@ -27,6 +27,7 @@ import org.apache.commons.lang.Validate;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.compress.DefaultCodec;
@@ -45,7 +46,6 @@ import org.apache.mahout.common.iterator.sequencefile.PathType;
 import org.apache.mahout.common.iterator.sequencefile.SequenceFileDirValueIterator;
 import org.apache.mahout.common.iterator.sequencefile.SequenceFileValueIterator;
 import org.apache.mahout.math.DenseVector;
-import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 import org.apache.mahout.math.hadoop.stochasticsvd.qr.QRLastStep;
@@ -87,16 +87,17 @@ public final class BtJob {
   }
 
   public static class BtMapper extends
-      Mapper<Writable, VectorWritable, IntWritable, VectorWritable> {
+      Mapper<Writable, VectorWritable, LongWritable, SparseRowBlockWritable> {
 
     private QRLastStep qr;
     private Deque<Closeable> closeables = new ArrayDeque<Closeable>();
 
     private int blockNum;
     private MultipleOutputs outputs;
-    private final IntWritable btKey = new IntWritable();
-    private final VectorWritable btValue = new VectorWritable();
     private final VectorWritable qRowValue = new VectorWritable();
+    private Vector btRow;
+    private SparseRowBlockAccumulator btCollector;
+    private Context mapContext;
 
     @Override
     protected void cleanup(Context context) throws IOException,
@@ -118,6 +119,7 @@ public final class BtJob {
     protected void map(Writable key, VectorWritable value, Context context)
       throws IOException, InterruptedException {
 
+      mapContext = context;
       // output Bt outer products
       Vector aRow = value.get();
 
@@ -128,10 +130,8 @@ public final class BtJob {
       // make sure Qs are inheriting A row labels.
       outputQRow(key, qRowValue);
 
-      Vector btRow = btValue.get();
       if (btRow == null) {
         btRow = new DenseVector(kp);
-        btValue.set(btRow);
       }
 
       if (!aRow.isDense()) {
@@ -142,8 +142,9 @@ public final class BtJob {
           for (int j = 0; j < kp; j++) {
             btRow.setQuick(j, mul * qRow.getQuick(j));
           }
-          btKey.set(el.index());
-          context.write(btKey, btValue);
+          // btKey.set(el.index());
+          // context.write(btKey, btValue);
+          btCollector.collect((long) el.index(), btRow);
         }
       } else {
         int n = aRow.size();
@@ -152,15 +153,15 @@ public final class BtJob {
           for (int j = 0; j < kp; j++) {
             btRow.setQuick(j, mul * qRow.getQuick(j));
           }
-          btKey.set(i);
-          context.write(btKey, btValue);
+          // btKey.set(i);
+          // context.write(btKey, btValue);
+          btCollector.collect((long) i, btRow);
         }
       }
-
     }
 
     @Override
-    protected void setup(Context context) throws IOException,
+    protected void setup(final Context context) throws IOException,
       InterruptedException {
       super.setup(context);
 
@@ -211,63 +212,53 @@ public final class BtJob {
         rhatInput.close();
       }
 
+      OutputCollector<LongWritable, SparseRowBlockWritable> btBlockCollector =
+        new OutputCollector<LongWritable, SparseRowBlockWritable>() {
+
+          @Override
+          public void collect(LongWritable blockKey,
+                              SparseRowBlockWritable block) throws IOException {
+            try {
+              mapContext.write(blockKey, block);
+            } catch (InterruptedException exc) {
+              throw new IOException("Interrupted.", exc);
+            }
+          }
+        };
+
+      btCollector =
+        new SparseRowBlockAccumulator(context.getConfiguration()
+          .getInt(QJob.PROP_AROWBLOCK_SIZE, -1), btBlockCollector);
+      closeables.addFirst(btCollector);
+
     }
   }
 
-  public static class OuterProductCombiner extends
-      Reducer<IntWritable, VectorWritable, IntWritable, VectorWritable> {
+  public static class OuterProductCombiner
+      extends
+      Reducer<LongWritable, SparseRowBlockWritable, LongWritable, SparseRowBlockWritable> {
 
-    protected final VectorWritable outValue = new VectorWritable();
-    protected DenseVector accum;
-    protected Deque<Closeable> closeables = new ArrayDeque<Closeable>();
-    protected int sparseThresholdZeroCnt;
-    protected RandomAccessSparseVector sparseAccum;
-    protected int accumSize;
+    // protected final VectorWritable outValue = new VectorWritable();
+    protected final SparseRowBlockWritable accum = new SparseRowBlockWritable();
+    protected final Deque<Closeable> closeables = new ArrayDeque<Closeable>();
+    protected int blockHeight;
 
     @Override
-    protected void reduce(IntWritable key,
-                          Iterable<VectorWritable> values,
-                          Context ctx) throws IOException, InterruptedException {
-      Iterator<VectorWritable> vwIter = values.iterator();
+    protected void setup(Context context) throws IOException,
+      InterruptedException {
+      blockHeight =
+        context.getConfiguration().getInt(QJob.PROP_AROWBLOCK_SIZE, -1);
+    }
 
-      Vector vec = vwIter.next().get();
-      if (accum == null || accum.size() != vec.size()) {
-        accum = new DenseVector(vec);
-        accumSize = accum.size();
-        sparseAccum = new RandomAccessSparseVector(accumSize);
-        sparseThresholdZeroCnt =
-          (int) Math.ceil(SPARSE_ZEROS_PCT_THRESHOLD * accum.size());
-        // outValue.set(accum);
-      } else {
-        accum.assign(vec);
-      }
-
-      while (vwIter.hasNext()) {
-        accum.addAll(vwIter.next().get());
-      }
-
-      // try to detect some 0s, although not terribly likely here,
-      // unless there are some items that have never been rated -- even then
-      // though. Frankly, i tried to run sparse matrices as sparse as 0.05%
-      // (5E-4)
-      // and B' rows still never come up as sparse. If there're some items that
-      // are never rated, probably it will create some B' rows that are
-      // completely 0'd although i am not sure.
-      boolean sparsify = false;
-      int zeroCnt = 0;
-      for (int i = 0; i < accumSize; i++) {
-        if (accum.get(i) == 0.0 && ++zeroCnt >= sparseThresholdZeroCnt) {
-          sparsify = true;
-          break;
-        }
-      }
-
-      if (sparsify) {
-        outValue.set(sparseAccum.assign(accum));
-      } else {
-        outValue.set(accum);
-      }
-      ctx.write(key, outValue);
+    @Override
+    protected void reduce(LongWritable key,
+                          Iterable<SparseRowBlockWritable> values,
+                          Context context) throws IOException,
+      InterruptedException {
+      for (SparseRowBlockWritable bw : values)
+        accum.plusBlock(bw);
+      context.write(key, accum);
+      accum.clear();
     }
 
     @Override
@@ -278,17 +269,26 @@ public final class BtJob {
     }
   }
 
-  public static class OuterProductReducer extends OuterProductCombiner {
+  public static class OuterProductReducer
+      extends
+      Reducer<LongWritable, SparseRowBlockWritable, IntWritable, VectorWritable> {
 
+    protected final SparseRowBlockWritable accum = new SparseRowBlockWritable();
+    protected final Deque<Closeable> closeables = new ArrayDeque<Closeable>();
+
+    protected int blockHeight;
     private boolean outputBBt;
     private UpperTriangular mBBt;
     private MultipleOutputs outputs;
+    private final IntWritable btKey = new IntWritable();
+    private final VectorWritable btValue = new VectorWritable();
 
     @Override
     protected void setup(Context context) throws IOException,
       InterruptedException {
 
-      super.setup(context);
+      blockHeight =
+        context.getConfiguration().getInt(QJob.PROP_AROWBLOCK_SIZE, -1);
 
       outputBBt =
         context.getConfiguration().getBoolean(PROP_OUPTUT_BBT_PRODUCTS, false);
@@ -309,29 +309,40 @@ public final class BtJob {
     }
 
     @Override
-    protected void reduce(IntWritable key,
-                          Iterable<VectorWritable> values,
-                          Context ctx) throws IOException, InterruptedException {
+    protected void reduce(LongWritable key,
+                          Iterable<SparseRowBlockWritable> values,
+                          Context context) throws IOException,
+      InterruptedException {
 
-      super.reduce(key, values, ctx);
+      accum.clear();
+      for (SparseRowBlockWritable bw : values)
+        accum.plusBlock(bw);
 
       // at this point, sum of rows should be in accum,
       // so we just generate outer self product of it and add to
       // BBt accumulator.
 
-      if (outputBBt) {
-        // accumulate partial BBt sum
-        int kp = mBBt.numRows();
-        for (int i = 0; i < kp; i++) {
-          double vi = accum.get(i);
-          if (vi != 0.0) {
-            for (int j = i; j < kp; j++) {
-              double vj = accum.get(j);
-              if (vj != 0.0)
-                mBBt.setQuick(i, j, mBBt.getQuick(i, j) + vi * vj);
+      for (int k = 0; k < accum.getNumRows(); k++) {
+        Vector btRow = accum.getRows()[k];
+        btKey.set((int) (key.get() * blockHeight + accum.getRowIndices()[k]));
+        btValue.set(btRow);
+        context.write(btKey, btValue);
+
+        if (outputBBt) {
+          int kp = mBBt.numRows();
+          // accumulate partial BBt sum
+          for (int i = 0; i < kp; i++) {
+            double vi = btRow.get(i);
+            if (vi != 0.0) {
+              for (int j = i; j < kp; j++) {
+                double vj = btRow.get(j);
+                if (vj != 0.0)
+                  mBBt.setQuick(i, j, mBBt.getQuick(i, j) + vi * vj);
+              }
             }
           }
         }
+
       }
     }
 
@@ -352,7 +363,7 @@ public final class BtJob {
                      new VectorWritable(new DenseVector(mBBt.getData())));
         }
       } finally {
-        super.cleanup(context);
+        IOUtils.close(closeables);
       }
 
     }
@@ -366,6 +377,7 @@ public final class BtJob {
                          int minSplitSize,
                          int k,
                          int p,
+                         int btBlockHeight,
                          int numReduceTasks,
                          Class<? extends Writable> labelClass,
                          boolean outputBBtProducts)
@@ -417,8 +429,8 @@ public final class BtJob {
     SequenceFileOutputFormat.setOutputCompressionType(job,
                                                       CompressionType.BLOCK);
 
-    job.setMapOutputKeyClass(IntWritable.class);
-    job.setMapOutputValueClass(VectorWritable.class);
+    job.setMapOutputKeyClass(LongWritable.class);
+    job.setMapOutputValueClass(SparseRowBlockWritable.class);
 
     job.setOutputKeyClass(IntWritable.class);
     job.setOutputValueClass(VectorWritable.class);
@@ -435,6 +447,7 @@ public final class BtJob {
     job.getConfiguration().set(PROP_QJOB_PATH, inputPathQJob.toString());
     job.getConfiguration().setBoolean(PROP_OUPTUT_BBT_PRODUCTS,
                                       outputBBtProducts);
+    job.getConfiguration().setInt(QJob.PROP_AROWBLOCK_SIZE, btBlockHeight);
 
     // number of reduce tasks doesn't matter. we don't actually
     // send anything to reducers. in fact, the only reason

@@ -297,6 +297,7 @@ public class SSVDSolver {
                 minSplitSize,
                 k,
                 p,
+                ablockRows,
                 reduceTasks > 1000 ? 1000 : reduceTasks,
                 labelType,
                 q > 0 ? false : true);
@@ -324,6 +325,7 @@ public class SSVDSolver {
                   minSplitSize,
                   k,
                   p,
+                  ablockRows,
                   reduceTasks > 1000 ? 1000 : reduceTasks,
                   labelType,
                   i == q - 1 ? true : false);
