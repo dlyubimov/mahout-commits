@@ -31,6 +31,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.Writable;
@@ -47,8 +48,6 @@ import org.apache.mahout.common.IOUtils;
 import org.apache.mahout.common.Pair;
 import org.apache.mahout.common.iterator.sequencefile.PathType;
 import org.apache.mahout.common.iterator.sequencefile.SequenceFileDirIterator;
-import org.apache.mahout.math.DenseVector;
-import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.SequentialAccessSparseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
@@ -81,16 +80,18 @@ public class ABtJob {
    */
   public static class ABtMapper
       extends
-      Mapper<Writable, VectorWritable, SplitPartitionedWritable, VectorWritable> {
+      Mapper<Writable, VectorWritable, SplitPartitionedWritable, SparseRowBlockWritable> {
 
     private SplitPartitionedWritable outKey;
     private Deque<Closeable> closeables = new ArrayDeque<Closeable>();
     private SequenceFileDirIterator<IntWritable, VectorWritable> btInput;
     private Vector[] aCols;
     // private Vector[] yiRows;
-    private VectorWritable outValue = new VectorWritable();
+    // private VectorWritable outValue = new VectorWritable();
     private int aRowCount;
     private int kp;
+    private int blockHeight;
+    private SparseRowBlockAccumulator yiCollector;
 
     @Override
     protected void map(Writable key, VectorWritable value, Context context)
@@ -157,10 +158,11 @@ public class ABtJob {
             Vector.Element aEl = aColIter.next();
             j = aEl.index();
 
-            outKey.setTaskRowOrdinal(j);
-            outValue.set(btVec.times(aEl.get())); // assign might work better
-                                                  // with memory after all.
-            context.write(outKey, outValue);
+            // outKey.setTaskItemOrdinal(j);
+            // outValue.set(btVec.times(aEl.get())); // assign might work better
+            // // with memory after all.
+            // context.write(outKey, outValue);
+            yiCollector.collect((long) j, btVec.times(aEl.get()));
           }
           if (lastRowIndex < j)
             lastRowIndex = j;
@@ -173,10 +175,12 @@ public class ABtJob {
         // probably don't want to repair there but rather here.
         SequentialAccessSparseVector yDummy =
           new SequentialAccessSparseVector(kp);
-        outValue.set(yDummy);
+        // outValue.set(yDummy);
         for (lastRowIndex += 1; lastRowIndex < aRowCount; lastRowIndex++) {
-          outKey.setTaskRowOrdinal(lastRowIndex);
-          context.write(outKey, outValue);
+          // outKey.setTaskItemOrdinal(lastRowIndex);
+          // context.write(outKey, outValue);
+
+          yiCollector.collect((long) lastRowIndex, yDummy);
         }
 
       } finally {
@@ -185,7 +189,7 @@ public class ABtJob {
     }
 
     @Override
-    protected void setup(Context context) throws IOException,
+    protected void setup(final Context context) throws IOException,
       InterruptedException {
 
       int k =
@@ -209,73 +213,28 @@ public class ABtJob {
                                                                    .getConfiguration());
       // TODO: how do i release all that stuff??
       closeables.addFirst(btInput);
+      OutputCollector<LongWritable, SparseRowBlockWritable> yiBlockCollector =
+        new OutputCollector<LongWritable, SparseRowBlockWritable>() {
 
+          @Override
+          public void collect(LongWritable blockKey,
+                              SparseRowBlockWritable block) throws IOException {
+            outKey.setTaskItemOrdinal((int) blockKey.get());
+            try {
+              context.write(outKey, block);
+            } catch (InterruptedException exc) {
+              throw new IOException("Interrupted", exc);
+            }
+          }
+        };
+      blockHeight =
+        context.getConfiguration().getInt(BtJob.PROP_OUTER_PROD_BLOCK_HEIGHT,
+                                          -1);
+      yiCollector =
+        new SparseRowBlockAccumulator(blockHeight, yiBlockCollector);
+      closeables.addFirst(yiCollector);
     }
 
-  }
-
-  public static class ABtCombiner
-      extends
-      Reducer<SplitPartitionedWritable, VectorWritable, SplitPartitionedWritable, VectorWritable> {
-
-    protected final VectorWritable outValue = new VectorWritable();
-    protected DenseVector accum;
-    protected Deque<Closeable> closeables = new ArrayDeque<Closeable>();
-    protected int sparseThresholdZeroCnt;
-    protected RandomAccessSparseVector sparseAccum;
-    protected int accumSize;
-
-    @Override
-    protected void reduce(SplitPartitionedWritable key,
-                          Iterable<VectorWritable> values,
-                          Context ctx) throws IOException, InterruptedException {
-      Iterator<VectorWritable> vwIter = values.iterator();
-
-      Vector vec = vwIter.next().get();
-      if (accum == null || accum.size() != vec.size()) {
-        accum = new DenseVector(vec);
-        accumSize = accum.size();
-        sparseAccum = new RandomAccessSparseVector(accumSize);
-        sparseThresholdZeroCnt =
-          (int) Math.ceil(BtJob.SPARSE_ZEROS_PCT_THRESHOLD * accum.size());
-      } else {
-        accum.assign(vec);
-      }
-
-      while (vwIter.hasNext()) {
-        accum.addAll(vwIter.next().get());
-      }
-
-      // try to detect some 0s, although not terribly likely here,
-      // unless there are some items that have never been rated -- even then
-      // though. Frankly, i tried to run sparse matrices as sparse as 0.05%
-      // (5E-4)
-      // and B' rows still never come up as sparse. If there're some items that
-      // are never rated, probably it will create some B' rows that are
-      // completely 0'd although i am not sure.
-      boolean sparsify = false;
-      int zeroCnt = 0;
-      for (int i = 0; i < accumSize; i++) {
-        if (accum.get(i) == 0.0 && ++zeroCnt >= sparseThresholdZeroCnt) {
-          sparsify = true;
-          break;
-        }
-      }
-
-      if (sparsify) {
-        outValue.set(sparseAccum.assign(accum));
-      } else {
-        outValue.set(accum);
-      }
-      ctx.write(key, outValue);
-    }
-
-    @Override
-    protected void cleanup(Context context) throws IOException,
-      InterruptedException {
-
-      IOUtils.close(closeables);
-    }
   }
 
   /**
@@ -284,7 +243,7 @@ public class ABtJob {
    */
   public static class QRReducer
       extends
-      Reducer<SplitPartitionedWritable, VectorWritable, SplitPartitionedWritable, VectorWritable> {
+      Reducer<SplitPartitionedWritable, SparseRowBlockWritable, SplitPartitionedWritable, VectorWritable> {
 
     // hack: partition number formats in hadoop, copied. this may stop working
     // if it gets
@@ -303,7 +262,10 @@ public class ABtJob {
     }
 
     private final Deque<Closeable> closeables = new LinkedList<Closeable>();
-    protected DenseVector accum;
+    protected final SparseRowBlockWritable accum = new SparseRowBlockWritable();
+
+    protected int blockHeight;
+
     protected int accumSize;
     protected int lastTaskId = -1;
 
@@ -314,6 +276,10 @@ public class ABtJob {
     @Override
     protected void setup(Context context) throws IOException,
       InterruptedException {
+      blockHeight =
+        context.getConfiguration().getInt(BtJob.PROP_OUTER_PROD_BLOCK_HEIGHT,
+                                          -1);
+
     }
 
     protected void setupBlock(Context context, SplitPartitionedWritable spw)
@@ -340,27 +306,24 @@ public class ABtJob {
 
     @Override
     protected void reduce(SplitPartitionedWritable key,
-                          Iterable<VectorWritable> values,
+                          Iterable<SparseRowBlockWritable> values,
                           Context context) throws IOException,
       InterruptedException {
 
-      Iterator<VectorWritable> vwIter = values.iterator();
-      Vector vec = vwIter.next().get();
-      if (accum == null || accum.size() != vec.size()) {
-        accum = new DenseVector(vec);
-        accumSize = accum.size();
-      } else {
-        accum.assign(vec);
-      }
-
-      while (vwIter.hasNext()) {
-        accum.addAll(vwIter.next().get());
-      }
+      accum.clear();
+      for (SparseRowBlockWritable bw : values)
+        accum.plusBlock(bw);
 
       if (key.getTaskId() != lastTaskId) {
         setupBlock(context, key);
       }
-      qr.collect(key, accum);
+
+      long blockBase = key.getTaskItemOrdinal() * blockHeight;
+      for (int k = 0; k < accum.getNumRows(); k++) {
+        Vector yiRow = accum.getRows()[k];
+        key.setTaskItemOrdinal(blockBase + accum.getRowIndices()[k]);
+        qr.collect(key, yiRow);
+      }
 
     }
 
@@ -431,6 +394,7 @@ public class ABtJob {
                          int minSplitSize,
                          int k,
                          int p,
+                         int outerProdBlockHeight,
                          int numReduceTasks) throws ClassNotFoundException,
     InterruptedException, IOException {
 
@@ -466,16 +430,18 @@ public class ABtJob {
                                                       CompressionType.BLOCK);
 
     job.setMapOutputKeyClass(SplitPartitionedWritable.class);
-    job.setMapOutputValueClass(VectorWritable.class);
+    job.setMapOutputValueClass(SparseRowBlockWritable.class);
 
     job.setOutputKeyClass(SplitPartitionedWritable.class);
     job.setOutputValueClass(VectorWritable.class);
 
     job.setMapperClass(ABtMapper.class);
-    job.setCombinerClass(ABtCombiner.class);
+    job.setCombinerClass(BtJob.OuterProductCombiner.class);
     job.setReducerClass(QRReducer.class);
 
     job.getConfiguration().setInt(QJob.PROP_AROWBLOCK_SIZE, aBlockRows);
+    job.getConfiguration().setInt(BtJob.PROP_OUTER_PROD_BLOCK_HEIGHT,
+                                  outerProdBlockHeight);
     job.getConfiguration().setInt(QRFirstStep.PROP_K, k);
     job.getConfiguration().setInt(QRFirstStep.PROP_P, p);
     job.getConfiguration().set(PROP_BT_PATH, inputBtGlob.toString());

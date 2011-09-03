@@ -111,7 +111,7 @@ public final class QJob {
           public void collect(Writable nil, DenseBlockWritable dbw)
             throws IOException {
             outputs.getCollector(OUTPUT_QHAT, null).collect(qHatKey, dbw);
-            qHatKey.incrementRowOrdinal();
+            qHatKey.incrementItemOrdinal();
           }
         };
       OutputCollector<Writable, VectorWritable> rhatCollector =
@@ -122,7 +122,7 @@ public final class QJob {
           public void collect(Writable nil, VectorWritable rhat)
             throws IOException {
             outputs.getCollector(OUTPUT_RHAT, null).collect(rHatKey, rhat);
-            rHatKey.incrementRowOrdinal();
+            rHatKey.incrementItemOrdinal();
           }
         };
 

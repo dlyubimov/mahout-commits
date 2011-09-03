@@ -106,6 +106,7 @@ public class SSVDSolver {
   private final Path[] inputPath;
   private final Path outputPath;
   private final int ablockRows;
+  private final int outerBlockHeight;
   private final int k;
   private final int p;
   private int q;
@@ -149,7 +150,7 @@ public class SSVDSolver {
     this.conf = conf;
     this.inputPath = inputPath;
     this.outputPath = outputPath;
-    this.ablockRows = ablockRows;
+    this.outerBlockHeight = this.ablockRows = ablockRows;
     this.k = k;
     this.p = p;
     this.reduceTasks = reduceTasks;
@@ -297,7 +298,7 @@ public class SSVDSolver {
                 minSplitSize,
                 k,
                 p,
-                ablockRows,
+                outerBlockHeight,
                 reduceTasks > 1000 ? 1000 : reduceTasks,
                 labelType,
                 q > 0 ? false : true);
@@ -314,6 +315,7 @@ public class SSVDSolver {
                    minSplitSize,
                    k,
                    p,
+                   outerBlockHeight,
                    reduceTasks);
 
         btPath = new Path(outputPath, String.format("Bt-job-%d", i + 1));
@@ -325,7 +327,7 @@ public class SSVDSolver {
                   minSplitSize,
                   k,
                   p,
-                  ablockRows,
+                  outerBlockHeight,
                   reduceTasks > 1000 ? 1000 : reduceTasks,
                   labelType,
                   i == q - 1 ? true : false);

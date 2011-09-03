@@ -80,6 +80,8 @@ public final class BtJob {
   public static final String PROP_QJOB_PATH = "ssvd.QJob.path";
   public static final String PROP_OUPTUT_BBT_PRODUCTS =
     "ssvd.BtJob.outputBBtProducts";
+  public static final String PROP_OUTER_PROD_BLOCK_HEIGHT =
+    "ssvd.outerProdBlockHeight";
 
   static final double SPARSE_ZEROS_PCT_THRESHOLD = 0.1;
 
@@ -228,7 +230,7 @@ public final class BtJob {
 
       btCollector =
         new SparseRowBlockAccumulator(context.getConfiguration()
-          .getInt(QJob.PROP_AROWBLOCK_SIZE, -1), btBlockCollector);
+          .getInt(PROP_OUTER_PROD_BLOCK_HEIGHT, -1), btBlockCollector);
       closeables.addFirst(btCollector);
 
     }
@@ -236,7 +238,7 @@ public final class BtJob {
 
   public static class OuterProductCombiner
       extends
-      Reducer<LongWritable, SparseRowBlockWritable, LongWritable, SparseRowBlockWritable> {
+      Reducer<Writable, SparseRowBlockWritable, Writable, SparseRowBlockWritable> {
 
     // protected final VectorWritable outValue = new VectorWritable();
     protected final SparseRowBlockWritable accum = new SparseRowBlockWritable();
@@ -247,11 +249,11 @@ public final class BtJob {
     protected void setup(Context context) throws IOException,
       InterruptedException {
       blockHeight =
-        context.getConfiguration().getInt(QJob.PROP_AROWBLOCK_SIZE, -1);
+        context.getConfiguration().getInt(PROP_OUTER_PROD_BLOCK_HEIGHT, -1);
     }
 
     @Override
-    protected void reduce(LongWritable key,
+    protected void reduce(Writable key,
                           Iterable<SparseRowBlockWritable> values,
                           Context context) throws IOException,
       InterruptedException {
@@ -288,7 +290,7 @@ public final class BtJob {
       InterruptedException {
 
       blockHeight =
-        context.getConfiguration().getInt(QJob.PROP_AROWBLOCK_SIZE, -1);
+        context.getConfiguration().getInt(PROP_OUTER_PROD_BLOCK_HEIGHT, -1);
 
       outputBBt =
         context.getConfiguration().getBoolean(PROP_OUPTUT_BBT_PRODUCTS, false);
@@ -447,7 +449,7 @@ public final class BtJob {
     job.getConfiguration().set(PROP_QJOB_PATH, inputPathQJob.toString());
     job.getConfiguration().setBoolean(PROP_OUPTUT_BBT_PRODUCTS,
                                       outputBBtProducts);
-    job.getConfiguration().setInt(QJob.PROP_AROWBLOCK_SIZE, btBlockHeight);
+    job.getConfiguration().setInt(PROP_OUTER_PROD_BLOCK_HEIGHT, btBlockHeight);
 
     // number of reduce tasks doesn't matter. we don't actually
     // send anything to reducers. in fact, the only reason

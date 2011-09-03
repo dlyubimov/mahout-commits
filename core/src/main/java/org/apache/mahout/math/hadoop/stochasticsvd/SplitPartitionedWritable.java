@@ -47,7 +47,7 @@ public class SplitPartitionedWritable implements
     WritableComparable<SplitPartitionedWritable> {
 
   private int taskId;
-  private int taskRowOrdinal;
+  private long taskItemOrdinal;
 
   public SplitPartitionedWritable(Mapper<?, ?, ?, ?>.Context mapperContext) {
     super();
@@ -63,28 +63,28 @@ public class SplitPartitionedWritable implements
     return taskId;
   }
 
-  public int getTaskRowOrdinal() {
-    return taskRowOrdinal;
+  public long getTaskItemOrdinal() {
+    return taskItemOrdinal;
   }
 
-  public void incrementRowOrdinal() {
-    taskRowOrdinal++;
+  public void incrementItemOrdinal() {
+    taskItemOrdinal++;
   }
 
-  public void setTaskRowOrdinal(int taskRowOrdinal) {
-    this.taskRowOrdinal = taskRowOrdinal;
+  public void setTaskItemOrdinal(long taskItemOrdinal) {
+    this.taskItemOrdinal = taskItemOrdinal;
   }
 
   @Override
   public void readFields(DataInput in) throws IOException {
     taskId = Varint.readUnsignedVarInt(in);
-    taskRowOrdinal = Varint.readUnsignedVarInt(in);
+    taskItemOrdinal = Varint.readUnsignedVarLong(in);
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
     Varint.writeUnsignedVarInt(taskId, out);
-    Varint.writeUnsignedVarInt(taskRowOrdinal, out);
+    Varint.writeUnsignedVarLong(taskItemOrdinal, out);
   }
 
   @Override
@@ -116,9 +116,9 @@ public class SplitPartitionedWritable implements
     } else if (taskId > o.taskId) {
       return 1;
     }
-    if (taskRowOrdinal < o.taskRowOrdinal) {
+    if (taskItemOrdinal < o.taskItemOrdinal) {
       return -1;
-    } else if (taskRowOrdinal > o.taskRowOrdinal) {
+    } else if (taskItemOrdinal > o.taskItemOrdinal) {
       return 1;
     }
     return 0;
