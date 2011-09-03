@@ -135,6 +135,7 @@ public class LocalSSVDSolverSparseSequentialTest extends MahoutTestCase {
                      new Path[] { aPath },
                      svdOutPath,
                      ablockRows,
+                     500,
                      k,
                      p,
                      3);

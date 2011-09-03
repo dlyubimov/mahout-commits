@@ -120,6 +120,7 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
                      new Path[] { aPath },
                      svdOutPath,
                      ablockRows,
+                     500,
                      k,
                      p,
                      3);
