@@ -47,7 +47,7 @@ public class YtYJob {
   public static final String PROP_P = "ssvd.p";
 
   // we have single output, so we use standard output
-  public static final String OUTPUT_YtY = "part-";
+  public static final String OUTPUT_YtY = "part";
 
   public static class YtYMapper extends
       Mapper<Writable, VectorWritable, IntWritable, VectorWritable> {
@@ -66,7 +66,7 @@ public class YtYJob {
 
     @Override
     protected void setup(Context context) throws IOException,
-        InterruptedException {
+      InterruptedException {
       int k = context.getConfiguration().getInt(PROP_K, -1);
       int p = context.getConfiguration().getInt(PROP_P, -1);
 
@@ -74,8 +74,8 @@ public class YtYJob {
       Validate.isTrue(p > 0, "invalid p parameter");
 
       kp = k + p;
-      long omegaSeed = Long.parseLong(context.getConfiguration()
-          .get(PROP_OMEGA_SEED));
+      long omegaSeed =
+        Long.parseLong(context.getConfiguration().get(PROP_OMEGA_SEED));
 
       omega = new Omega(omegaSeed, k, p);
 
@@ -88,7 +88,7 @@ public class YtYJob {
 
     @Override
     protected void map(Writable key, VectorWritable value, Context context)
-        throws IOException, InterruptedException {
+      throws IOException, InterruptedException {
       omega.computeYRow(value.get(), yRow);
       // compute outer product update for YtY
 
@@ -110,11 +110,11 @@ public class YtYJob {
         // are creating some short-lived references) here is that we obviously
         // do two times more iterations then necessary if y row is pretty dense.
         for (Iterator<Vector.Element> iterI = yRow.iterateNonZero(); iterI
-            .hasNext();) {
+          .hasNext();) {
           Vector.Element eli = iterI.next();
           int i = eli.index();
           for (Iterator<Vector.Element> iterJ = yRow.iterateNonZero(); iterJ
-              .hasNext();) {
+            .hasNext();) {
             Vector.Element elj = iterJ.next();
             int j = elj.index();
             if (j < i) {
@@ -128,9 +128,9 @@ public class YtYJob {
 
     @Override
     protected void cleanup(Context context) throws IOException,
-        InterruptedException {
+      InterruptedException {
       context.write(new IntWritable(context.getTaskAttemptID().getTaskID()
-          .getId()), new VectorWritable(new DenseVector(mYtY.getData())));
+        .getId()), new VectorWritable(new DenseVector(mYtY.getData())));
     }
   }
 
@@ -141,7 +141,7 @@ public class YtYJob {
 
     @Override
     protected void setup(Context context) throws IOException,
-        InterruptedException {
+      InterruptedException {
       int k = context.getConfiguration().getInt(PROP_K, -1);
       int p = context.getConfiguration().getInt(PROP_P, -1);
 
@@ -152,22 +152,28 @@ public class YtYJob {
 
     @Override
     protected void cleanup(Context context) throws IOException,
-        InterruptedException {
+      InterruptedException {
       context.write(new IntWritable(), accum);
     }
 
     @Override
-    protected void reduce(IntWritable key, Iterable<VectorWritable> values,
-        Context arg2) throws IOException, InterruptedException {
-      for (VectorWritable vw : values) {
+    protected void reduce(IntWritable key,
+                          Iterable<VectorWritable> values,
+                          Context arg2) throws IOException,
+      InterruptedException {
         acc.addAll(vw.get());
       }
     }
   }
 
-  public static void run(Configuration conf, Path[] inputPaths,
-      Path outputPath, int k, int p, long seed, int numReduceTasks)
-      throws ClassNotFoundException, InterruptedException, IOException {
+  public static void run(Configuration conf,
+                         Path[] inputPaths,
+                         Path outputPath,
+                         int k,
+                         int p,
+                         long seed,
+                         int numReduceTasks) throws ClassNotFoundException,
+    InterruptedException, IOException {
 
     Job job = new Job(conf);
     job.setJobName("YtY-job");
@@ -192,12 +198,7 @@ public class YtYJob {
     job.getConfiguration().setInt(PROP_K, k);
     job.getConfiguration().setInt(PROP_P, p);
 
-    // we must reduce to just one matrix which means
-    // we need only one reducer.
-    // But it's ok since each mapper outputs only one
-    // vector (a packed UpperTriangular) so even if
-    // there're thousands of mappers, one reducer should cope just fine.
-    job.setNumReduceTasks(1);
+    job.setNumReduceTasks(numReduceTasks > 100 ? 100 : numReduceTasks);
 
     job.submit();
     job.waitForCompletion(false);

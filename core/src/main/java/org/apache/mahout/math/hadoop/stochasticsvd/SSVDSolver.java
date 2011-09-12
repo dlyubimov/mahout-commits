@@ -28,8 +28,13 @@ import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.common.collect.Lists;
-import com.google.common.io.Closeables;
+import org.apache.commons.math.linear.CholeskyDecomposition;
+import org.apache.commons.math.linear.CholeskyDecompositionImpl;
+import org.apache.commons.math.linear.LUDecompositionImpl;
+import org.apache.commons.math.linear.NotPositiveDefiniteMatrixException;
+import org.apache.commons.math.linear.NotSymmetricMatrixException;
+import org.apache.commons.math.linear.RealMatrix;
+import org.apache.commons.math.linear.RealMatrixImpl;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -45,6 +50,9 @@ import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 import org.apache.mahout.math.ssvd.EigenSolverWrapper;
+
+import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 
 /**
  * Stochastic SVD solver (API class).
@@ -115,6 +123,7 @@ public class SSVDSolver {
   private boolean cUHalfSigma;
   private boolean cVHalfSigma;
   private boolean overwrite;
+  private boolean useCholeskyDecomposition;
 
   /**
    * create new SSVD solver. Required parameters are passed to constructor to
@@ -178,6 +187,14 @@ public class SSVDSolver {
    */
   public void setQ(int q) {
     this.q = q;
+  }
+
+  public boolean isUseCholeskyDecomposition() {
+    return useCholeskyDecomposition;
+  }
+
+  public void setUseCholeskyDecomposition(boolean useCholeskyDecomposition) {
+    this.useCholeskyDecomposition = useCholeskyDecomposition;
   }
 
   /**
@@ -267,6 +284,7 @@ public class SSVDSolver {
       FileSystem fs = FileSystem.get(conf);
 
       Path qPath = new Path(outputPath, "Q-job");
+      Path ytyPath = new Path(outputPath, "YtY-job");
       Path btPath = new Path(outputPath, "Bt-job");
       Path uHatPath = new Path(outputPath, "UHat");
       Path svPath = new Path(outputPath, "Sigma");
@@ -280,30 +298,67 @@ public class SSVDSolver {
       Random rnd = RandomUtils.getRandom();
       long seed = rnd.nextLong();
 
-      QJob.run(conf,
-               inputPath,
-               qPath,
-               ablockRows,
-               minSplitSize,
-               k,
-               p,
-               seed,
-               reduceTasks);
+      if (useCholeskyDecomposition) {
 
-      // restrict number of reducers to a reasonable number
-      // so we don't have to run too many additions in the frontend.
+        YtYJob.run(conf, inputPath, ytyPath, k, p, seed, reduceTasks);
 
-      BtJob.run(conf,
-                inputPath,
-                qPath,
-                btPath,
-                minSplitSize,
-                k,
-                p,
-                outerBlockHeight,
-                reduceTasks > 1000 ? 1000 : reduceTasks,
-                labelType,
-                q <= 0);
+        UpperTriangular mYtY =
+          loadAndSumUpperTriangularMatrices(fs, new Path(ytyPath,
+                                                         YtYJob.OUTPUT_YtY
+                                                             + "-*"), conf);
+        // convert yty to something our apache math can understand
+        assert mYtY.columnSize() == k + p;
+
+        double[][] ytySquare = new double[k + p][];
+        for (int i = 0; i < k + p; i++) {
+          ytySquare[i] = new double[k + p];
+        }
+
+        for (int i = 0; i < k + p; i++) {
+          for (int j = i; j < k + p; j++) {
+            ytySquare[i][j] = ytySquare[j][i] = mYtY.getQuick(i, j);
+          }
+        }
+
+        CholeskyDecomposition cd ;
+        try {
+          cd = new CholeskyDecompositionImpl(new RealMatrixImpl(ytySquare,false));
+        } catch ( NotPositiveDefiniteMatrixException exc )  {
+          throw new IOException ( "Not positive definte", exc);
+        } catch ( NotSymmetricMatrixException exc )  {
+          throw new IOException ( "Not positive definte", exc);
+        }
+        RealMatrix mLt=cd.getLT();
+        RealMatrix mLtinv=new LUDecompositionImpl(mLt).getSolver().getInverse();
+        //  TODO: save L transpose inverse
+
+      } else {
+        // use QR decomposition
+        QJob.run(conf,
+                 inputPath,
+                 qPath,
+                 ablockRows,
+                 minSplitSize,
+                 k,
+                 p,
+                 seed,
+                 reduceTasks);
+
+        // restrict number of reducers to a reasonable number
+        // so we don't have to run too many additions in the frontend.
+
+        BtJob.run(conf,
+                  inputPath,
+                  qPath,
+                  btPath,
+                  minSplitSize,
+                  k,
+                  p,
+                  outerBlockHeight,
+                  reduceTasks > 1000 ? 1000 : reduceTasks,
+                  labelType,
+                  q <= 0);
+      }
 
       // power iterations
       for (int i = 0; i < q; i++) {
@@ -330,7 +385,7 @@ public class SSVDSolver {
                   k,
                   p,
                   outerBlockHeight,
-                  reduceTasks > 1000 ? 1000 : reduceTasks,
+                  reduceTasks > 100 ? 100 : reduceTasks,
                   labelType,
                   i == q - 1);
       }
