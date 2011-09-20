@@ -257,7 +257,16 @@ public class QRFirstStep implements Closeable, OutputCollector<Writable, Vector>
       // is going to be maanged by kernel, not java GC. And if IO cache is not
       // good enough,
       // then at least it is always sequential.
-      String taskTmpDir = System.getProperty("java.io.tmpdir");
+      
+      // A quick hack: in local mode, the MR doesn't care to
+      // box the task properly so this would point to just /tmp.
+      // our tests can overwrite this with another property, so if
+      // found, we will use that.
+
+      String taskTmpDir = System.getProperty("mahout.task.tmpdir");
+      if (taskTmpDir == null)
+        taskTmpDir = System.getProperty("java.io.tmpdir");
+      
       FileSystem localFs = FileSystem.getLocal(jobConf);
       tempQPath = new Path(new Path(taskTmpDir), "q-temp.seq");
       tempQw =

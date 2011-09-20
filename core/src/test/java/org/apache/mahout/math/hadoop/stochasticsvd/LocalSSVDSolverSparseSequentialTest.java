@@ -79,6 +79,10 @@ public class LocalSSVDSolverSparseSequentialTest extends MahoutTestCase {
 
     File tmpDir = getTestTempDir("svdtmp");
     conf.set("hadoop.tmp.dir", tmpDir.getAbsolutePath());
+    
+    // overcome task boxing difficulties in local hadoop solver
+    File taskTmpDir = getTestTempDir("svdtmp/tasktmp");
+    System.setProperty("mahout.task.tmpdir", taskTmpDir.getAbsolutePath());
 
     Path aLocPath = new Path(getTestTempDirPath("svdtmp/A"), "A.seq");
 

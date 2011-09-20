@@ -68,11 +68,13 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
     // conf.set("mapred.job.tracker","localhost:11011");
     // conf.set("fs.default.name","hdfs://localhost:11010/");
 
-    // Deque<Closeable> closeables = new LinkedList<Closeable>();
-    // Random rnd = RandomUtils.getRandom();
 
     File tmpDir = getTestTempDir("svdtmp");
     conf.set("hadoop.tmp.dir", tmpDir.getAbsolutePath());
+    
+    // overcome task boxing difficulties in local hadoop solver
+    File taskTmpDir = getTestTempDir("svdtmp/tasktmp");
+    System.setProperty("mahout.task.tmpdir", taskTmpDir.getAbsolutePath());
 
     Path aLocPath = new Path(getTestTempDirPath("svdtmp/A"), "A.seq");
 
