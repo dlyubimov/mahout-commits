@@ -161,8 +161,8 @@ public class YtYJob {
                           Iterable<VectorWritable> values,
                           Context arg2) throws IOException,
       InterruptedException {
-        acc.addAll(vw.get());
-      }
+        for ( VectorWritable vw:values)
+          acc.addAll(vw.get());
     }
   }
 
