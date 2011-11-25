@@ -1,21 +1,29 @@
-#LyX 1.6.7 created this file. For more info see http://www.lyx.org/
-\lyxformat 345
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
 \begin_document
 \begin_header
 \textclass article
 \use_default_options true
+\maintain_unincluded_children false
 \language english
+\language_package default
 \inputencoding auto
+\fontencoding global
 \font_roman lmodern
 \font_sans default
 \font_typewriter default
 \font_default_family default
+\use_non_tex_fonts false
 \font_sc false
 \font_osf false
 \font_sf_scale 100
 \font_tt_scale 100
 
 \graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
 \paperfontsize default
 \spacing single
 \use_hyperref true
@@ -32,9 +40,18 @@
 \use_geometry false
 \use_amsmath 1
 \use_esint 1
+\use_mhchem 1
+\use_mathdots 1
 \cite_engine basic
 \use_bibtopic false
+\use_indices false
 \paperorientation portrait
+\suppress_date true
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
 \secnumdepth 3
 \tocdepth 3
 \paragraph_separation skip
@@ -45,8 +62,9 @@
 \paperpagestyle default
 \tracking_changes false
 \output_changes false
-\author "" 
-\author "" 
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
 \end_header
 
 \begin_body
@@ -57,53 +75,255 @@ Command Line Interface,
 \end_inset
 
 Stochastic SVD
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Dmitriy Lyubimov, dlyubimov at apache dot org
 \end_layout
 
-\begin_layout Author
-Dmitriy Lyubimov
-\begin_inset Newline newline
 \end_inset
 
 
-\size normal
-dlieu.7@gmail.com
 \end_layout
 
 \begin_layout Section
-Base algoirthm
-\end_layout
-
-\begin_layout Paragraph
-Branch: 
-\emph on
-givens-ssvd
-\emph default
-.
+Overview.
 \end_layout
 
 \begin_layout Standard
-This branch contains more or less stable code optimized for tall but relatively
- thin (n=30,000...50,000 non-zero elements).
- With 1G memory in child processes and right combination of block height,
- min split size and k,p parameters it is expected to be able to process
- 1 billion rows or more with 1 million dense (i.e.
- non-zero) data elements.
- However, network IO deficiencies will start to occur much sooner as discussed
- in the p.
- 6.1 of the 
-\begin_inset CommandInset href
-LatexCommand href
-name "working notes"
-target "https://github.com/dlyubimov/ssvd-lsi/raw/doc/SSVD%20working%20notes.pdf"
+Stochasitc SVD method in Mahout produces reduced rank Singular Value Decompositi
+on output in its strict mathematical definition:
+\begin_inset Formula 
+\[
+\mathbf{A}=\mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^{\top},
+\]
 
 \end_inset
 
- (this is one of TODOs).
+
+\end_layout
+
+\begin_layout Standard
+i.
+ e.
+ it creates outputs for matrices 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+, 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ and 
+\begin_inset Formula $\boldsymbol{\Sigma}$
+\end_inset
+
+, each of which may be requested individually.
+ The desired rank of decomposition, henceforth denoted as
+\begin_inset Formula $k$
+\end_inset
+
+, is a parameter of the algorithm.
+ The singular values inside diagonal matrix 
+\begin_inset Formula $\boldsymbol{\Sigma}$
+\end_inset
+
+ satisfy 
+\begin_inset Formula $\sigma_{i+1}\ge\sigma_{i}$
+\end_inset
+
+ 
+\begin_inset Formula $\forall i\in\left[1,k-1\right]$
+\end_inset
+
+, i.e.
+ sorted from biggest to smallest.
+ Cases of rank deficiency 
+\begin_inset Formula $\mbox{rank}\left(\mathbf{A}\right)<k$
+\end_inset
+
+ are handled by producing 0s in singular value positions once deficiency
+ takes place.
  
 \end_layout
 
-\begin_layout Paragraph
-Usage.
+\begin_layout Standard
+On top of it, there's an option to present decomposition output in a form
+ of 
+\begin_inset Formula 
+\[
+\mathbf{A}=\mathbf{U}_{\sigma}V_{\sigma}^{\top},
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $\mathbf{U}_{\sigma}=\mathbf{U}\boldsymbol{\Sigma}^{0.5}$
+\end_inset
+
+ instead of 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+ (but not both), 
+\begin_inset Formula $\mathbf{V}_{\sigma}=\mathbf{V}\boldsymbol{\Sigma}^{0.5}$
+\end_inset
+
+ instead of 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ (but not both).
+ Here, notation 
+\begin_inset Formula $\boldsymbol{\Sigma}^{0.5}$
+\end_inset
+
+ implies diagonal matrix containing square roots of the singular values:
+ 
+\begin_inset Formula 
+\[
+\boldsymbol{\Sigma}^{0.5}=\left(\begin{matrix}\sqrt{\sigma_{1}} & \cdots & 0\\
+\vdots & \ddots & \vdots\\
+0 & \cdots & \sqrt{\sigma_{k}}
+\end{matrix}\right).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This option is a nod to a common need to compare both types of actors represente
+d input rows and columns in a common space.
+ E.g.
+ if LSI is performed such that rows are documents and columns are terms
+ then it is possible to project both (or fold in new items) into common
+ space and perform similarity measurement between document and an individual
+ term.
+\end_layout
+
+\begin_layout Standard
+Some of common applications for SVD include Latent Semantic Analysis (LSA),
+ Principal Component Analysis (PCA) and others.
+\end_layout
+
+\begin_layout Section
+File formats
+\end_layout
+
+\begin_layout Standard
+Input 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+, as well as outputs 
+\begin_inset Formula $\mathbf{U}\left(\mathbf{U}_{\sigma}\right),\,\mathbf{V}\left(\mathbf{V}_{\sigma}\right)$
+\end_inset
+
+, are Mahout's Distributed Row Matrix format, i.e.
+ set of sequence files where value is of 
+\family typewriter
+VectorWritable
+\family default
+ type.
+ As far as keys are concerned, rows of 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ may be keyed (identified) by any 
+\family typewriter
+Writable 
+\family default
+(for as long as it is instantiable thru a default constructor).
+ That, among others, means that this method can be applied directly on the
+ output of 
+\family typewriter
+seq2sparse 
+\family default
+where keys were of 
+\family typewriter
+Text
+\family default
+ type (TODO: re-verify).
+ 
+\end_layout
+
+\begin_layout Standard
+Definition of output 
+\begin_inset Formula $\mathbf{U}\,\,\left(\mathbf{U}\sigma\right)$
+\end_inset
+
+ is identical to definition of the input matrix 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+, and the keys of corresponding rows in 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ are copied to corresponding rows of output 
+\begin_inset Formula $\mathbf{U}\,\,\left(\mathbf{U}_{\sigma}\right)$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Definition of output 
+\begin_inset Formula $\mathbf{V}\,\,\left(\mathbf{V}_{\sigma}\right)$
+\end_inset
+
+ is always sequence file(s) of 
+\family typewriter
+(IntWritable, VectorWritable)
+\family default
+ where key corresponds to a row index of the input 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Output of 
+\begin_inset Formula $\boldsymbol{\Sigma}$
+\end_inset
+
+ is encoded by a single output file with a single value containing 
+\family typewriter
+VectorWritable
+\family default
+ with main diagonal entries of 
+\begin_inset Formula $\boldsymbol{\Sigma}$
+\end_inset
+
+ aka singular values 
+\begin_inset Formula $\left(\begin{matrix}\sigma_{1} & \cdots & \sigma_{k}\end{matrix}\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+Usage
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+As of Mahout 0.6 trunk
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout LyX-Code
@@ -114,7 +334,7 @@ mahout ssvd <options>
 Options.
 \end_layout
 
-\begin_layout List
+\begin_layout Labeling
 \labelwidthstring 00.00.0000
 
 \size footnotesize
@@ -135,7 +355,7 @@ k,
  in U, V matrices) 
 \end_layout
 
-\begin_layout List
+\begin_layout Labeling
 \labelwidthstring 00.00.0000
 
 \family typewriter
@@ -152,11 +372,20 @@ k,
 \family default
 \size default
  stochastic SVD oversampling.
- (k+p=500 is probably more than reasonable).
+ 
+\emph on
+k+p=500 is probably more than reasonable
+\emph default
+.
+ 
+\begin_inset Formula $p$
+\end_inset
+
+ doesn't seem to have to be very significant (perhaps 5..10).
  
 \end_layout
 
-\begin_layout List
+\begin_layout Labeling
 \labelwidthstring 00.00.0000
 
 \family typewriter
@@ -177,18 +406,15 @@ k,
  somewhat better running times.
  The most optimal mode from the running time point of view should be 1 block
  per 1 mapper.
- For 64Mb blocks this is probably somewhere around 30,000.
- However, Q-job mapper preallocates the memory for the entire Q block 
-\begin_inset Formula $\left(k+p\right)\times r$
-\end_inset
-
- even if it doesn't encounter that many rows.
- So it's ok to set it somewhat higher than 1 block per mapper would take
- to ensure exactly 1 block is formed, but setting it too high may cause
- memory management problems.
+ 
+\emph on
+For 64Mb blocks this is probably somewhere around 30,000
+\emph default
+.
+ 
 \end_layout
 
-\begin_layout List
+\begin_layout Labeling
 \labelwidthstring 00.00.0000
 
 \family typewriter
@@ -204,7 +430,8 @@ k,
 <int-value>
 \family default
 \size default
- the minimum split size to use in mappers.
+ optional.
+ Minimum split size to use in mappers.
  Since in this branch block formation happens in mappers, for significantly
  large -r and width of the input matrix the algorithm may not be able to
  read minimum 
@@ -216,27 +443,17 @@ k,
  If that is the case, then one of the recourses available is to force increase
  in the MapReduce split size using SequenceFileInputFormat.setMinSplitSize()
  property.
- Increasing this significantly over HDFS size will result in network IO
- overhead as discussed in p.6.2 of the 
-\begin_inset CommandInset href
-LatexCommand href
-name "working notes"
-target "https://github.com/dlyubimov/ssvd-lsi/raw/doc/SSVD%20working%20notes.pdf"
-
-\end_inset
-
-).
- In reality, assuming 1Gb in mappers and block height reasonably high so
- there's one block per mapper, this probably should be left alone up until
- ~64Gb in input.
- After that, either increase split size or use 
-\emph on
-ssvd-wide
-\emph default
- branch.
+ Increasing this significantly over HDFS size may result in network IO to
+ mappers.
+ Another caveat is that you sometimes don't want too many mappers because
+ it may in fact increase time of the computation.
+ This should probably left alone unless you have significant amount of mappers
+ (as in thousands) at which point reducing amount of mappers may actually
+ improve the thruput (just a guesstimate at this point).
+ 
 \end_layout
 
-\begin_layout List
+\begin_layout Labeling
 \labelwidthstring 00.00.0000
 
 \family typewriter
@@ -248,10 +465,10 @@ ssvd-wide
 <true|false>
 \family default
 \size default
- Request computation of the U matrix (default true) 
+ Request computation of the U matrix (optional, default true) 
 \end_layout
 
-\begin_layout List
+\begin_layout Labeling
 \labelwidthstring 00.00.0000
 
 \family typewriter
@@ -263,10 +480,10 @@ ssvd-wide
 <true|false>
 \family default
 \size default
- Request computation of the V matrix (default true) 
+ Request computation of the V matrix (optional, default true) 
 \end_layout
 
-\begin_layout List
+\begin_layout Labeling
 \labelwidthstring 00.00.0000
 
 \family typewriter
@@ -291,7 +508,7 @@ ssvd-wide
  Default false.
 \end_layout
 
-\begin_layout List
+\begin_layout Labeling
 \labelwidthstring 00.00.0000
 
 \family typewriter
@@ -315,7 +532,7 @@ ssvd-wide
  default false.
 \end_layout
 
-\begin_layout List
+\begin_layout Labeling
 \labelwidthstring 00.00.0000
 
 \family typewriter
@@ -327,8 +544,11 @@ ssvd-wide
 <int-value>
 \family default
 \size default
+ optional.
  The number of reducers to use (where applicable): depends on size of the
- hadoop cluster
+ hadoop cluster.
+ At this point i beleive it could also be overwritten by a standard hadoop
+ property using -D option.
 \end_layout
 
 \begin_layout Paragraph
@@ -336,7 +556,7 @@ Standard Options.
  
 \end_layout
 
-\begin_layout List
+\begin_layout Labeling
 \labelwidthstring 00.00.0000
 
 \family typewriter
@@ -352,7 +572,7 @@ Standard Options.
  
 \end_layout
 
-\begin_layout List
+\begin_layout Labeling
 \labelwidthstring 00.00.0000
 
 \family typewriter
@@ -376,7 +596,7 @@ Standard Options.
  
 \end_layout
 
-\begin_layout List
+\begin_layout Labeling
 \labelwidthstring 00.00.0000
 
 \family typewriter
