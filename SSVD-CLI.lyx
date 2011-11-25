@@ -120,7 +120,7 @@ i.
 \end_inset
 
 , each of which may be requested individually.
- The desired rank of decomposition, henceforth denoted as
+ The desired rank of decomposition, henceforth denoted as 
 \begin_inset Formula $k$
 \end_inset
 
@@ -162,7 +162,7 @@ On top of it, there's an option to present decomposition output in a form
 \end_layout
 
 \begin_layout Standard
-where 
+where one can request 
 \begin_inset Formula $\mathbf{U}_{\sigma}=\mathbf{U}\boldsymbol{\Sigma}^{0.5}$
 \end_inset
 
@@ -199,13 +199,22 @@ where
 \end_layout
 
 \begin_layout Standard
-This option is a nod to a common need to compare both types of actors represente
-d input rows and columns in a common space.
+Original singular values 
+\begin_inset Formula $\boldsymbol{\Sigma}$
+\end_inset
+
+ are still produced and saved regardless.
+\end_layout
+
+\begin_layout Standard
+This option is a nod to a common need of comparing actors represented by
+ both input rows and input columns in a common space.
  E.g.
  if LSI is performed such that rows are documents and columns are terms
- then it is possible to project both (or fold in new items) into common
- space and perform similarity measurement between document and an individual
- term.
+ then it is possible to compare documents and terms (ether existing or fold
+ in new ones) in one common space and perform similarity measurement between
+ a document and a term, rather than computing just term2term or document2documen
+t similarities.
 \end_layout
 
 \begin_layout Standard
@@ -250,13 +259,23 @@ where keys were of
 \family typewriter
 Text
 \family default
- type (TODO: re-verify).
+ type
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+(TODO: re-verify)
+\end_layout
+
+\end_inset
+
+.
  
 \end_layout
 
 \begin_layout Standard
 Definition of output 
-\begin_inset Formula $\mathbf{U}\,\,\left(\mathbf{U}\sigma\right)$
+\begin_inset Formula $\mathbf{U}\,\,\left(\mathbf{U}_{\sigma}\right)$
 \end_inset
 
  is identical to definition of the input matrix 
@@ -297,9 +316,9 @@ Output of
 \begin_inset Formula $\boldsymbol{\Sigma}$
 \end_inset
 
- is encoded by a single output file with a single value containing 
+ is encoded by a single output file with a single vector value 
 \family typewriter
-VectorWritable
+(VectorWritable)
 \family default
  with main diagonal entries of 
 \begin_inset Formula $\boldsymbol{\Sigma}$
@@ -337,10 +356,9 @@ Options.
 \begin_layout Labeling
 \labelwidthstring 00.00.0000
 
-\size footnotesize
--
 \family typewriter
-k,
+\size footnotesize
+-k,
 \begin_inset space ~
 \end_inset
 
@@ -351,8 +369,8 @@ k,
 <int-value>
 \family default
 \size default
- the requested SVD rank (minimum number of singular values and dimensions
- in U, V matrices) 
+ (required): the requested SVD rank (minimum number of singular values and
+ dimensions in U, V matrices) 
 \end_layout
 
 \begin_layout Labeling
@@ -371,7 +389,7 @@ k,
 <int-value>
 \family default
 \size default
- stochastic SVD oversampling.
+ (required): stochastic SVD oversampling.
  
 \emph on
 k+p=500 is probably more than reasonable
@@ -390,6 +408,39 @@ k+p=500 is probably more than reasonable
 
 \family typewriter
 \size footnotesize
+-q,
+\begin_inset space ~
+\end_inset
+
+--powerIter
+\begin_inset space ~
+\end_inset
+
+<int-value>
+\size default
+ 
+\family default
+(optional, default 0): number of power iterations to perform.
+ This helps fighting data noise and improve precision significantly more
+ than just increasing 
+\begin_inset Formula $p$
+\end_inset
+
+.
+ Each additional power iteration adds 2 more steps (map/reduce + map-only).
+ Experimental data suggests using 
+\begin_inset Formula $q=1$
+\end_inset
+
+ is already producing quite good results which are hard to much improve
+ upon.
+\end_layout
+
+\begin_layout Labeling
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
 -r,
 \begin_inset space ~
 \end_inset
@@ -401,16 +452,53 @@ k+p=500 is probably more than reasonable
 <int-value>
 \family default
 \size default
- the number of rows of source matrix for block computations.
+ (optional, default 10,000): the number of rows of source matrix for block
+ computations.
  Taller blocking causes more memory use but produces less blocks and therefore
  somewhat better running times.
  The most optimal mode from the running time point of view should be 1 block
  per 1 mapper.
  
-\emph on
-For 64Mb blocks this is probably somewhere around 30,000
-\emph default
-.
+\end_layout
+
+\begin_layout Labeling
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
+-oh,
+\begin_inset space ~
+\end_inset
+
+--outerProdBlockHeight
+\begin_inset space ~
+\end_inset
+
+<int-value>
+\size default
+ 
+\family default
+(optional, default 10,000): the block height in multiplication operations.
+ With extreme sparse matrices increasing that parameter will lead to better
+ performance by reducing computational pressure on the shuffle and sort
+ and grouping sparse records together.
+ However, setting it too high may cause larger block values formed and written
+ and may cause OOM.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Matrix mutliplications are the biggest bottleneck of this method as of the
+ time of this writing.
+ Tweaking this parameters for bigger blocks will help tremendeously but
+ may cause OOM and/or GC thrashing which will again either decrease performance
+ dramatically or even derail the whole job.
+ So sweet balance must be striken here.
+ Default is good for dense inputs and safe for sparse inputs).
+\end_layout
+
+\end_inset
+
  
 \end_layout
 
@@ -430,27 +518,52 @@ For 64Mb blocks this is probably somewhere around 30,000
 <int-value>
 \family default
 \size default
- optional.
- Minimum split size to use in mappers.
- Since in this branch block formation happens in mappers, for significantly
- large -r and width of the input matrix the algorithm may not be able to
- read minimum 
+ (optional, default: use Hadoop's default): minimum split size to use in
+ mappers reading 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ input.
+ 
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+
+\emph on
+As of this day, I haven't heard of a case where somebody would actually
+ have to use this option and actually increase split size and how it has
+ played out.
+ So this option is experimental.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+Since in this version projection block formation happens in mappers, for
+ significantly large -r and width of the input matrix the algorithm may
+ not be able to read minimum 
 \begin_inset Formula $k+p$
 \end_inset
 
- rows and form a block of minimum height, so the job would bail out at the
- very first mapping step.
- If that is the case, then one of the recourses available is to force increase
- in the MapReduce split size using SequenceFileInputFormat.setMinSplitSize()
+ rows and form a block of minimum height required, so in that case the job
+ would bail out at the very first mapping step.
+ If this happens, one of the recourses available is to force increase in
+ the MapReduce split size using SequenceFileInputFormat.setMinSplitSize()
  property.
  Increasing this significantly over HDFS size may result in network IO to
  mappers.
  Another caveat is that you sometimes don't want too many mappers because
  it may in fact increase time of the computation.
- This should probably left alone unless you have significant amount of mappers
- (as in thousands) at which point reducing amount of mappers may actually
- improve the thruput (just a guesstimate at this point).
+ Consquently, this option should probably left alone unless one has significant
+ amount of mappers (as in thousands of map tasks) at which point reducing
+ amount of mappers may actually improve the thruput (just a guesstimate
+ at this point).
  
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Labeling
@@ -465,7 +578,8 @@ For 64Mb blocks this is probably somewhere around 30,000
 <true|false>
 \family default
 \size default
- Request computation of the U matrix (optional, default true) 
+ (optional, default true).
+ Request computation of the U matrix 
 \end_layout
 
 \begin_layout Labeling
@@ -480,7 +594,8 @@ For 64Mb blocks this is probably somewhere around 30,000
 <true|false>
 \family default
 \size default
- Request computation of the V matrix (optional, default true) 
+ (optional, default true).
+ Request computation of the V matrix 
 \end_layout
 
 \begin_layout Labeling
@@ -495,7 +610,7 @@ For 64Mb blocks this is probably somewhere around 30,000
 <true|false>
 \family default
 \size default
- compute 
+ (optional, default: false): compute 
 \begin_inset Formula $\mathbf{V}_{\sigma}=\mathbf{V}\boldsymbol{\Sigma}^{0.5}$
 \end_inset
 
@@ -503,9 +618,8 @@ For 64Mb blocks this is probably somewhere around 30,000
 \begin_inset Formula $\mathbf{V}$
 \end_inset
 
- (affords for easier similarity computations between row-wise and column-wise
- items).
- Default false.
+ (see overview for explanation).
+ 
 \end_layout
 
 \begin_layout Labeling
@@ -520,7 +634,7 @@ For 64Mb blocks this is probably somewhere around 30,000
 <true|false>
 \family default
 \size default
- compute 
+ (optional, default: false): compute 
 \begin_inset Formula $\mathbf{U}_{\sigma}=\mathbf{U}\boldsymbol{\Sigma}^{0.5}$
 \end_inset
 
@@ -529,7 +643,7 @@ For 64Mb blocks this is probably somewhere around 30,000
 \end_inset
 
 .
- default false.
+ 
 \end_layout
 
 \begin_layout Labeling
@@ -547,8 +661,18 @@ For 64Mb blocks this is probably somewhere around 30,000
  optional.
  The number of reducers to use (where applicable): depends on size of the
  hadoop cluster.
- At this point i beleive it could also be overwritten by a standard hadoop
- property using -D option.
+ At this point it could also be overwritten by a standard hadoop property
+ using -D option
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+TODO: reverify
+\end_layout
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Paragraph
@@ -613,16 +737,28 @@ Standard Options.
  This is a standard Mahout optional parameter.
 \end_layout
 
-\begin_layout Paragraph
-Output.
+\begin_layout Labeling
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
+-ow
+\size default
+ 
+\family default
+overwrite output if exists.
+\end_layout
+
+\begin_layout Section
+Embedded use
 \end_layout
 
 \begin_layout Standard
-Singular values are output as a single-record Sequence File containing a
- dense vector with k singular values.
- U and V matrices are k-wide dense DistributedRowMatrix files.
- U matrix inherits row labels of the input matrix.
- 
+It is possible to instantiate and use SSVDSolver class in embedded fashion
+ in Hadoop-enabled applications.
+ This class would have getter and setter methods for each option available
+ via command line.
+ See javadoc for details.
 \end_layout
 
 \end_body
