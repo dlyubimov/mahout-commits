@@ -1,0 +1,615 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\begin_preamble
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\end_preamble
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman lmodern
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks false
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation skip
+\defskip medskip
+\quotes_language english
+\papercolumns 2
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Power Iterations
+\begin_inset Newline newline
+\end_inset
+
+
+\size small
+
+\begin_inset CommandInset href
+LatexCommand href
+name "MAHOUT-796"
+target "https://issues.apache.org/jira/browse/MAHOUT-796"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Formulae
+\end_layout
+
+\begin_layout Subsection
+Modified approach to power iterations formula
+\end_layout
+
+\begin_layout Paragraph
+Original formula
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{Q}=\mbox{qr}\left[\left(\mathbf{AA^{\top}}\right)^{q}\mathbf{A}\boldsymbol{\Omega}\right].\mathbf{Q},
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{B}=\mathbf{Q}^{\top}\mathbf{A}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Modified version 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{Y}=\mathbf{A}\boldsymbol{\Omega},
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{B}_{0}=\left[\mbox{qr}\left(\mathbf{Y}\right).\mathbf{Q}\right]^{\top}\mathbf{A},
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{B}_{i}=\left[\mbox{qr}\left(\mathbf{AB}_{i-1}^{\top}\right).\mathbf{Q}\right]^{\top}\mathbf{A},\, i\in\left[1..q\right].
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Notation 
+\begin_inset Formula $\mbox{qr}\left(\cdot\right).\mathbf{Q}$
+\end_inset
+
+ means "compute 
+\begin_inset Formula $\mathbf{QR}$
+\end_inset
+
+ decomposition of the argument and retain 
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+ as a result".
+ 
+\end_layout
+
+\begin_layout Standard
+Current combination of QJob and BtJob is essentially producing 
+\begin_inset Formula $\mathbf{B}_{0}^{\top}=\mathbf{A}^{\top}\mbox{qr}\left(\mathbf{A}\boldsymbol{\Omega}\right).\mathbf{Q}$
+\end_inset
+
+.
+ Intermediate QJob results are QR blocks, not a final Q, so QJob is not
+ terribly meaningful without BtJob.
+\end_layout
+
+\begin_layout Standard
+See also 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "sec:Quick-recap-of"
+
+\end_inset
+
+ for quick recap of 
+\begin_inset Formula $\mathbf{B}_{0}$
+\end_inset
+
+ pipeline details.
+ B pipeline takes 2 tasks with only one global sorter (map + map + combiner
+ + shuffle-sort + reducer).
+ 
+\end_layout
+
+\begin_layout Standard
+It seems that the task boils down to figuring out alternative pipeline modificat
+ions necessary to produce 
+\begin_inset Formula $\mathbf{B}_{i}^{\top}$
+\end_inset
+
+.
+ After that, algorithm proceeds as before with assumption of 
+\begin_inset Formula $\mathbf{B}\equiv\mathbf{B}_{q}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+the existing processing will be equivalent to 
+\begin_inset Formula $q=0$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+(Ted Dunning points out: Note that the 
+\begin_inset Formula $\mathbf{QR}$
+\end_inset
+
+ decomposition is not strictly necessary with 
+\begin_inset Formula $q=0$
+\end_inset
+
+ (see 
+\begin_inset CommandInset href
+LatexCommand href
+target "https://issues.apache.org/jira/browse/MAHOUT-792"
+
+\end_inset
+
+).
+ Instead, the Cholesky decomposition can be applied to 
+\begin_inset Formula $\mathbf{Y}'\mathbf{Y}$
+\end_inset
+
+ and the resulting triangular matrix can be used to expose chunks of 
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+ as required).
+\end_layout
+
+\begin_layout Subsection
+\begin_inset Formula $\mathbf{B}_{i}$
+\end_inset
+
+ pipeline (some new code)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\mathbf{B}_{i}$
+\end_inset
+
+ pipeline produces 
+\begin_inset Formula $\mathbf{B}_{i}^{\top}=\mathbf{A}^{\top}\mbox{qr}\left(\mathbf{A}\mathbf{B}^{\top}\right).\mathbf{Q}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+This is very similar to 
+\begin_inset Formula $\mathbf{B}_{0}$
+\end_inset
+
+ pipeline with specfics being full multiplication of 
+\begin_inset Formula $\mathbf{A}\mathbf{B}^{\top}$
+\end_inset
+
+ in the first job and first pass qr pushdown to the reducer of the first
+ job:
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+map1:
+\series default
+ 
+\begin_inset Formula $\mathbf{A}\mathbf{B}^{\top}$
+\end_inset
+
+vertical blocks of outer products are produced 
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+combiner1:
+\series default
+ presumming vertical blocks of outer products of 
+\begin_inset Formula $\mathbf{A}\mathbf{B}^{\top}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+reducer1:
+\series default
+ finalizes summing up outer products of 
+\begin_inset Formula $\mathbf{A}\mathbf{B}^{\top}$
+\end_inset
+
+ and starts 
+\begin_inset Formula $\mbox{qrFirstPass}\left(\mathbf{A}\mathbf{B}^{\top}\right)\to\mbox{qr blocks}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+mapper2, combiner2, reducer2
+\series default
+ proceed exactly as mapper2, combiner2, reducer2 in 
+\begin_inset Formula $\mathbf{B}_{0}$
+\end_inset
+
+ pipeline]] and output final 
+\begin_inset Formula $\mathbf{B}_{i}^{\top}$
+\end_inset
+
+ with blocks corresponding to initial splits of 
+\series bold
+
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+
+\series default
+ input.
+\end_layout
+
+\begin_layout Standard
+Thus, this pipeline is 2 MR jobs with 2 sorts (map1 + combiner1 + shuffle
+ and sort + reducer1 + map2 + combiner2 + shuffle and sort + reducer2).
+\end_layout
+
+\begin_layout Subsection
+Integration of Cholesky trick route for computing power iterations
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Will cover in MAHOUT-797
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+Also note that whatever route is chosen to calculate 
+\begin_inset Formula $\mathbf{B}_{i}=g$
+\end_inset
+
+
+\begin_inset Formula $\left(\mathbf{Y}_{i}\right)$
+\end_inset
+
+, mathematically it should still be valid 
+\begin_inset Formula $\forall i\in\left[0..q\right]$
+\end_inset
+
+ for as long as we assume 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{Y}_{i}=\begin{cases}
+\mathbf{A}\boldsymbol{\Omega}, & i=0;\\
+\mathbf{A}\mathbf{B}_{i-1}^{\top}, & i>0.
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+So, if Cholesky trick allows to produce 
+\begin_inset Formula $\mathbf{B}_{0}$
+\end_inset
+
+ efficiently, I see no reason why it could not be applied to producing the
+ 
+\begin_inset Formula $\mathbf{B}_{i}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Section
+Quick recap of the 
+\begin_inset Formula $\mathbf{B}_{0}$
+\end_inset
+
+ pipeline
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Quick-recap-of"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+QR
+\end_layout
+
+\begin_layout Standard
+QR takes more than one 
+\emph on
+map-only
+\emph default
+ steps, but current implementation requires only 2 map jobs and that is
+ thought to scale to a few billion rows assuming k+p=500 and with upper
+ limit on RAM in mappers at 1G.
+ 
+\end_layout
+
+\begin_layout Standard
+First QR step may also be pushed down to reducers of previous job (something
+ i have plans to have as an option in 
+\begin_inset Formula $\mathbf{B}_{0}$
+\end_inset
+
+ pipeline as well).
+ Last QR step may be optimized to be first part of further execution tree
+ in a MR job thus last Q product output may not be required (and it is not
+ in 
+\begin_inset Formula $\mathbf{B}_{0}$
+\end_inset
+
+ pipeline).
+ 
+\end_layout
+
+\begin_layout Standard
+2 QR steps do output intermediate blocks of Q and R, but this from I/O standpoin
+t is basically as efficient as 1 MR multiplication job, if not even better,
+ because full MR outputs map results too and sends them to reducers, but
+ it also incurs sorts, which 2 map-only jobs do not incur.
+ 
+\end_layout
+
+\begin_layout Standard
+The only I/O deficiency of 2 map-only jobs vs.
+ 1 MR job is that intermediate output would be replicated thus increasing
+ I/O but that can be addressed by forcefully reducing replication factor
+ on the output of intermediate QR blocks.
+\end_layout
+
+\begin_layout Subsection
+Multiplications 
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\mathbf{Q}^{\top}\mathbf{A}$
+\end_inset
+
+.
+ This is a generic multiplication that requires full MR jobs with significant
+ pressure on combiners that combine intermediate outer products.
+ 
+\end_layout
+
+\begin_layout Itemize
+There are exceptions that do not require combiners when accumulator of the
+ result can be fit in memory and accumulated in mappers in line (These are
+ 
+\begin_inset Formula $\mathbf{B}\mathbf{B}^{\top}$
+\end_inset
+
+ and potentially 
+\begin_inset Formula $\mathbf{Y^{\top}}\mathbf{Y}$
+\end_inset
+
+ which require only upper-triangular accumulator of 
+\begin_inset Formula $\left(k+p\right)\times\left(k+p\right)$
+\end_inset
+
+ geometry).
+\end_layout
+
+\begin_layout Itemize
+The product 
+\begin_inset Formula $\mathbf{A}\boldsymbol{\Omega}$
+\end_inset
+
+ is of course much simpler since the entire matrix 
+\begin_inset Formula $\boldsymbol{\Omega}$
+\end_inset
+
+ is always available without taking any memory, so this is can be done inline
+ in either mapper or reducer.
+ 
+\end_layout
+
+\begin_layout Subsection
+Execution plan of the 
+\begin_inset Formula $\mathbf{B}_{0}$
+\end_inset
+
+ pipeline 
+\end_layout
+
+\begin_layout Standard
+This, execution plan of the 
+\begin_inset Formula $\mathbf{B}_{0}$
+\end_inset
+
+ pipeline is: 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Map1:
+\series default
+ 
+\begin_inset Formula $\mbox{qrFirstPass}\left(\mathbf{A}\boldsymbol{\Omega}\right)\to$
+\end_inset
+
+ intermediate qr blocks
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Map2:
+\series default
+ 
+\begin_inset Formula $\left[\text{qrLastPass}\left(\mbox{qr blocks}\right).\mathbf{Q}\right]^{\top}\mathbf{A}\to$
+\end_inset
+
+ vertical blocks of the outer products of 
+\begin_inset Formula $\mathbf{B}_{0}^{\top}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Combiner2:
+\series default
+ summing up intermediate outer products of 
+\begin_inset Formula $\mathbf{B}_{0}^{\top}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Reducer2:
+\series default
+ final sums of all outer products 
+\begin_inset Formula $\to\mathbf{B}_{0}^{\top}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Thus, currently it takes 1 map-only job + 1 MR job to get to 
+\begin_inset Formula $\mathbf{B}_{0}$
+\end_inset
+
+.
+ (In other words, 2 jobs + 1 sorter).
+ 
+\end_layout
+
+\begin_layout Standard
+The caveat is that this process is not currently terribly performant while
+ handling supersparse matrices as 
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+ blocks are treated as dense.
+\end_layout
+
+\end_body
+\end_document

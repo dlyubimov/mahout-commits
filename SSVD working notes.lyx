@@ -1,0 +1,4997 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman lmodern
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks false
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation skip
+\defskip bigskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+MapReduce SSVD Working Notes.
+ 
+\begin_inset Newline newline
+\end_inset
+
+MapReduce QR decomposition 
+\end_layout
+
+\begin_layout Author
+Dmitriy Lyubimov, 2010
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Base algorithm
+\end_layout
+
+\begin_layout Paragraph
+Notations.
+\end_layout
+
+\begin_layout Standard
+I consider the problem in context of stochastic SVD 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Martinsson"
+
+\end_inset
+
+.
+ Hence some notation and matrix names are inherited from that work.
+ Since this work encounters a lot of matrix blocks, I also use extensively
+ matrix block notation from 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Golub"
+
+\end_inset
+
+, i.e.
+ notation 
+\begin_inset Formula $\mathbf{A}\left(i:j,k:p\right)$
+\end_inset
+
+ means 'block of 
+\series bold
+A
+\series default
+, rows 
+\begin_inset Formula $i$
+\end_inset
+
+ to 
+\begin_inset Formula $j$
+\end_inset
+
+ and columns 
+\begin_inset Formula $k$
+\end_inset
+
+ to 
+\begin_inset Formula $p$
+\end_inset
+
+'.
+ Another example accepted there is such as 
+\begin_inset Formula $\mathbf{A}\left(i,:\right)$
+\end_inset
+
+ (i-th row).
+ More mainstream linear algebra notations are also used: single subscript
+ such as 
+\begin_inset Formula $\mathbf{A}_{i}$
+\end_inset
+
+ usually means 'i-th vertical or horizontal block of 
+\series bold
+A
+\series default
+'.
+ Double subscript usually means single element of a matrix (e.g.
+ 
+\begin_inset Formula $\mathbf{A}_{i,j}$
+\end_inset
+
+) or a row ( 
+\begin_inset Formula $\mathbf{A}_{i,*}$
+\end_inset
+
+) or a column ( 
+\begin_inset Formula $\mathbf{A}_{*,i}$
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Subsection
+Modified SSVD method 
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Modified-SSVD-method"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Paragraph
+Modified SSVD Algorithm.
+\end_layout
+
+\begin_layout Plain Layout
+Given an 
+\begin_inset Formula $m\times n$
+\end_inset
+
+ matrix 
+\series bold
+A
+\series default
+, a target rank 
+\begin_inset Formula $k$
+\end_inset
+
+, and an oversampling parameter 
+\begin_inset Formula $p$
+\end_inset
+
+, this procedure computes an 
+\begin_inset Formula $m\times\left(k+p\right)$
+\end_inset
+
+ SVD 
+\begin_inset Formula $\mathbf{A=U}\boldsymbol{\Sigma}\mathbf{V}^{\top}$
+\end_inset
+
+(some notations are adjusted):
+\end_layout
+
+\begin_layout Enumerate
+Create seed for random 
+\begin_inset Formula $n\times\left(k+p\right)$
+\end_inset
+
+ matrix 
+\begin_inset Formula $\mathbf{\Omega}$
+\end_inset
+
+.
+ The seed defines matrix 
+\begin_inset Formula $\mathbf{\Omega}$
+\end_inset
+
+ using Gaussian unit vectors per one of suggestions in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Martinsson"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $\mathbf{Y=A\Omega},\,\mathbf{Y}\in\mathbb{R}^{m\times\left(k+p\right)}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Column-orthonormalize 
+\begin_inset Formula $\mathbf{Y}\rightarrow\mathbf{Q}$
+\end_inset
+
+ by computing thin decomposition 
+\begin_inset Formula $\mathbf{Y}=\mathbf{Q}\mathbf{R}$
+\end_inset
+
+.
+ Also, 
+\begin_inset Formula $\mathbf{Q}\in\mathbb{R}^{m\times\left(k+p\right)},\,\mathbf{R}\in\mathbb{R}^{\left(k+p\right)\times\left(k+p\right)}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $\mathbf{B}=\mathbf{Q}^{\top}\mathbf{A}:\,\,\mathbf{B}\in\mathbb{R}^{\left(k+p\right)\times n}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Compute Eigensolution of a small Hermitian 
+\begin_inset Formula $\mathbf{BB}^{\top}=\mathbf{\hat{U}}\boldsymbol{\Lambda}\mathbf{\hat{U}}^{\top}$
+\end_inset
+
+.
+ 
+\begin_inset Formula $\mathbf{BB}^{\top}\in\mathbb{R}^{\left(k+p\right)\times\left(k+p\right)}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Singular values 
+\begin_inset Formula $\mathbf{\boldsymbol{\Sigma}}=\boldsymbol{\Lambda}^{0.5}$
+\end_inset
+
+, or, in other words, 
+\begin_inset Formula $s_{i}=\sqrt{\sigma_{i}}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+If needed, compute 
+\begin_inset Formula $\mathbf{U}=\mathbf{Q}\hat{\mathbf{U}}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+If needed, compute 
+\begin_inset Formula $\mathbf{V}=\mathbf{B}^{\top}\hat{\mathbf{U}}\boldsymbol{\Sigma}^{-1}$
+\end_inset
+
+.
+ Another way is 
+\begin_inset Formula $\mathbf{V}=\mathbf{A}^{\top}\mathbf{U}\boldsymbol{\Sigma}^{-1}$
+\end_inset
+
+.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+QR decomposition.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{Y}=\mathbf{QR},
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+where 
+\begin_inset Formula $\mathbf{Y}\in\mathbb{R}^{m\times n}$
+\end_inset
+
+,
+\begin_inset Formula $\mathbf{Q}\in\mathbb{R}^{m\times m}$
+\end_inset
+
+,
+\begin_inset Formula $\mathbf{R}\in\mathbb{R}^{m\times n}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+We find our base algorithm in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Golub"
+
+\end_inset
+
+.
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Paragraph
+Base QR algorithm.
+\end_layout
+
+\begin_layout Description
+for 
+\begin_inset Formula $j=1:n$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+for 
+\begin_inset Formula $i=m-1:j-1$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\left[c,s\right]=\mathrm{givens}\left(\mathbf{Y}\left(i-1,j\right),\mathbf{Y}\left(i,j\right)\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{Y}\left(i-1:i,j:n\right)\leftarrow\left(\begin{matrix}c & s\\
+-s & c
+\end{matrix}\right)^{\top}\mathbf{Y}\left(i-1:i,j:n\right)$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Thin decomposition.
+\end_layout
+
+\begin_layout Standard
+Thin decomposition is defined as
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{Y}=\mathbf{Q_{1}R_{1}},
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $\mathbf{Q_{1}}=\mathbf{Q}(1:m,1:n)$
+\end_inset
+
+, 
+\begin_inset Formula $\mathbf{R}_{1}=\mathbf{R}\left(1:n,1:n\right)$
+\end_inset
+
+.
+ Also, 
+\begin_inset Formula $\mathrm{range\left(\mathbf{Q_{1}}\right)}=\mathrm{range\left(\mathbf{Y}\right)}$
+\end_inset
+
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Golub"
+
+\end_inset
+
+.
+ Further on when i speak of QR decomposition, i will imply the thin decompositio
+n (unless explicitly said otherwise).
+\end_layout
+
+\begin_layout Section
+Reordering base QR for MapReduce
+\end_layout
+
+\begin_layout Subsection
+Blocking the input.
+\end_layout
+
+\begin_layout Standard
+We start off by dividing 
+\series bold
+Y
+\series default
+ into 
+\emph on
+z
+\emph default
+ blocks, such that 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{Y}=\left(\begin{matrix}\mathbf{Y}_{1}\\
+\mathbf{Y}_{2}\\
+\vdots\\
+\mathbf{Y}_{z}
+\end{matrix}\right).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Each 
+\begin_inset Formula $\mathbf{Y}_{i}=\mathbf{Y}\left(r\left(i-1\right):r\cdot i,:\right)$
+\end_inset
+
+and 
+\begin_inset Formula $\mathbf{Y}_{i}\in\mathbb{R}^{r\times n}$
+\end_inset
+
+ thus corresponds to a mapper process.
+ 
+\end_layout
+
+\begin_layout Subsection
+Initialization step.
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Initialization-step."
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We start Givens iterations in 
+\begin_inset Formula $\mathbf{Y}_{i}$
+\end_inset
+
+ by traversing it from bottom to top.
+ We allocate buffer 
+\begin_inset Formula $\tilde{\mathbf{R}}\in\mathbb{R}^{\left(k+p+1\right)\times\left(k+p\right)}$
+\end_inset
+
+ and initially populate it with last 
+\emph on
+k+p+1 
+\emph default
+rows of 
+\begin_inset Formula $\mathbf{Y}_{i}$
+\end_inset
+
+: 
+\begin_inset Formula $\tilde{\mathbf{R}}\leftarrow\mathbf{Y}_{i}\left(r-k-p:r,:\right)$
+\end_inset
+
+.
+ We assume 
+\begin_inset Formula $k+p\leq r$
+\end_inset
+
+.
+ There's a special case when 
+\begin_inset Formula $k+p=r$
+\end_inset
+
+ in which case last row of 
+\begin_inset Formula $\tilde{\mathbf{R}}$
+\end_inset
+
+ remains all zeros.
+ Then we apply base thin 
+\series bold
+QR
+\series default
+ algorithm thus zeroing out all subdiagonal entries: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\tilde{\mathbf{R}}=\left(\begin{matrix}\times & \times & \times & \vdots & \times & \times & \times\\
+0 & \times & \times & \vdots & \times & \times & \times\\
+0 & 0 & \times & \vdots & \times & \times & \times\\
+\cdots & \cdots & \cdots & \cdots & \cdots & \cdots & \cdots\\
+0 & 0 & 0 & \vdots & \times & \times & \times\\
+0 & 0 & 0 & \vdots & 0 & \times & \times\\
+0 & 0 & 0 & \vdots & 0 & 0 & \times\\
+0 & 0 & 0 & \vdots & 0 & 0 & 0
+\end{matrix}\right)\label{eq:upper triangular}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Iterative step.
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Iterative-step."
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+At each iterative step, we keep 
+\begin_inset Quotes eld
+\end_inset
+
+shifting
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\begin_inset Formula $\tilde{\mathbf{R}}$
+\end_inset
+
+ one row up on 
+\series bold
+Y
+\series default
+ (thus new rows are added on top of it):
+\end_layout
+
+\begin_layout Description
+for 
+\begin_inset Formula $j=r-k-p-1:1$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\tilde{\mathbf{R}}\left(2:k+p+1,:\right)\leftarrow\tilde{\mathbf{R}}\left(1:k+p,:\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\tilde{\mathbf{R}}\left(1,:\right)\leftarrow\mathbf{Y}_{i}\left(j,:\right)$
+\end_inset
+
+ 
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+# step A
+\end_layout
+
+\begin_layout Description
+for 
+\begin_inset Formula $l=1:k+p-1$
+\end_inset
+
+ 
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+# step B
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\left[c,s\right]\leftarrow\mathrm{givens}\left(\tilde{\mathbf{R}}\left(l,l\right),\tilde{\mathbf{R}}\left(l+1,l\right)\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\tilde{\mathbf{R}}\left(l:l+1,l:k+p\right)\leftarrow\left(\begin{matrix}c & s\\
+-s & c
+\end{matrix}\right)^{\top}\tilde{\mathbf{R}}\left(l:l+1,l:k+p\right)$
+\end_inset
+
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\begin_layout Standard
+In step A above the 
+\begin_inset Formula $\tilde{\mathbf{R}}$
+\end_inset
+
+ obtains non-zero values in the sub diagonal:
+\begin_inset Formula 
+\begin{equation}
+\tilde{\mathbf{R}}=\left(\begin{matrix}\times & \times & \times & \vdots & \times & \times & \times\\
+\beta & \times & \times & \vdots & \times & \times & \times\\
+0 & \beta & \times & \vdots & \times & \times & \times\\
+\cdots & \cdots & \cdots & \cdots & \cdots & \cdots & \cdots\\
+0 & 0 & 0 & \vdots & \times & \times & \times\\
+0 & 0 & 0 & \vdots & \beta & \times & \times\\
+0 & 0 & 0 & \vdots & 0 & \beta & \times\\
+0 & 0 & 0 & \vdots & 0 & 0 & \beta
+\end{matrix}\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Step B brings 
+\begin_inset Formula $\tilde{\mathbf{R}}$
+\end_inset
+
+ back to upper-triangular-plus-one form 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:upper triangular"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+Combining §§ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Initialization-step."
+
+\end_inset
+
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Iterative-step."
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Paragraph
+
+\series bold
+Algorithm 
+\begin_inset Quotes eld
+\end_inset
+
+Thin streaming QR
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Plain Layout
+Given thin tall matrix 
+\begin_inset Formula $\mathbf{Y}\in\mathbb{R}^{m\times\left(k+p\right)}$
+\end_inset
+
+, this algorithm computes 
+\series bold
+R
+\series default
+ in thin decomposition
+\begin_inset Formula $\mathbf{Y}=\mathbf{Q}\mathbf{R}$
+\end_inset
+
+ with memory requirements 
+\begin_inset Formula $O\approx\left(k+p\right)\times\left(k+p\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Description
+for 
+\begin_inset Formula $j=r-1:1$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\tilde{\mathbf{R}}\left(2:k+p+1,:\right)\leftarrow\tilde{\mathbf{R}}\left(1:k+p,:\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\tilde{\mathbf{R}}\left(1,:\right)\leftarrow\mathbf{Y}_{i}\left(j,:\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+added =r-j
+\end_layout
+
+\begin_layout Description
+for 
+\begin_inset Formula $l=1:\max\left(added-1,k+p\right)$
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\left[c,s\right]\leftarrow\mathrm{givens}\left(\tilde{\mathbf{R}}\left(l,l\right),\tilde{\mathbf{R}}\left(l+1,l\right)\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\tilde{\mathbf{R}}\left(l:l+1,l:k+p\right)\leftarrow\left(\begin{matrix}c & s\\
+-s & c
+\end{matrix}\right)^{\top}\tilde{\mathbf{R}}\left(l:l+1,l:k+p\right)$
+\end_inset
+
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\begin_layout Description
+collect 
+\begin_inset Formula $\mathbf{R}_{i}\leftarrow\tilde{\mathbf{R}}\left(1:k+p,:\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that outer loop can be a Mapper iterator feeding rows of matrix 
+\series bold
+Y
+\series default
+ into 
+\begin_inset Formula $\tilde{\mathbf{R}}$
+\end_inset
+
+ in a streaming fashion.
+ Memory bounds do not depend on 
+\begin_inset Formula $m$
+\end_inset
+
+.
+ 
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+In reality, mapper can't feed 
+\series bold
+Y 
+\series default
+rows in reverse.
+ So i get my 
+\series bold
+Q 
+\series default
+rows in reverse.
+ Which doesn't seem to be a problem if i account for it later.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Combining results of multiple mappers 
+\end_layout
+
+\begin_layout Standard
+Next step is to define how to parallelize 
+\emph on
+thinGivensQR 
+\emph default
+algorithm.
+ We split 
+\series bold
+Y
+\series default
+ into several blocks, and run additional Givens iterations pairwise on
+\begin_inset Formula $\mathbf{R}_{i},\mathbf{R}_{j}$
+\end_inset
+
+ as:
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Algorithm mergeR
+\begin_inset Newline newline
+\end_inset
+
+
+\series default
+
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{R}\,\,\mathrm{mergeR}\left(\mathbf{R}_{i},\mathbf{R}_{j}\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+begin
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+for 
+\begin_inset Formula $v=1:k+p$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+for 
+\begin_inset Formula $u=v:k+p$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\left[c,s\right]\leftarrow\mathrm{givens}\left(\mathbf{R}_{i}\left(u,u\right),\mathbf{R}_{j}\left(u-v,u\right)\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\left(\begin{matrix}\mathbf{R}_{i}\left(u,u:k+p\right)\\
+\mathbf{R}_{j}\left(u-v,u:k+p\right)
+\end{matrix}\right)\leftarrow\left(\begin{matrix}c & s\\
+-s & c
+\end{matrix}\right)^{\top}\left(\begin{matrix}\mathbf{R}_{i}\left(u,u:k+p\right)\\
+\mathbf{R}_{j}\left(u-v,u:k+p\right)
+\end{matrix}\right)$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\begin_layout Description
+return 
+\begin_inset Formula $\mathbf{R}_{i}$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The traversal order for algorithm 
+\emph on
+mergeR
+\emph default
+
+\begin_inset space ~
+\end_inset
+
+is outlined in fig.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:traversal-order-of"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename mergeR.png
+	width 12cm
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+traversal order of matrices 
+\begin_inset Formula $\mathbf{R}_{1},\mathbf{R}_{2}$
+\end_inset
+
+ in algorithm 
+\emph on
+mergeR
+\emph default
+.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:traversal-order-of"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Thus final R can be computed with the following: 
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Description
+Algorithm mergeAllRs
+\end_layout
+
+\begin_layout Description
+begin
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+for 
+\begin_inset Formula $i=2:z$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\mathbf{R}_{1}\leftarrow\mathrm{merge}\left(\mathbf{R}_{1},\mathbf{R}_{i}\right)$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\begin_layout Description
+return 
+\begin_inset Formula $\mathbf{R}_{1}$
+\end_inset
+
+as 
+\begin_inset Formula $\mathbf{R}$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Collecting Q 
+\end_layout
+
+\begin_layout Standard
+So far memory requirements to compute R were very negligent: indeed, we
+ only had to keep 
+\begin_inset Formula $\tilde{\mathbf{R}}\in\mathbb{R}^{\left(k+p+1\right)\times\left(k+p\right)}$
+\end_inset
+
+around.
+ It is not so simple about collecting 
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+.
+ In the most common case, 
+\begin_inset Formula $\mathbf{Q}=\prod_{i}^{N}\mathbf{G}_{i}$
+\end_inset
+
+, where 
+\begin_inset Formula $\mathbf{G}_{i}(i,j,\Theta)$
+\end_inset
+
+ are Givens rotations accumulated in the order of the application.
+ Since Givens operations are affecting only two columns of 
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+ , 
+\begin_inset Formula $i$
+\end_inset
+
+ and 
+\begin_inset Formula $j$
+\end_inset
+
+, interesting facts emerge: a) since no mapper applies Givens to the same
+ combination of 
+\begin_inset Formula $\left(i,j\right)$
+\end_inset
+
+, it doesn't matter in which order to apply mapper results; b) memory requiremen
+ts to collecting 
+\series bold
+
+\begin_inset Formula $\mathbf{Q}_{i}$
+\end_inset
+
+ 
+\series default
+in a mapper can be satisfied by 
+\begin_inset Formula $\mathbf{Q}_{i}\in\mathbb{R}^{r\times\left(k+p+1\right)}$
+\end_inset
+
+ instead of 
+\begin_inset Formula $\mathbb{R}^{r\times r}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+It is rather easy to modify 
+\begin_inset Quotes eld
+\end_inset
+
+
+\emph on
+Thin streaming QR
+\begin_inset Quotes erd
+\end_inset
+
+
+\emph default
+ to tug along partial Givens product for all Givens operations occurred
+ in the given mapper which we denote as 
+\begin_inset Formula $\mathbf{Q}_{i}=\prod_{j}\mathbf{G}_{i,j}$
+\end_inset
+
+
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Here, 
+\begin_inset Formula $\mathbf{G}_{i,j}$
+\end_inset
+
+ is denoting 
+\begin_inset Formula $j^{th}$
+\end_inset
+
+ Givens accumulated in mapper 
+\begin_inset Formula $i$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+.
+ Problem arises when we approach collecting 
+\series bold
+Q 
+\series default
+during 
+\begin_inset Formula $\mathrm{merge}\left(\mathbf{R}_{i},\mathbf{R}_{j}\right)$
+\end_inset
+
+.
+ Indeed, merging 
+\begin_inset Formula $\mathbf{Q}_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{Q}_{2}$
+\end_inset
+
+ would result into interim accumulated 
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+ that densely requires 
+\begin_inset Formula $\mathbb{R}^{2r\times\left(k+p\right)}$
+\end_inset
+
+.
+ After l-th merge it grows to 
+\begin_inset Formula $\mathbb{R}^{lr\times\left(k+p\right)}$
+\end_inset
+
+ and so on until ultimately we collect total thin 
+\begin_inset Formula $\mathbf{Q}\in\mathbb{R}^{m\times\left(k+p\right)}$
+\end_inset
+
+.
+ An observation is that if 
+\begin_inset Formula 
+\begin{equation}
+\mathbf{Q}=\left(\begin{matrix}\mathbf{\hat{Q}}_{1}\\
+\mathbf{\hat{Q}}_{2}\\
+\cdots\\
+\mathbf{\hat{\mathbf{Q}}}_{z}
+\end{matrix}\right),\label{eq:q-blocking}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+then intuition is that we can probably come up with some block algorithm
+ computing 
+\begin_inset Formula $\hat{\mathbf{Q}}_{i}=\mathrm{qMerge}\left(\mathbf{Q}_{1},\mathbf{R}_{1},...,\mathbf{Q}_{z},\mathbf{R}_{z}\right)$
+\end_inset
+
+, where 
+\begin_inset Formula $\left\{ \mathbf{Q}_{i},\mathbf{R}_{i}\right\} $
+\end_inset
+
+ are results of running a 
+\emph on
+thinStreamingQR 
+\emph default
+over blocks 
+\begin_inset Formula $\mathbf{Y}_{i}$
+\end_inset
+
+.
+ If 
+\begin_inset Formula $\mathbf{Q}_{1},\mathbf{R}_{1},...,\mathbf{Q}_{z},\mathbf{R}_{z}$
+\end_inset
+
+can be consumed in a streaming fashion, then memory requirement can be kept
+ again in check the same as in mapper, since 
+\begin_inset Formula $\mathbf{\hat{Q}}_{i}\in\mathbb{R}^{r\times(k+p)}$
+\end_inset
+
+.
+ In addition, in context of stochastic SVD, collecting 
+\series bold
+Q 
+\series default
+column-wise is not a convenient outcome; since we'll have to do outer products
+ with rows of 
+\series bold
+A 
+\series default
+during next pass, we'd rather collect it row-wise or in small horizontal
+ blocks like in 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:q-blocking"
+
+\end_inset
+
+ above in order to avoid additional transpose.
+\end_layout
+
+\begin_layout Standard
+So all the said intuitively means that strategy in 
+\emph on
+mergeAllRs 
+\emph default
+is not really expected to work for the purposes of building final 
+\series bold
+Q
+\series default
+.
+\end_layout
+
+\begin_layout Subsection
+Q collection in 
+\emph on
+Thin Streaming QR
+\emph default
+.
+\end_layout
+
+\begin_layout Standard
+in order to collect thin 
+\begin_inset Formula $\mathbf{Q}_{i}$
+\end_inset
+
+ block, we'll define a rolling buffer similarly to 
+\begin_inset Formula $\tilde{\mathbf{R}}$
+\end_inset
+
+: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\tilde{\mathbf{Q}}\in\mathbb{R}^{r\times\left(k+p+1\right)},
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+which would be collecting 
+\emph on
+columns 
+\emph default
+of 
+\begin_inset Formula $\mathbf{Q}_{i}$
+\end_inset
+
+.
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Description
+
+\series bold
+Algorithm 
+\begin_inset Quotes eld
+\end_inset
+
+Thin streaming QR 1
+\begin_inset Quotes erd
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Description
+for 
+\begin_inset Formula $j=r-1:1$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\tilde{\mathbf{R}}\left(2:k+p+1,:\right)\leftarrow\tilde{\mathbf{R}}\left(1:k+p,:\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\tilde{\mathbf{Q}}\left(2:k+p+1,:\right)\leftarrow\tilde{\mathbf{Q}}\left(1:k+p,:\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\tilde{\mathbf{R}}\left(1,:\right)\leftarrow\mathbf{Y}_{i}\left(j,:\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+added =r-j
+\end_layout
+
+\begin_layout Description
+for 
+\begin_inset Formula $l=1:\max\left(added-1,k+p\right)$
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\left[c,s\right]\leftarrow\mathrm{givens}\left(\tilde{\mathbf{R}}\left(l,l\right),\tilde{\mathbf{R}}\left(l+1,l\right)\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\tilde{\mathbf{R}}\left(l:l+1,l:k+p\right)\leftarrow\left(\begin{matrix}c & s\\
+-s & c
+\end{matrix}\right)^{\top}\tilde{\mathbf{R}}\left(l:l+1,l:k+p\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\tilde{\mathbf{Q}}\left(l:l+1,:\right)\leftarrow\left(\begin{matrix}c & s\\
+-s & c
+\end{matrix}\right)^{\top}\tilde{\mathbf{Q}}\left(l:l+1,:\right)$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\begin_layout Description
+collect 
+\begin_inset Formula $\mathbf{R}_{i}\leftarrow\tilde{\mathbf{R}}\left(1:k+p,:\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+collect 
+\begin_inset Formula $\mathbf{Q}_{i}^{\top}\leftarrow\tilde{\mathbf{Q}}\left(1:k+p,:\right)$
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Merging Qs
+\end_layout
+
+\begin_layout Standard
+So we got series of 
+\begin_inset Formula $\left(\mathbf{Q}_{i},\mathbf{R}_{i}\right)$
+\end_inset
+
+ pairs.
+ I already demonstrated how to produce 
+\series bold
+R
+\series default
+, but I am yet to demonstrate how to produce 
+\series bold
+Q
+\series default
+ in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:q-blocking"
+
+\end_inset
+
+.
+ We approach designing algorithm for 
+\begin_inset Formula $\hat{\mathbf{Q}}_{i}$
+\end_inset
+
+ by induction.
+ Let's assume, initially, we have only 2 blocks 
+\begin_inset Formula $\text{\left(\mathbf{Q}_{1},\mathbf{R}_{1}\right)}$
+\end_inset
+
+ and 
+\begin_inset Formula $\text{\left(\mathbf{Q}_{2},\mathbf{R}_{2}\right)}$
+\end_inset
+
+ which we now want to merge into final solution 
+\begin_inset Formula $\mathbf{Y}=\mathbf{Q}\mathbf{R}$
+\end_inset
+
+.
+ In general case, the number of rows in 
+\begin_inset Formula $\mathbf{Q}_{i}$
+\end_inset
+
+ coming from different mappers may not match.
+ We will consider merge: 
+\begin_inset Formula $\left(\mathbf{Q},\mathbf{R}\right)\leftarrow\mathrm{QRmerge}\left(\mathbf{Q}_{i},\mathbf{R}_{i},\mathbf{Q}_{j},\mathbf{R}_{j}\right),\,\mathbf{Q}_{i}\in\mathbb{R}^{r_{i}\times\left(k+p\right)},\,\mathbf{Q}_{j}\in\mathbb{R}^{r_{J}\times\left(k+p\right)},\,\mathbf{Q}_{m}\in\mathbb{R}^{\left(r_{i}+r_{j}\right)\times\left(k+p\right)}$
+\end_inset
+
+:
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Description
+Algorithm QRmerge
+\begin_inset Formula $\left(\mathbf{Q}_{i},\mathbf{R}_{i},\mathbf{Q}_{j},\mathbf{R}_{j}\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+begin
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\tilde{\mathbf{Q}}\leftarrow\left(\begin{matrix}\mathbf{Q}_{i} & \mathbf{0}\\
+\mathbf{0} & \mathbf{Q}_{j}
+\end{matrix}\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+for 
+\begin_inset Formula $v=1:k+p$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+for 
+\begin_inset Formula $u=v:k+p$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\left[c,s\right]\leftarrow\mathrm{givens}\left(\mathbf{R}_{i}\left(u,u\right),\mathbf{R}_{j}\left(u-v,u\right)\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\left(\begin{matrix}\mathbf{R}_{i}\left(u,u:k+p\right)\\
+\mathbf{R}_{j}\left(u-v,u:k+p\right)
+\end{matrix}\right)\leftarrow\left(\begin{matrix}c & s\\
+-s & c
+\end{matrix}\right)^{\top}\left(\begin{matrix}\mathbf{R}_{i}\left(u,u:k+p\right)\\
+\mathbf{R}_{j}\left(u-v,u:k+p\right)
+\end{matrix}\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\left(\begin{matrix}\mathbf{\tilde{Q}}\left(:,u\right) & \mathbf{\tilde{Q}}\left(:u-v+k+p\right)\end{matrix}\right)\leftarrow$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\leftarrow\left(\begin{matrix}\mathbf{\tilde{Q}}\left(:,u\right) & \mathbf{\tilde{Q}}\left(:,u-v+k+p\right)\end{matrix}\right)\left(\begin{matrix}c & s\\
+-s & c
+\end{matrix}\right)$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{R}\leftarrow\mathbf{R}_{i}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{Q}\leftarrow\tilde{\mathbf{Q}}_{m}\left(:,1:\left(k+p\right)\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+return 
+\begin_inset Formula $\left(\mathbf{Q},\mathbf{R}\right)$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The result of applying this algorithm to our trivial case of
+\begin_inset Formula $\left(\mathbf{Q}_{1},\mathbf{R}_{1},\mathbf{Q}_{2},\mathbf{R}_{2}\right)$
+\end_inset
+
+ is final QR decomposition since it is equivalent to a Givens QR with a
+ modified order of Givens operations.
+\end_layout
+
+\begin_layout Standard
+Still working on the trivial case of induction: the algorithm 
+\emph on
+QRMerge
+\emph default
+ is still not good enough though because merged matrix is now approximately
+ two times taller (not mentioning the quadrupled memory requirement to store
+ temporary buffer 
+\begin_inset Formula $\tilde{\mathbf{Q}}$
+\end_inset
+
+).
+ All benefits of blocking in terms of memory requirements are thus gone.
+ The next observation is that we actually can run the procedure 2 times
+ and output 
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+ in 2 blocks.
+ It will work since Givens operations are affecting two values in the same
+ row independently of other rows.
+ So the next step is to split algorithm into several subroutines:
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Algorithm 
+\begin_inset Formula $\mathbf{R}$
+\end_inset
+
+ mergeRonQ
+\series default
+ 
+\begin_inset Formula $\left(\mathbf{R}_{i},\mathbf{R}_{j},\mathbf{Q}_{m}\right)$
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Description
+begin
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+for 
+\begin_inset Formula $v=1:k+p$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+for 
+\begin_inset Formula $u=v:k+p$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\left[c,s\right]\leftarrow\mathrm{givens}\left(\mathbf{R}_{i}\left(u,u\right),\mathbf{R}_{j}\left(u-v,u\right)\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\left(\begin{matrix}\mathbf{R}_{i}\left(u,u:k+p\right)\\
+\mathbf{R}_{j}\left(u-v,u:k+p\right)
+\end{matrix}\right)\leftarrow\left(\begin{matrix}c & s\\
+-s & c
+\end{matrix}\right)^{\top}\left(\begin{matrix}\mathbf{R}_{i}\left(u,u:k+p\right)\\
+\mathbf{R}_{j}\left(u-v,u:k+p\right)
+\end{matrix}\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\left(\begin{matrix}\mathbf{Q}_{m}\left(:,u\right) & \mathbf{Q}_{m}\left(:u-v+k+p\right)\end{matrix}\right)\leftarrow$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\noun off
+\color none
+\begin_inset Formula $\leftarrow\left(\begin{matrix}\mathbf{Q}_{m}\left(:,u\right) & \mathbf{Q}_{m}\left(:,u-v+k+p\right)\end{matrix}\right)\left(\begin{matrix}c & s\\
+-s & c
+\end{matrix}\right)$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\begin_layout Description
+return 
+\begin_inset Formula $\mathbf{R}_{i}$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Algorithm
+\series default
+ 
+\begin_inset Formula $\left(\mathbf{Q},\mathbf{R}\right)$
+\end_inset
+
+ 
+\series bold
+mergeQrUp
+\series default
+
+\begin_inset Formula $\left(\mathbf{Q}_{d},\mathbf{R}_{d},\mathbf{R}_{s}\right)$
+\end_inset
+
+:
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Description
+begin
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\tilde{\mathbf{Q}}\leftarrow\left(\begin{matrix}\mathbf{Q}_{d} & \mathbf{0}\end{matrix}\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{R}\leftarrow\mathrm{mergeRonQ}\left(\mathbf{R}_{d},\mathbf{R}_{s},\tilde{\mathbf{Q}}\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{Q}\leftarrow\tilde{\mathbf{Q}}\left(:,1:k+p\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+return 
+\begin_inset Formula $\left(\mathbf{Q},\mathbf{R}\right)$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Algorithm 
+\series default
+
+\begin_inset Formula $\left(\mathbf{Q},\mathbf{R}\right)$
+\end_inset
+
+ 
+\series bold
+mergeQrDown
+\series default
+
+\begin_inset Formula $\left(\mathbf{R}_{d},\mathbf{Q}_{s},\mathbf{R}_{s}\right)$
+\end_inset
+
+:
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Description
+begin
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\tilde{\mathbf{Q}}\leftarrow\left(\begin{matrix}\mathbf{0} & \mathbf{Q}_{s}\end{matrix}\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{R}\leftarrow\mathrm{mergeRonQ}\left(\mathbf{R}_{d},\mathbf{R}_{s},\tilde{\mathbf{Q}}\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{Q}\leftarrow\tilde{\mathbf{Q}}\left(:,1:k+p\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+return 
+\begin_inset Formula $\left(\mathbf{Q},\mathbf{R}\right)$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+So, in the trivial case of 2 blocks (
+\begin_inset Formula $z=2$
+\end_inset
+
+), with respect to 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:q-blocking"
+
+\end_inset
+
+ we could execute 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\hat{\mathbf{Q}}_{1}=\mathrm{mergeQrUp\left(\mathbf{Q}_{1},\mathbf{R}_{1},\mathbf{Q}_{2}\right)}.\mathbf{Q}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\hat{\mathbf{Q}}_{2}=\mathrm{mergeQrDown}\left(\mathbf{R}_{1},\mathbf{Q}_{2},\mathbf{R}_{2}\right).\mathbf{Q}
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+which is equivalent to 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\left(\begin{matrix}\hat{\mathbf{Q}}_{1}\\
+\hat{\mathbf{Q}}_{2}
+\end{matrix}\right)=\mathrm{mergeQR}\left(\mathbf{Q}_{1},\mathbf{R}_{1},\mathbf{Q}_{2},\mathbf{R}_{2}\right)
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+above, which is in its turn a full Givens method solution for 
+\series bold
+Q
+\series default
+.
+\end_layout
+
+\begin_layout Standard
+Moving on.
+ For number of Q-blocks 
+\begin_inset Formula $z=3$
+\end_inset
+
+ this will look like 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\hat{\mathbf{Q}}_{1}=\mathrm{mergeQrUp}\left(\mathrm{mergeQrUp\left(\mathbf{Q}_{1},\mathbf{R}_{1},\mathbf{R}_{2}\right),\mathbf{R}_{3}}\right).\mathbf{Q};
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\hat{\mathbf{Q}}_{2}=\mathrm{mergeQrUp}\left(\mathrm{mergeQrDown}\left(\mathbf{R}_{1},\mathbf{Q}_{2},\mathbf{R}_{2}\right),\mathbf{R}_{3}\right).\mathbf{Q};
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\hat{\mathbf{Q}}_{3}=\mathrm{mergeQrDown}\left(\mathrm{mergeR}\left(\mathbf{R}_{1},\mathbf{R}_{2}\right),\mathbf{Q}_{3},\mathbf{R}_{3}\right).\mathbf{Q}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The pattern emerging from this is that in order to process Q blocks 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:q-blocking"
+
+\end_inset
+
+, one would need a sequential access to all 
+\begin_inset Formula $\mathbf{R}_{i}$
+\end_inset
+
+ (
+\emph on
+always in the same sorted order which allows for great optimization under
+ MR assumptions and which would require a rather small I/O requirement of
+ 
+\begin_inset Formula $\sim\frac{z\left(k+p\right)^{2}}{2}$
+\end_inset
+
+
+\emph default
+ ), and only current Q block as initial value.
+ By induction we infer our algorithm for 
+\begin_inset Formula $\hat{\mathbf{Q}}_{i}$
+\end_inset
+
+ in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:q-blocking"
+
+\end_inset
+
+ as:
+\begin_inset Newline newline
+\end_inset
+
+
+\series bold
+
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Plain Layout
+
+\series bold
+Algorithm 
+\begin_inset Formula $\hat{\mathbf{Q}}_{i}$
+\end_inset
+
+ computeQHatBlock 
+\begin_inset Formula $\left(\mathbf{Q}_{i},\mathrm{iterator\left(\mathbf{R}_{1},...\mathbf{R}_{z}\right)}\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Plain Layout
+This algorithm computes a 
+\begin_inset Formula $\hat{\mathbf{Q}}_{i}$
+\end_inset
+
+ block in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:q-blocking"
+
+\end_inset
+
+, given 
+\series bold
+
+\begin_inset Formula $\mathbf{Q}_{i}$
+\end_inset
+
+ 
+\series default
+and complete series 
+\begin_inset Formula $\left\{ \mathbf{R}_{i}\right\} $
+\end_inset
+
+ from qr computations of blocks 
+\begin_inset Formula $\mathbf{Y}_{i}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Description
+
+\series bold
+begin
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+let 
+\begin_inset Formula $\tilde{\mathbf{R}}\leftarrow\mathrm{iterator.fetch\left(\mathbf{R}_{1}\right)}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+for 
+\begin_inset Formula $j=2:\left(i-1\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\tilde{\mathbf{R}}\leftarrow\mathrm{mergeR}\left(\tilde{\mathbf{R}},\mathrm{iterator.fetch}\left(\mathbf{R}_{j}\right)\right)$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\begin_layout Description
+if 
+\begin_inset Formula $\left(i>1\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\left(\mathbf{Q}_{i},\tilde{\mathbf{R}}\right)\leftarrow\mathrm{mergeQrDown}\left(\tilde{\mathbf{R}},\mathbf{Q}_{i},\mathrm{iterator.fetch}\left(\mathbf{R}_{i}\right)\right)$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Description
+endif 
+\end_layout
+
+\begin_layout Description
+for 
+\begin_inset Formula $j\leftarrow i+1:z$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\left(\mathbf{Q}_{i},\tilde{\mathbf{R}}\right)\leftarrow\mathrm{mergeQrUp}\left(\mathbf{Q}_{i},\tilde{\mathbf{R}},\mathrm{iterator.fetch}\left(\mathbf{R}_{j}\right)\right)$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\begin_layout Description
+return 
+\begin_inset Formula $\mathbf{Q}_{i}$
+\end_inset
+
+ as 
+\series bold
+
+\begin_inset Formula $\hat{\mathbf{Q}}_{i}$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+There is yet another observation.
+ If we run 
+\emph on
+compute
+\begin_inset Formula $\hat{Q}$
+\end_inset
+
+Block 
+\emph default
+in succession for an ordered sequence of Q blocks then we obviously keep
+ running 
+\emph on
+mergeR 
+\emph default
+for same subsequences of 
+\series bold
+R 
+\series default
+again and again.
+ A little improvement on that would be reducing number of Rs in the R sequence
+ as we go:
+\begin_inset Newline newline
+\end_inset
+
+
+\series bold
+
+\begin_inset Newline newline
+\end_inset
+
+
+\series default
+
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Plain Layout
+
+\series bold
+Algorithm computeQHatSequence.
+\end_layout
+
+\begin_layout Plain Layout
+This algorithm computes all 
+\begin_inset Formula $\left\{ \hat{\mathbf{Q}}_{i}\right\} $
+\end_inset
+
+ and final 
+\series bold
+R 
+\series default
+in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:q-blocking"
+
+\end_inset
+
+ given individual series 
+\begin_inset Formula $\left\{ \mathbf{Q}_{i}\right\} $
+\end_inset
+
+, 
+\begin_inset Formula $\left\{ \mathbf{R}_{i}\right\} $
+\end_inset
+
+ from block-wise qr computations of blocks 
+\begin_inset Formula $\mathbf{Y}_{i}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Description
+
+\series bold
+computeQHatSequence
+\begin_inset Formula $\left(\left\{ \mathbf{Q}_{i}\right\} ,\left\{ \mathbf{R}_{i}\right\} \right)$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Description
+begin
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $s\leftarrow1$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+for i=1:z
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\mathbf{Q_{s}}\leftarrow\mathbf{Q}_{i}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\hat{\mathbf{Q}}_{i}\leftarrow\mathrm{computeQHatBlock}\left(\mathbf{Q}_{s},\mathrm{iterator}\left(\left\{ \mathbf{R}_{i}\right\} \right)\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+if ( s==2) 
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\mathbf{R}_{1}\leftarrow\mathrm{mergeR}\left(\mathbf{R}_{1},\mathbf{R}_{2}\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\left\{ \mathbf{R}_{i}\right\} \leftarrow\left\{ \mathbf{R}_{i}\right\} \backslash\left\{ \mathbf{R}_{2}\right\} $
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Description
+else s ++
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+What's more, at the end 
+\begin_inset Formula $\left\{ \mathbf{R}_{i}\right\} \equiv\left\{ \mathbf{R}\right\} \Box$
+\end_inset
+
+.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+We still go over Rs twice as really necessary since preceding call to 
+\emph on
+compute
+\begin_inset Formula $\hat{Q}$
+\end_inset
+
+Hat 
+\emph default
+already merges the R internally...
+ but it's gotta be good enough for now.
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Thus, considering a potential for MapReduce implementation, we may find
+ we need to re-distribute an individual copy of 
+\begin_inset Formula $\mathbf{R}_{1},\mathbf{R}_{2},...,\mathbf{R}_{z}$
+\end_inset
+
+to each process running series of QR merges.
+ So sequence
+\begin_inset Formula $\text{\left\{  \mathbf{R}_{i}\right\}  }$
+\end_inset
+
+may act as a side map info.
+ Good thing is that this memory is only bound by number of Q blocks (that
+ may quite high) and number of oversampled singular values 
+\begin_inset Formula $k+p$
+\end_inset
+
+.
+ Further memory scaling is aided by the fact that, as is demonstrated further,
+ we can use hierarchical approach to computation of 
+\begin_inset Formula $\left\{ \hat{\mathbf{Q}}_{i}\right\} $
+\end_inset
+
+, thus essentially unbounding algorithm for memory for either 
+\begin_inset Formula $z$
+\end_inset
+
+ or 
+\begin_inset Formula $m$
+\end_inset
+
+ (algorithm is already theoretically unbounded for 
+\begin_inset Formula $n$
+\end_inset
+
+ in terms of memory requirements).
+ 
+\end_layout
+
+\begin_layout Standard
+This is not to say that memory is completely not essential to the algorithm:
+ there's a component in flops estimate, not terribly significant, that would
+ depend on on the number of blocks 
+\begin_inset Formula $z$
+\end_inset
+
+.
+ After all, computation path of every
+\series bold
+
+\begin_inset Formula $\hat{\mathbf{Q}}_{i}$
+\end_inset
+
+ 
+\series default
+has to go thru merging all Rs one way or another.
+ So the higher 
+\begin_inset Formula $\mathbf{Q}_{i}$
+\end_inset
+
+ is, the smaller 
+\begin_inset Formula $z$
+\end_inset
+
+.
+ Flops function is not strictly linear to 
+\begin_inset Formula $z$
+\end_inset
+
+ (it's more like 
+\begin_inset Formula $\propto\frac{1}{2}\log z$
+\end_inset
+
+) but it would help to have less blocks, given this algorithm is CPU bound
+ as it is.
+ 
+\end_layout
+
+\begin_layout Subsection
+Hierarchical QR
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Hierarchical-QR"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+ComputeQHatSequence 
+\emph default
+algorithm is a one-pass algorithm which requires preloading the entire 
+\begin_inset Formula $\left\{ \mathbf{R}_{i}\right\} $
+\end_inset
+
+ sequence into memory.
+ Even though matrices 
+\begin_inset Formula $\mathbf{R}_{i}$
+\end_inset
+
+ are not directly bound to 
+\begin_inset Formula $m$
+\end_inset
+
+ (number of input rows), they are still bound by the same process memory
+ space as the height of Q-block 
+\begin_inset Formula $r$
+\end_inset
+
+.
+ This means that at some point, for a given amount of RAM in a process,
+ a maximum for length of 
+\begin_inset Formula $\left\{ \mathbf{R}_{i}\right\} $
+\end_inset
+
+ is going to be reached and upper bound for 
+\begin_inset Formula $m$
+\end_inset
+
+ can be presented by a function 
+\begin_inset Formula $m=f\left(r\right)$
+\end_inset
+
+ where 
+\begin_inset Formula $f\left(r\right)$
+\end_inset
+
+ is a function with a single global maximum.
+ Bottom line, 
+\begin_inset Formula $m$
+\end_inset
+
+ is still RAM-bound at this point, even maximum might be quite high for
+ practical purposes.
+ 
+\end_layout
+
+\begin_layout Standard
+There's another observation that allows to unbind 
+\begin_inset Formula $m$
+\end_inset
+
+ for RAM with additional passes over Q data.
+ 
+\end_layout
+
+\begin_layout Standard
+We can employ bottom-up 
+\begin_inset Formula $r$
+\end_inset
+
+-indegree divide-and-conquer aproach to evolve Q thru multiple sequences
+ of R as follows: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{Y}=\left(\begin{matrix}\cdots\\
+\mathbf{Y}_{i}\\
+\mathbf{Y}_{i+1}\\
+\mathbf{Y}_{i+2}\\
+\cdots
+\end{matrix}\right)=\begin{matrix}\cdots\\
+\left.\begin{matrix}\mathbf{Q} & \mathbf{R}\\
+\mathbf{Q} & \mathbf{R}\\
+\cdots & \cdots\\
+\mathbf{Q} & \mathbf{R}
+\end{matrix}\right]\\
+\\
+\left.\begin{matrix}\mathbf{Q} & \mathbf{R}\\
+\mathbf{Q} & \mathbf{R}\\
+\cdots & \cdots\\
+\mathbf{Q} & \mathbf{R}
+\end{matrix}\right]\\
+\\
+\left.\begin{matrix}\mathbf{Q} & \mathbf{R}\\
+\mathbf{Q} & \mathbf{R}\\
+\cdots & \cdots\\
+\mathbf{Q} & \mathbf{R}
+\end{matrix}\right]\\
+\cdots
+\end{matrix}\Rightarrow\begin{matrix}\cdots\\
+\left.\begin{matrix}\cdots & \mathbf{\cdots}\\
+\left.\begin{matrix}\mathbf{Q}\\
+\mathbf{Q}\\
+\cdots\\
+\mathbf{Q}
+\end{matrix}\right] & \mathbf{R}\\
+\\
+\left.\begin{matrix}\mathbf{Q}\\
+\mathbf{Q}\\
+\cdots\\
+\mathbf{Q}
+\end{matrix}\right] & \mathbf{R}\\
+\\
+\left.\begin{matrix}\mathbf{Q}\\
+\mathbf{Q}\\
+\cdots\\
+\mathbf{Q}
+\end{matrix}\right] & \mathbf{R}\\
+\cdots & \cdots
+\end{matrix}\right]\\
+\cdots
+\end{matrix}\Rightarrow\cdots\Rightarrow\begin{matrix}\left.\begin{matrix}\mathbf{\cdots}\\
+\mathbf{\hat{Q}}\\
+\mathbf{\hat{Q}}\\
+\cdots\\
+\mathbf{\hat{Q}}\\
+\\
+\mathbf{\hat{Q}}\\
+\mathbf{\hat{Q}}\\
+\cdots\\
+\mathbf{\hat{Q}}\\
+\\
+\mathbf{\hat{Q}}\\
+\mathbf{\hat{Q}}\\
+\cdots\\
+\mathbf{\hat{Q}}\\
+\cdots
+\end{matrix}\right] & \hat{\mathbf{R}}\end{matrix}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Indeed, since source blocks for merging 
+\begin_inset Formula $\mathbf{QR}$
+\end_inset
+
+ decomposition are 
+\begin_inset Formula $\mathbf{QR}$
+\end_inset
+
+ decompositions themselves, 
+\begin_inset Formula $\hat{\mathbf{Q}}$
+\end_inset
+
+ computation can be made hierarchically-recursive.
+ 
+\end_layout
+
+\begin_layout Standard
+We start at the bottom of tree and merge smaller 
+\series bold
+QR 
+\series default
+sequences into longer ones.
+ Each pass is rougly a map-only MapReduce job.
+ Nodes in the tree have rather high outdegree (~1000).
+ Thus a tree corresponding to 2 passes would have depth tree and can merge
+ up more than a million leaves, which each leaf being a rather high Q block.
+ If Q block can be at least 1000 rows high (and our memory resources can
+ easily allow much taller Q blocks) then we can scale current 2-pass approach
+ to over than a billion rows.
+\end_layout
+
+\begin_layout Standard
+Suppose initially we have same input as for the 
+\emph on
+computeQHatSequence 
+\emph default
+algorithm, i.e.
+ two sequences 
+\begin_inset Formula $\left\{ \mathbf{Q}_{i}\right\} ,$
+\end_inset
+
+ 
+\begin_inset Formula $\left\{ \mathbf{R}_{i}\right\} $
+\end_inset
+
+.
+ The next step is to split them further into subsequences 
+\begin_inset Formula $\left\{ \left\{ \left(\mathbf{Q}_{j},\mathbf{R}_{j}\right)\right\} _{i}\right\} $
+\end_inset
+
+.
+ For simplicity, let's denote members of new subsequences with a double
+ subscript notation such as 
+\begin_inset Formula $\mathbf{Q}_{j,i}$
+\end_inset
+
+ in order to denote 
+\begin_inset Formula $j$
+\end_inset
+
+-th q-block in 
+\begin_inset Formula $i$
+\end_inset
+
+-th group.
+ How we group them into new subsequences is not important, what important
+ is that 
+\begin_inset Formula $\forall\, i:\,\mathbf{Q}_{i}\equiv\mathbf{Q}_{j,s}\rightarrow\mathbf{R}_{i}\equiv\mathbf{R}_{j,s}$
+\end_inset
+
+ and the length of each subsequence group is small enough so that we can
+ preload the entire subsequence 
+\begin_inset Formula $\left\{ \mathbf{R}_{j}\right\} _{i}$
+\end_inset
+
+ into memory of a single process.
+ Let's assume the split algorithm is available as a subroutine that posseses
+ the aforementioned properties.
+\end_layout
+
+\begin_layout Standard
+The next step is to apply 
+\emph on
+computeQHatSequence 
+\emph default
+algorithm to each of the subsequences.
+ In this algorithm, we only will have to preload R subsequences for individual
+ split only.
+ The output of this hence will have only one 
+\begin_inset Formula $\hat{\mathbf{R}}$
+\end_inset
+
+ and the same number of q-blocks which we can denote as 
+\begin_inset Formula $\left\{ \left\{ \hat{\mathbf{Q}}_{j}\right\} _{i}\right\} ,$
+\end_inset
+
+
+\begin_inset Formula $\left\{ \hat{\mathbf{R}}_{i}\right\} $
+\end_inset
+
+ .
+ Each subsequence 
+\begin_inset Formula $\left\{ \left\{ \hat{\mathbf{Q}}_{j}\right\} _{i}\right\} $
+\end_inset
+
+ then can be regarded as 
+\begin_inset Formula $\left\{ \mathbf{Q}_{i}\right\} $
+\end_inset
+
+ and the split-and-merge steps repeat until there's only one 
+\begin_inset Formula $\hat{\mathbf{R}}$
+\end_inset
+
+ left (i.e., more formally, until 
+\begin_inset Formula $\left\Vert \left\{ \mathbf{\hat{R}}_{i}\right\} \right\Vert =1$
+\end_inset
+
+).
+ 
+\end_layout
+
+\begin_layout Standard
+Now we can try to produce a formal description of hierarchical QR.
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+First, we need a slightly modified version of 
+\emph on
+ComputeQHatSequence
+\emph default
+ algorithm that allows to work with groups of q-blocks:
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Plain Layout
+
+\series bold
+Algorithm computeQHatSequence2.
+\end_layout
+
+\begin_layout Plain Layout
+This algorithm computes all 
+\begin_inset Formula $\left\{ \hat{\mathbf{Q}}_{i}\right\} $
+\end_inset
+
+ and final 
+\series bold
+R 
+\series default
+in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:q-blocking"
+
+\end_inset
+
+ given individual series 
+\begin_inset Formula $\left\{ \left\{ \mathbf{Q}_{j}\right\} _{i}\right\} $
+\end_inset
+
+, 
+\begin_inset Formula $\left\{ \mathbf{R}_{i}\right\} $
+\end_inset
+
+ of intermediate QR products
+\end_layout
+
+\begin_layout Description
+
+\series bold
+\begin_inset Formula $\left(\left\{ \hat{\mathbf{Q}}_{j}\right\} ,\mathbf{R}\right)$
+\end_inset
+
+computeQHatSequence2
+\begin_inset Formula $\left(\left\{ \left\{ \mathbf{Q}_{j}\right\} _{i}\right\} ,\left\{ \mathbf{R}_{i}\right\} \right)$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Description
+begin
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $u\leftarrow1,v\leftarrow1$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $z=\left\Vert \left\{ \mathbf{R}_{s}\right\} \right\Vert $
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+for 
+\begin_inset Formula $l=1:z$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+for 
+\begin_inset Formula $k=1:\left\Vert \left\{ \mathbf{Q}_{j}\right\} _{l}\right\Vert $
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+begin
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\hat{\mathbf{Q}}_{v}\leftarrow\mathrm{computeQHatBlock}\left(\mathbf{Q}_{k,l},\mathrm{iterator}\left(\left\{ \mathbf{R}_{i}\right\} \right)\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $v\leftarrow v+1$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\begin_layout Description
+if ( u==2) 
+\end_layout
+
+\begin_layout Description
+then
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\mathbf{R}_{1}\leftarrow\mathrm{mergeR}\left(\mathbf{R}_{1},\mathbf{R}_{2}\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\left\{ \mathbf{R}_{i}\right\} \leftarrow\left\{ \mathbf{R}_{i}\right\} \backslash\left\{ \mathbf{R}_{2}\right\} $
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Description
+else 
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $u\leftarrow u+1$
+\end_inset
+
+ 
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{R}\leftarrow\mathbf{R}_{1}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+return 
+\begin_inset Formula $\left(\left\{ \hat{\mathbf{Q}}\right\} ,\mathbf{R}\right)$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Next, we can define a pseudo code for hierarchical QR merge process.
+ Note that this is pseudocode that is logical only and never really implemented
+ sequentially as presented:
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Paragraph
+Algorithm HierarchicalQR.
+\end_layout
+
+\begin_layout Plain Layout
+This algorithm compiles full reordered Givens QR of initial blocked input
+ per 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:q-blocking"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\left\{ \hat{\mathbf{Q}}_{i}\right\} ,\mathbf{R}$
+\end_inset
+
+ 
+\series bold
+HierarchicalQR
+\series default
+ 
+\begin_inset Formula $\left(\left\{ \left\{ \mathbf{Q}_{j}\right\} _{i}\right\} ,\left\{ \mathbf{R}_{i}\right\} ,\,\mbox{maxRseqLen}\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+begin
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+if 
+\begin_inset Formula $\left\Vert \left\{ \mathbf{R}_{i}\right\} \right\Vert >\mbox{maxRseqLen }$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+then 
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+groups = split input into maxRSeqLen groups; // 
+\emph on
+this will set up MR pass
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+actually we only need to split R sequences between passes.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mbox{input}\leftarrow\emptyset$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+foreach group in 
+\series bold
+groups
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+input 
+\begin_inset Formula $=$
+\end_inset
+
+input 
+\begin_inset Formula $\cup$
+\end_inset
+
+ HierarchicalQR(group)
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_deeper
+\begin_layout Description
+else 
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+input=
+\begin_inset Formula $\left(\left\{ \left\{ \mathbf{Q}_{i}\right\} _{j}\right\} ,\left\{ \mathbf{R}_{i}\right\} \right)$
+\end_inset
+
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\begin_layout Description
+return computeQHatSequence2(input, maxRseqLen)
+\end_layout
+
+\end_deeper
+\begin_layout Description
+end
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The idea behind multiple passes is that we keep splitting R sequences into
+ groups such that group of Rs is sufficiently small to be loaded into a
+ map process, and run 
+\emph on
+computeQHatSequence2
+\emph default
+ on each group in parallel so that each group will produce a single R.
+ Thus, new R-sequence will have significantly smaller number of Rs.
+ Realistically, if we can hope to fit 1000 
+\begin_inset Formula $k+p\times k+p$
+\end_inset
+
+ triangular matrices in memory, then with each pass we can reduce length
+ of 
+\begin_inset Formula $\left\{ \mathbf{R}_{i}\right\} $
+\end_inset
+
+ 1000 times.
+ With current implementation illustrated in fig.
+ 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "fig:illustration-of-hierarhical"
+
+\end_inset
+
+ we have only 2 passes in which we can reasonably expect to be able to compute
+ 1,000,000 Rs (and also Q blocks) assuming some reasonable block height
+ 
+\begin_inset Formula $r$
+\end_inset
+
+.
+ Suppose under these arrangements the height of the Q block can be at least
+ 
+\begin_inset Formula $1,000\times(k+p\approx500)=4\mbox{Mb}$
+\end_inset
+
+ then we can orthogonalize 1 billion rows of input matrix 
+\series bold
+Y
+\series default
+.
+ But of course expectation is that 
+\begin_inset Formula $r$
+\end_inset
+
+ can be quite more than 1,000 to maximize 
+\begin_inset Formula $m$
+\end_inset
+
+, in which case we can easily overshoot 1 bln rows scale for some combination
+ of reasonable RAM and 
+\begin_inset Formula $r$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+MapReduce considerations and optimizations 
+\end_layout
+
+\begin_layout Subsection
+QR MapReduce optimizations
+\end_layout
+
+\begin_layout Itemize
+Since source blocks for merging 
+\begin_inset Formula $\mathbf{QR}$
+\end_inset
+
+ decomposition are 
+\begin_inset Formula $\mathbf{QR}$
+\end_inset
+
+ decompositions themselves, 
+\begin_inset Formula $\hat{\mathbf{Q}}$
+\end_inset
+
+ computation can be made hierarchically-recursive.
+ E.g.
+ each mapper can compute small blocks, then combiner would produce a larger
+ block, and the larger blocks can again be input to the next level computation
+ of 
+\begin_inset Formula $\hat{\mathbf{Q}}$
+\end_inset
+
+.
+
+\emph on
+ 
+\emph default
+Essentially what this achieves is reducing number of R matrices to number
+ of mappers which makes it more feasible to fit in memory at the next stage
+ of the hierarchical merge (not to mention moving some significant computational
+ load from reducers to combiners.
+ Short version, if 
+\begin_inset Formula $\mathbf{Q}_{i,j}$
+\end_inset
+
+ is a 
+\emph on
+j
+\emph default
+-th block produced in 
+\emph on
+i-
+\emph default
+th mapper, then final block 
+\begin_inset Formula $\left\{ \hat{\mathbf{Q}}_{i,j}\right\} =\mathrm{compute\hat{Q}Block}|_{i}\left(\mathrm{compute\hat{Q}Block}|_{j}\left(\mathbf{Q}_{i,j,}\left\{ \mathbf{R}_{i*}\right\} \right),\left\{ \mathbf{R}_{*}\right\} \right)$
+\end_inset
+
+ (here I omit details of merging intermediate Rs).
+ The inner algorithm is run in combiner and outer algorithm is run in reducer/ne
+xt step mappers.
+ Quick illustration of the hierarchy is in fig.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:illustration-of-hierarhical"
+
+\end_inset
+
+.
+ More formal definition of this process for any number of hierarchical passes
+ was given in § 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Hierarchical-QR"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+It doesn't look like we have anything to gain from shuffle-and-sort.
+ Makes sense to run 2 mapper-only jobs rather than one MR.
+ Indeed, Rs are already coming in the order we need, out of map processing,
+ and so are the Q blocks.
+ We wouldn't even need to use combiners had we not wanted to revisit all
+ Q blocks we just produced with the full R order available.
+ The downside is that it is going to produce a lot of small partition files
+ (one per mapper).
+ But that's all temporary data.
+ Also, in context of SSVD computation, the next mapper can proceed and finish
+ with computation of 
+\begin_inset Formula $\mathbf{B}^{\top}$
+\end_inset
+
+, so running it in the next mapper actually shortens overall execution time
+ by skipping the need for one shuffle-sort-reduce parts (which are usually
+ the most voluminous parts of any MR process).
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename HierarchicalQRMergimg.png
+	width 12cm
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+illustration of hierarchical recursive application of 
+\emph on
+computeQHatSequence
+\emph default
+ routines.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:illustration-of-hierarhical"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Packing triangular matrices
+\end_layout
+
+\begin_layout Standard
+We are packing an (upper) triangular matrix 
+\begin_inset Formula $\mathbf{R}\in\mathbb{R}^{n}$
+\end_inset
+
+ into a vector 
+\begin_inset Formula $\boldsymbol{\alpha}\in\mathbb{R}^{r}$
+\end_inset
+
+ and the following defines the transformations 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+r=n(n+1)/2
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+n=\frac{-1+\sqrt{1+8\cdot r}}{2}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Coordinates mapping: if 
+\begin_inset Formula $\forall\, i,j\,,i\in[0,n-1],\, j\in[0,n-1]\,\rightarrow\,\exists\, l\in[0,r-1]:\,\mathbf{R}_{i,j}=\boldsymbol{\alpha}_{l}$
+\end_inset
+
+; and if 
+\begin_inset Formula $\forall\, l\,\exists\, i,j:\,\rightarrow\boldsymbol{\alpha}_{l}=\mathbf{R}_{i,j}$
+\end_inset
+
+ then we denote such index transformation by 
+\begin_inset Formula $l=f(i,j)$
+\end_inset
+
+.
+ The solution for 
+\begin_inset Formula $f(\cdot)$
+\end_inset
+
+ I used is:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+l=f\left(i,j\right)=\frac{n+(n-i+1)}{2}i+\left(j-i\right)=\frac{\left(2n-i+1\right)i}{2}+\left(j-i\right)
+\]
+
+\end_inset
+
+and then I defined that 
+\begin_inset Formula 
+\[
+\mathbf{R}_{i,j}=\boldsymbol{\alpha}_{f\left(i,j\right)}
+\]
+
+\end_inset
+
+(assuming all indices start with 0, like they do in java).
+\end_layout
+
+\begin_layout Subsection
+Growing and trimming Q block on demand
+\end_layout
+
+\begin_layout Standard
+When we reach end of an input corresponding to Q block computation, we need
+ to make sure mapper still has at least another 
+\begin_inset Formula $k+p$
+\end_inset
+
+ inputs for the next last block.
+ If it turns out it doesn't, we need to add the remainder rows to the current
+ block.
+ That means that we may need to be able to grow 
+\begin_inset Formula $\tilde{\mathbf{Q}}$
+\end_inset
+
+ buffer by 
+\begin_inset Formula $\Delta<k+p$
+\end_inset
+
+ on the top to increase number of rows in the output Q block (Fig.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:growing-Q-block"
+
+\end_inset
+
+).
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename Growing Q Block.pdf
+	width 12cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+growing Q block
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:growing-Q-block"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Similarly, the solver can 'trim' the block if computation ends early (between
+ 
+\begin_inset Formula $k+p$
+\end_inset
+
+ and 
+\begin_inset Formula $r$
+\end_inset
+
+ rows).
+\end_layout
+
+\begin_layout Section
+SSVD Map Reduce steps 
+\end_layout
+
+\begin_layout Subsection
+Q-Job
+\end_layout
+
+\begin_layout Standard
+This is a map-only job.
+ Shuffle and sort is unnecessary (well, it does have a reducer configured,
+ although it doesn't send anything to it, since otherwise combiners would
+ not fire).
+ Hence this job is more scalable than a regular MapReduce job that involves
+ shuffle-and-sort.
+\end_layout
+
+\begin_layout Subsubsection
+Mapper
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Mapper-QJob"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The mappers compute Y rows as 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\left(\mathbf{Y}_{i,*}\right)^{\top}=\left(\mathbf{A}_{i,*}\right)^{\top}\boldsymbol{\Omega}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Each mapper then feeds Y rows into 
+\emph on
+ThinStreamingQR1 
+\emph default
+algorithm until block size of 
+\begin_inset Formula $r$
+\end_inset
+
+ is reached.
+ Thus blocks of 
+\series bold
+A 
+\series default
+and 
+\series bold
+Y
+\series default
+ are only conceptual but are never formed in memory.
+ 
+\end_layout
+
+\begin_layout Standard
+After 
+\begin_inset Formula $r$
+\end_inset
+
+ rows of 
+\begin_inset Formula $\mathbf{Y}$
+\end_inset
+
+ are consumed by algorithm, 
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{R}$
+\end_inset
+
+ blocks are collected.
+ In this version mapper does a second pass over 
+\series bold
+
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+ 
+\series default
+data (unless there's exactly one 
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+ block has been computed
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+In reality, if we don't increase split sizes using --minsplitsize, then
+ we always can load 1 hdfs block worth of data in memory.
+ But since we are forming Q blocks which presumably require even less memory
+ than blocks of 
+\series bold
+
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+
+\series default
+, then in reality our Q blocks should always be able to fit into memory
+ for the entire mapper input and the case of exactly 1 Q block formed in
+ a mapper pass should be the norm.
+ Which, it it's turn, means there's no need for a second pass in the mapper
+ mentioned here.
+ Indeed, optimization is such that no temporary side Q file is created in
+ mappers unless we encounter more than 1 Q block in a mapper pass.
+ Bottom line, the second pass mentioned here is largely expected to be rather
+ an exception than a rule and is necessary mostly with unusually high 
+\family typewriter
+\size scriptsize
+--minsplitsize
+\family default
+\size default
+ parameter.
+ But by the time this unusally large split happens, we should be able to
+ switch to more ad hoc efficient reducer-side first phase QR which will
+ be available in the 
+\emph on
+ssvd-wide 
+\emph default
+branch as an alternative execution flow.
+ Which means, in theory, we should never have a need for second passes here.
+ 
+\end_layout
+
+\end_inset
+
+) so 
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+ block is flushed to a local temp file but 
+\begin_inset Formula $\mathbf{R}$
+\end_inset
+
+ sequence is accumulated in the memory.
+ for case of 
+\begin_inset Formula $k+p=500$
+\end_inset
+
+, 
+\begin_inset Formula $\mathbf{R}$
+\end_inset
+
+ matrix would occupy approximately 1Mb, uncompressed.
+ Thus, optimal use of RAM is achieved by tweaking 
+\begin_inset Formula $r$
+\end_inset
+
+ parameter (block height) which affects both length of
+\series bold
+ 
+\begin_inset Formula $\left\{ \mathbf{R}\right\} $
+\end_inset
+
+
+\series default
+ sharing memory with single 
+\series bold
+
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+ 
+\series default
+block at the peak RAM load.
+ 
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+A nuance here is that QR can only be compiled if there are at least 
+\begin_inset Formula $k+p$
+\end_inset
+
+ rows of 
+\series bold
+Y
+\series default
+, so in order to ensure that, a lookahead buffer for Y rows is maintained.
+ If end of stream is encountered, the lookahead buffer is just added to
+ current 
+\emph on
+ThinStreamingQR1 
+\emph default
+computation, thus ensuring the last block will have at least 
+\begin_inset Formula $k+p$
+\end_inset
+
+ rows in it.
+ If 
+\begin_inset Formula $n$
+\end_inset
+
+ becomes large enough that Hadoop splits do not include even 
+\begin_inset Formula $k+p$
+\end_inset
+
+ rows of 
+\series bold
+A
+\series default
+, then 
+\emph on
+minSplitSize 
+\emph default
+parameter should be used.
+ Current Hadoop's 
+\emph on
+FileInputFormat
+\emph default
+ implementation ensures that the last split is at least 
+\begin_inset Formula $1.1\times minSplitSize$
+\end_inset
+
+ large.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Once all Q blocks are flushed into a local file, the stored Q sequence is
+ considered again in the same order.
+ Processing of 
+\begin_inset Formula $\left\{ \mathbf{Q}_{i}\right\} $
+\end_inset
+
+, 
+\begin_inset Formula $\left\{ \mathbf{R}_{i}\right\} $
+\end_inset
+
+ is done per 
+\emph on
+ComputeQHatSequence
+\emph default
+ algorithm and HFDS 
+\emph on
+MultipleOutputs
+\emph default
+ are used to store one 
+\begin_inset Formula $\mathbf{R}_{i}$
+\end_inset
+
+ and 
+\begin_inset Formula $\left\{ \hat{\mathbf{Q}}_{i,j}^{\top}\right\} $
+\end_inset
+
+ where 
+\begin_inset Formula $i$
+\end_inset
+
+ is the mapper's task id, as the mapper's output.
+ This is a first level of R merging illustrated in fig.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:illustration-of-hierarhical"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+\begin_inset Formula $\mathbf{B}^{\top}$
+\end_inset
+
+-Job
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Bt-Job"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This job completes Q merge hierarchy in mappers, and produces two outputs:
+ final 
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{B}^{\top}$
+\end_inset
+
+.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Since all matrices are produced as row-wise sequence files, notation 
+\begin_inset Formula $\mathbf{B}^{\top}$
+\end_inset
+
+ and such just imply that matrix 
+\begin_inset Formula $\mathbf{B}$
+\end_inset
+
+ is produced column-wise.
+\end_layout
+
+\end_inset
+
+ .
+\end_layout
+
+\begin_layout Subsubsection
+Mapper 
+\end_layout
+
+\begin_layout Standard
+The mapper runs a variation of 
+\emph on
+ComputeQHatSequence 
+\emph default
+algorithm at the next level of hierarchy to produce final blocks 
+\begin_inset Formula $\left\{ \hat{\mathbf{Q}}_{i}^{\top}\right\} $
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{R}$
+\end_inset
+
+ as has already been refered to fig.
+ 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "fig:illustration-of-hierarhical"
+
+\end_inset
+
+ previously.
+ After 
+\begin_inset Formula $\hat{\mathbf{Q}}_{i}^{\top}$
+\end_inset
+
+ fragment is computed, it is transposed and output row-wise into Q side
+ file
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Since 
+\series bold
+\size normal
+Y
+\series default
+ rows are fed into 
+\emph on
+ThinStreamingQR1
+\emph default
+ in direct order, instead of inverse, the columns of 
+\begin_inset Formula $\hat{\mathbf{Q}}^{\top}$
+\end_inset
+
+ are produced in inverse order.
+ Hence, we need to flip 
+\begin_inset Formula $\hat{\mathbf{Q}}$
+\end_inset
+
+ row-wise after transposition before outputing it and being able to use
+ it to form outer products 
+\begin_inset Formula $\mathbf{Q}_{i,*}\left(\mathbf{A}_{i,*}\right)^{\top}$
+\end_inset
+
+.
+ Also, 
+\begin_inset Formula $\hat{\mathbf{Q}}$
+\end_inset
+
+ rows inherit labels from correpsonding 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ rows so we can use them later to label 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+ rows.
+\end_layout
+
+\end_inset
+
+.
+ Also, it is used to compute outer products per 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\mathbf{B}^{\top}=\sum_{i}^{m}\mathbf{Q}_{i,*}\left(\mathbf{A}_{i,*}\right)^{\top}.\label{eq:Btsummation}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The main input is 
+\series bold
+A 
+\series default
+with exactly the same split as was used in §
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Mapper-QJob"
+
+\end_inset
+
+
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+This hugely relies the fact that 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ is split exactly the same way in Q-job and 
+\begin_inset Formula $\mathbf{B}^{\top}$
+\end_inset
+
+-job and tasks with the same task ids in these jobs receive exactly the
+ same input rows of 
+\series bold
+A
+\series default
+, which at present seems to hold.
+ I'd prefer to have a patch that would actually serialize splits produced
+ for 
+\series bold
+A 
+\series default
+in the 
+\series bold
+Q-
+\series default
+job and re-uses them for 
+\begin_inset Formula $\mathbf{B}^{\top}$
+\end_inset
+
+-job to avoid unexpected surprises.
+ But in the current implementation, it just relies on Hadoop to do this
+ idempotently.
+ I haven't tested situation when A might be presented by multiple files,
+ which often might be the case if A is a result of a MR job.
+\end_layout
+
+\end_inset
+
+.
+ The second input is Q-Job file corresponding to the same task id.
+ This ensures that Q rows are produced along with corresponding A rows.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Combiner
+\end_layout
+
+\begin_layout Subsubsection
+Reducer
+\end_layout
+
+\begin_layout Standard
+Reducer and combiner are exactly the same and doing regular reduction of
+ outer products as in any matrix multiplication, to finalize partial sums
+ in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:Btsummation"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Reducer now also produces upper triangular sums of 
+\begin_inset Formula $\mathbf{BB}^{\top}$
+\end_inset
+
+.
+ Since 
+\begin_inset Formula $\mathbf{BB}^{\top}$
+\end_inset
+
+ is symmetrical, it is sufficient to sum up just an upper triangular part
+ of all the outer products.
+ After a reducer finishes summing up a row of 
+\begin_inset Formula $\mathbf{B}^{\top}$
+\end_inset
+
+ matrix 
+\begin_inset Formula $\mathbf{b}_{i}$
+\end_inset
+
+, outer product 
+\begin_inset Formula $\mathbf{b}_{i}\mathbf{b}_{i}^{\top}$
+\end_inset
+
+
+\series bold
+ 
+\series default
+is added to accumulator 
+\begin_inset Formula $\left[\mathbf{BB}^{\top}\right]_{l}$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+\left[\mathbf{BB}^{\top}\right]_{l}\leftarrow\left[\mathbf{BB}^{\top}\right]_{l}+\mathbf{B}_{i,*}\mathbf{B}_{i,*}{}^{\top}.
+\]
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+At the end of the reducing, 
+\begin_inset Formula $L$
+\end_inset
+
+ partial sums are created, one per reducer.
+\end_layout
+
+\begin_layout Subsection
+Front-end step
+\end_layout
+
+\begin_layout Subsubsection
+Finishing summing up 
+\begin_inset Formula $\mathbf{BB}^{\top}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This takes individual partial sums which are 
+\begin_inset Formula $\left(k+p\right)\times\left(k+p\right)$
+\end_inset
+
+ upper-triangulars, and sums them up 
+\begin_inset Formula 
+\[
+\mathbf{BB}^{\top}=\sum_{l=1}^{L}\left[\mathbf{BB}^{\top}\right]_{l}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Since input matrices are tiny, running it on frontend even on output of
+ couple of thousands of reducers should not be a performance bottleneck.
+ Perhaps we could improve this a little by parallelizing the I/O part but
+ at this point it is just done sequentially with no noticeable impact.
+\end_layout
+
+\begin_layout Subsubsection
+Eigen decomposition
+\end_layout
+
+\begin_layout Standard
+Eigen decomposition is run in frontend: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{BB}^{\top}=\mathbf{\hat{U}}\boldsymbol{\Lambda}\mathbf{\hat{U}}^{\top},\,\,
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{BB}^{\top}\in\mathbb{R}^{\left(k+p\right)\times\left(k+p\right)}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Singular values are computed as 
+\begin_inset Formula $s_{i}=\sqrt{\sigma_{i}}$
+\end_inset
+
+, where 
+\begin_inset Formula $\sigma_{i}$
+\end_inset
+
+ is i-th eigenvalue (from i-th row on the main diagonal of 
+\begin_inset Formula $\boldsymbol{\Lambda}$
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Subsection
+U-, V- Jobs
+\end_layout
+
+\begin_layout Standard
+These jobs are optional (called when output is requested) and are trivial
+ matrix multiplication jobs per formulations given in §
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "sub:Modified-SSVD-method"
+
+\end_inset
+
+.
+ If both computations are requested, they are spawned as parallel multiplication
+ jobs (similar to 
+\begin_inset Quotes eld
+\end_inset
+
+parallel query
+\begin_inset Quotes erd
+\end_inset
+
+ optimization used in Pig).
+ The jobs use outputs of §
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Bt-Job"
+
+\end_inset
+
+.
+ 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+ rows receive correspondent labels from 
+\series bold
+A
+\series default
+.
+ 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ rows just receive ordinals 
+\begin_inset Formula $[0,n)$
+\end_inset
+
+.
+ Only ints are supported as labels as of the time of this writing (which
+ means 
+\series bold
+A 
+\series default
+can only have 4 billion uniquely labeled rows.
+ This limitation is perhaps a 
+\emph on
+TODO
+\emph default
+).
+ Also, since thin SVD rank is meant to be 
+\begin_inset Formula $k$
+\end_inset
+
+ (not 
+\begin_inset Formula $k+p$
+\end_inset
+
+), I use only parts of 
+\begin_inset Formula $\hat{\mathbf{U}}$
+\end_inset
+
+ and 
+\begin_inset Formula $\boldsymbol{\Sigma}^{-1}$
+\end_inset
+
+ as described below.
+\end_layout
+
+\begin_layout Subsubsection
+U-Job
+\end_layout
+
+\begin_layout Standard
+U-Job is a mapReduce job that works row-wise thru
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{U}_{i,*}=\left(\mathbf{Q}_{i,*}\right)^{\top}\hat{\mathbf{U}}\left(:,1:k\right).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Hence, U-job is a map-only job.
+\end_layout
+
+\begin_layout Standard
+Alternatively, solver may compute a shared similarity space output for U
+ as 
+\begin_inset Formula 
+\[
+\mathbf{U}_{\sigma}=\mathbf{U}\boldsymbol{\Sigma}^{0.5}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+if requested by a command line option.
+ Here, notation 
+\begin_inset Formula $\mathbf{U}_{\sigma}$
+\end_inset
+
+ implies, for lack of a better one, that U columns are scaled using singular
+ values to a similarity space shared by both 
+\begin_inset Formula $\mathbf{U}_{\sigma}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{V}_{\sigma}$
+\end_inset
+
+.
+ Notation 
+\begin_inset Formula $\boldsymbol{\Sigma}^{0.5}$
+\end_inset
+
+ implies 
+\begin_inset Formula 
+\[
+\boldsymbol{\Sigma}^{0.5}=\left(\begin{matrix}\sqrt{\sigma_{1}} & 0 & \cdots & 0\\
+0 & \sqrt{\sigma_{2}} & \cdots & 0\\
+\vdots & \vdots & \ddots & \vdots\\
+0 & 0 & \cdots & \sqrt{\sigma_{k}}
+\end{matrix}\right).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+V-Job
+\end_layout
+
+\begin_layout Standard
+Similarly to U-Job, V-Job is a map-only mapReduce job that works row-wise
+ via 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{V}_{i,*}=\left(\mathbf{B}_{i,*}^{\top}\right)^{\top}\hat{\mathbf{U}}\left(:,1:k\right)\boldsymbol{\Sigma}^{-1}\left(1:k,1:k\right).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Alternatively, solver may compute a shared similarity space output for 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ as 
+\begin_inset Formula 
+\[
+\mathbf{V}_{\sigma}=\mathbf{V}\boldsymbol{\Sigma}^{0.5}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+if requested by a command line option.
+\end_layout
+
+\begin_layout Section
+Issues and future work 
+\end_layout
+
+\begin_layout Subsection
+\begin_inset Quotes eld
+\end_inset
+
+Supersplits
+\begin_inset Quotes erd
+\end_inset
+
+ in MapReduce
+\end_layout
+
+\begin_layout Paragraph
+Row wise format poses fundamental limitation on block formation (vertical
+ blocking only), thus putting forward a requirement for huge MR split sizes
+ far exceeding what is deemed common and practical hdfs block sizes.
+\end_layout
+
+\begin_layout Standard
+Indeed, by my estimates, with 
+\begin_inset Formula $k+p=500$
+\end_inset
+
+, and assuming hdfs block size of 128Mb, expectation for mapper data downloads
+ with this current approach starts to exceed 50% of the split size at about
+ ~30,000-50,000 non-zero elements in rows of A.
+ With 
+\begin_inset Formula $n=300,000$
+\end_inset
+
+ for a dense data we can expect up to 90% of A data to be moved around just
+ be loaded in mappers (assuming a large machine cluster).
+ With larger 
+\begin_inset Formula $n$
+\end_inset
+
+ these numbers only increase.
+ It may not be a big problem for moderate size clusters and moderate size
+ inputs, but for huge clusters (thousand nodes) it may prove to be a challenge
+ (imo).
+ I dont have first hand experience of working with hardware of this scale,
+ so it's hard for me to put forward any further estimates.
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+In terms of solution
+\emph default
+, intriguing possiblity that might solve supersplit problem completely is
+ blockwise input format.
+ 
+\end_layout
+
+\begin_layout Standard
+Within the limitations of row-wise format and absent of blockwise format,
+ the next best thing may be to devise a strategy of semi-automatic detection
+ of the situations when 
+\begin_inset Formula $k+p$
+\end_inset
+
+ blocks of 
+\series bold
+A 
+\series default
+start exceeding HDFS block size.
+ Like it is shown above, it is actually expected to happen fairly quickly
+ with growth either 
+\begin_inset Formula $n$
+\end_inset
+
+ or number of requested singular values 
+\begin_inset Formula $k+p$
+\end_inset
+
+.
+ When this happens, a slightly modified flow may kick in.
+ In that flow, we preprocess A in the mapper row-by-row and generate Y rows
+ and then send them to reducer for the first pass of QR hierarchical processing
+ to happen there.
+ We'd still be moving around a lot of data thru shuffle and sort, but it's
+ much easier to move Y data around than A data, since Y is only 
+\begin_inset Formula $k+p$
+\end_inset
+
+ wide as opposed to A which may span millions in width.
+ If we consider A in a row by row fashion, then supersplit problem would
+ not realistically cause more than 50% of A data move up to a couple of
+ million of non-zero elements in rows of A.
+ Another time matrix A comes into contact with our data is computation of
+ 
+\begin_inset Formula $\mathbf{B}^{\top}$
+\end_inset
+
+.
+ At this point, a finer organization of Q data may be required to find starting
+ point for map-side join with A data (HFile or MapFile come to mind as possible
+ venues).
+ 
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Quotes eld
+\end_inset
+
+ssvd-wide
+\begin_inset Quotes erd
+\end_inset
+
+ git branch is slated to address this solution in ssvd-lsi github repo.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Lack of preprocessing capabilities of matrix data is wasteful on RAM with
+ wider matrices when packed with DistributeRowMatrix format
+\end_layout
+
+\begin_layout Standard
+This algorithm may consider matrix 
+\series bold
+A 
+\series default
+element by element.
+ However, as of the time of this writing implementation of 
+\emph on
+VectorWritable 
+\emph default
+doesn't allow sequential consumption of matrix elements without preloading
+ the entire vector in memory.
+ In case 1 million non-zero elements in incoming vector, the prebuffering
+ RAM space reaches 8Mb or more, for 100 million vector it would require
+ 1G just to get access to single next element of matrix A.
+ Considering the fact that this SSVD implementation is theoretically memory-unbo
+und for 
+\begin_inset Formula $n$
+\end_inset
+
+ (width) of 
+\series bold
+A
+\series default
+, this situation strikes me as being severely off-balance between effort
+ going into SSVD algorithm efficiency and serialization framework.
+ 
+\end_layout
+
+\begin_layout Standard
+However one doesn't have to operate with 1Gb long vectors to start feeling
+ the pain.
+ Consider situation (which was confirmed to be somewhat typical with recommender
+s) where occasionally a 100mb long vector for an extremely popular item
+ may occur.
+ With default mapper setting in hadoop of -Xmx200m that means 50% of mapper
+ RAM has to be dedicated to prebuffering occuring in VectorWritable, with
+ the rest being available to the algorithm.
+ What's worse, we have to do that allocation even though long vectors are
+ occurring only 0.1% or so, so that memory is wasted while algorithm running
+ time suffers.
+ That may become quite a showstopper in some computations dealing with unevenly
+ sparse data whereas it doesn't have to be.
+\end_layout
+
+\begin_layout Standard
+Another opportunity to improve is that 
+\emph on
+VectorWritable 
+\emph default
+to a significant degree goes against philosophy of the 
+\emph on
+Writable 
+\emph default
+use case.
+ Indeed, during read operation Hadoop mappers create one same 
+\emph on
+Writable
+\emph default
+ instance and keep reusing it for every record as a preallocated buffer
+ so that batch doesn't generate stream of one-time references that then
+ directly go to garbage colleciton, thus creating signficant garbage collection
+ overhead and, in situations of low memory, even a phenomenon known as GC
+ thrashing.
+ Opportunity to do the same is thus presented to 
+\emph on
+Writable.readFields()
+\emph default
+.
+
+\emph on
+ 
+\emph default
+However, 
+\emph on
+VectorWritable
+\emph default
+ actually doesn't follow that pattern and as of the time of this writing
+ allocates a new Vector for 
+\emph on
+every new record
+\emph default
+.
+ Even if GC thrashing does not really occur in a particular case, GC still
+ occupies significantly more CPU ticks than it actually has to, had 
+\emph on
+Writable 
+\emph default
+philosophy been actually followed.
+ 
+\emph on
+
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+
+\emph on
+TODO: get mapper running time comparison when running with and without vector
+ preprocessing.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+In terms of solution, 
+\emph default
+I beleive this deficiency can be relatively easily rectified though so it
+ should be a low-hanging fruit for furthering memory efficacy effort in
+ SSVD solution.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+This is now alpha-ready in branch 
+\begin_inset Quotes eld
+\end_inset
+
+ssvd-preprocessing
+\begin_inset Quotes erd
+\end_inset
+
+ of my github account as of this writing, see https://github.com/dlyubimov/ssvd-l
+si.
+ Q-Job is now forming Y rows without forming A row vector in memory, and
+ 
+\begin_inset Formula $\mathbf{B}^{\top}$
+\end_inset
+
+-job is forming both partial 
+\begin_inset Formula $\mathbf{B}^{\top}$
+\end_inset
+
+ sums and final 
+\series bold
+Q 
+\series default
+rows without forming A row, so at any given time it is pretty much just
+ single Q block in memory (+ one partial product consisting of 
+\begin_inset Formula $k+p$
+\end_inset
+
+ double precision values).
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Additional passes over QR data would allow to unbind 
+\begin_inset Formula $m$
+\end_inset
+
+ from per-process RAM 
+\end_layout
+
+\begin_layout Standard
+As described in § 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Hierarchical-QR"
+
+\end_inset
+
+, each additional Map-only pass over Q data would increase bound for m approx.
+ 1000 times or more.
+ Such additional pass might be implemented rather easily by shuffling some
+ code around and adding some more properties for tuning this up.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset Quotes eld
+\end_inset
+
+ssvd-tall
+\begin_inset Quotes erd
+\end_inset
+
+ branch is slated for this in ssvd-lsi repo.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\labelwidthstring References
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "Golub, Van Loan"
+key "Golub"
+
+\end_inset
+
+Golub, Van Loan.
+ Matrix computations, 3rd edition.
+\end_layout
+
+\begin_layout Bibliography
+\labelwidthstring References
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "Halko, et al"
+key "Martinsson"
+
+\end_inset
+
+N.
+ Halko, P.
+ G.
+ Martinsson, and J.
+ A.
+ Tropp.
+ Finding structure with randomness: Stochastic algorithms for constructing
+ approximate matrix decompositions
+\end_layout
+
+\end_body
+\end_document

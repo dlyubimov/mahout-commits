@@ -1,0 +1,409 @@
+#LyX 1.6.7 created this file. For more info see http://www.lyx.org/
+\lyxformat 345
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\language english
+\inputencoding auto
+\font_roman lmodern
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks false
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\cite_engine basic
+\use_bibtopic false
+\paperorientation portrait
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation skip
+\defskip bigskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\author "" 
+\author "" 
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Command Line Interface, 
+\begin_inset Newline newline
+\end_inset
+
+Stochastic SVD
+\end_layout
+
+\begin_layout Author
+Dmitriy Lyubimov
+\begin_inset Newline newline
+\end_inset
+
+
+\size normal
+dlieu.7@gmail.com
+\end_layout
+
+\begin_layout Section
+Base algoirthm
+\end_layout
+
+\begin_layout Paragraph
+Branch: 
+\emph on
+givens-ssvd
+\emph default
+.
+\end_layout
+
+\begin_layout Standard
+This branch contains more or less stable code optimized for tall but relatively
+ thin (n=30,000...50,000 non-zero elements).
+ With 1G memory in child processes and right combination of block height,
+ min split size and k,p parameters it is expected to be able to process
+ 1 billion rows or more with 1 million dense (i.e.
+ non-zero) data elements.
+ However, network IO deficiencies will start to occur much sooner as discussed
+ in the p.
+ 6.1 of the 
+\begin_inset CommandInset href
+LatexCommand href
+name "working notes"
+target "https://github.com/dlyubimov/ssvd-lsi/raw/doc/SSVD%20working%20notes.pdf"
+
+\end_inset
+
+ (this is one of TODOs).
+ 
+\end_layout
+
+\begin_layout Paragraph
+Usage.
+\end_layout
+
+\begin_layout LyX-Code
+mahout ssvd <options>
+\end_layout
+
+\begin_layout Paragraph
+Options.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\size footnotesize
+-
+\family typewriter
+k,
+\begin_inset space ~
+\end_inset
+
+--rank
+\begin_inset space ~
+\end_inset
+
+<int-value>
+\family default
+\size default
+ the requested SVD rank (minimum number of singular values and dimensions
+ in U, V matrices) 
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
+-p,
+\begin_inset space ~
+\end_inset
+
+--oversampling
+\begin_inset space ~
+\end_inset
+
+<int-value>
+\family default
+\size default
+ stochastic SVD oversampling.
+ (k+p=500 is probably more than reasonable).
+ 
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
+-r,
+\begin_inset space ~
+\end_inset
+
+--blockHeight
+\begin_inset space ~
+\end_inset
+
+<int-value>
+\family default
+\size default
+ the number of rows of source matrix for block computations.
+ Taller blocking causes more memory use but produces less blocks and therefore
+ somewhat better running times.
+ The most optimal mode from the running time point of view should be 1 block
+ per 1 mapper.
+ For 64Mb blocks this is probably somewhere around 30,000.
+ However, Q-job mapper preallocates the memory for the entire Q block 
+\begin_inset Formula $\left(k+p\right)\times r$
+\end_inset
+
+ even if it doesn't encounter that many rows.
+ So it's ok to set it somewhat higher than 1 block per mapper would take
+ to ensure exactly 1 block is formed, but setting it too high may cause
+ memory management problems.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
+-s,
+\begin_inset space ~
+\end_inset
+
+--minSplitSize
+\begin_inset space ~
+\end_inset
+
+<int-value>
+\family default
+\size default
+ the minimum split size to use in mappers.
+ Since in this branch block formation happens in mappers, for significantly
+ large -r and width of the input matrix the algorithm may not be able to
+ read minimum 
+\begin_inset Formula $k+p$
+\end_inset
+
+ rows and form a block of minimum height, so the job would bail out at the
+ very first mapping step.
+ If that is the case, then one of the recourses available is to force increase
+ in the MapReduce split size using SequenceFileInputFormat.setMinSplitSize()
+ property.
+ Increasing this significantly over HDFS size will result in network IO
+ overhead as discussed in p.6.2 of the 
+\begin_inset CommandInset href
+LatexCommand href
+name "working notes"
+target "https://github.com/dlyubimov/ssvd-lsi/raw/doc/SSVD%20working%20notes.pdf"
+
+\end_inset
+
+).
+ In reality, assuming 1Gb in mappers and block height reasonably high so
+ there's one block per mapper, this probably should be left alone up until
+ ~64Gb in input.
+ After that, either increase split size or use 
+\emph on
+ssvd-wide
+\emph default
+ branch.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
+--computeU
+\begin_inset space ~
+\end_inset
+
+<true|false>
+\family default
+\size default
+ Request computation of the U matrix (default true) 
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
+--computeV
+\begin_inset space ~
+\end_inset
+
+<true|false>
+\family default
+\size default
+ Request computation of the V matrix (default true) 
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
+--vHalfSigma
+\begin_inset space ~
+\end_inset
+
+<true|false>
+\family default
+\size default
+ compute 
+\begin_inset Formula $\mathbf{V}_{\sigma}=\mathbf{V}\boldsymbol{\Sigma}^{0.5}$
+\end_inset
+
+ instead of 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ (affords for easier similarity computations between row-wise and column-wise
+ items).
+ Default false.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
+--uHalfSigma
+\begin_inset space ~
+\end_inset
+
+<true|false>
+\family default
+\size default
+ compute 
+\begin_inset Formula $\mathbf{U}_{\sigma}=\mathbf{U}\boldsymbol{\Sigma}^{0.5}$
+\end_inset
+
+ instead of 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+.
+ default false.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
+--reduceTasks
+\begin_inset space ~
+\end_inset
+
+<int-value>
+\family default
+\size default
+ The number of reducers to use (where applicable): depends on size of the
+ hadoop cluster
+\end_layout
+
+\begin_layout Paragraph
+Standard Options.
+ 
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
+--input
+\begin_inset space ~
+\end_inset
+
+<glob>
+\family default
+\size default
+ HDFS glob specification where the DistributedRowMatrix input to be found.
+ 
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
+--output
+\begin_inset space ~
+\end_inset
+
+<hdfs-dir>
+\family default
+\size default
+ non-existent hdfs directory where to output 
+\begin_inset Formula $\mathbf{U},\mathbf{V}$
+\end_inset
+
+ and 
+\begin_inset Formula $\boldsymbol{\Sigma}$
+\end_inset
+
+ (singular values) files.
+ 
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
+--tempDir
+\begin_inset space ~
+\end_inset
+
+<temp-dir>
+\family default
+\size default
+ temporary dir where to store intermediate files (cleaned up upon normal
+ completion).
+ This is a standard Mahout optional parameter.
+\end_layout
+
+\begin_layout Paragraph
+Output.
+\end_layout
+
+\begin_layout Standard
+Singular values are output as a single-record Sequence File containing a
+ dense vector with k singular values.
+ U and V matrices are k-wide dense DistributedRowMatrix files.
+ U matrix inherits row labels of the input matrix.
+ 
+\end_layout
+
+\end_body
+\end_document
