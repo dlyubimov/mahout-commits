@@ -121,7 +121,7 @@ i.
 
 , each of which may be requested individually.
  The desired rank of decomposition, henceforth denoted as 
-\begin_inset Formula $k$
+\begin_inset Formula $k\in\mathbb{N}_{1}$
 \end_inset
 
 , is a parameter of the algorithm.
@@ -148,13 +148,17 @@ i.
  
 \end_layout
 
+\begin_layout Paragraph
+Single space for comparing row-items and column-items.
+\end_layout
+
 \begin_layout Standard
 On top of it, there's an option to present decomposition output in a form
  of 
 \begin_inset Formula 
-\[
-\mathbf{A}=\mathbf{U}_{\sigma}V_{\sigma}^{\top},
-\]
+\begin{equation}
+\mathbf{A}=\mathbf{U}_{\sigma}V_{\sigma}^{\top},\label{eq:baked-sigma}
+\end{equation}
 
 \end_inset
 
@@ -217,9 +221,118 @@ This option is a nod to a common need of comparing actors represented by
 t similarities.
 \end_layout
 
+\begin_layout Paragraph
+Folding in new observations.
+\end_layout
+
 \begin_layout Standard
-Some of common applications for SVD include Latent Semantic Analysis (LSA),
- Principal Component Analysis (PCA) and others.
+It is probably worth mentioning the operation of 
+\begin_inset Quotes eld
+\end_inset
+
+folding in
+\begin_inset Quotes erd
+\end_inset
+
+ new observations in context of this method, since it is often a basis for
+ incremental methods.
+\end_layout
+
+\begin_layout Standard
+If 
+\begin_inset Formula $\tilde{\mathbf{c}}_{r}\,\,\left(\tilde{\mathbf{c}}_{c}\right)$
+\end_inset
+
+ is a new row (column) observation in addition to original input 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+, then correspondent 
+\begin_inset Quotes eld
+\end_inset
+
+new
+\begin_inset Quotes erd
+\end_inset
+
+ row vectors of 
+\begin_inset Formula $\tilde{\mathbf{U}}$
+\end_inset
+
+ 
+\begin_inset Formula $\left(\tilde{\mathbf{V}}\right)$
+\end_inset
+
+ can be obtained as 
+\begin_inset Formula 
+\begin{eqnarray*}
+\mathbf{\tilde{u}} & = & \boldsymbol{\Sigma}^{-1}\mathbf{V}^{\top}\tilde{\mathbf{c}}_{r},\\
+\tilde{\mathbf{v}} & = & \boldsymbol{\Sigma}^{-1}\mathbf{U}^{\top}\tilde{\mathbf{c}}_{c}.
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Similarly, for the case 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "eq:baked-sigma"
+
+\end_inset
+
+ folding in new observations into rows of 
+\begin_inset Formula $\tilde{\mathbf{U}}_{\sigma}\,\,\left(\tilde{\mathbf{V}}_{\sigma}\right)$
+\end_inset
+
+ would look like
+\begin_inset Formula 
+\begin{eqnarray*}
+\mathbf{\tilde{u}}_{\sigma} & = & \mathbf{V}_{\sigma}^{\top}\tilde{\mathbf{c}}_{r},\\
+\tilde{\mathbf{v}}_{\sigma} & = & \mathbf{U}_{\sigma}^{\top}\tilde{\mathbf{c}}_{c}.
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Thus, new rows can be added to matrices denoted as 
+\begin_inset Formula $\tilde{\mathbf{U}}\,\,\left(\tilde{\mathbf{V}}\right)$
+\end_inset
+
+ corresponding to new observations as new observations become available,
+ i.e.
+ incrementally.
+ Given that new observations are usually moderately sparse vectors, it might
+ be feasible to do fold-in in real time or almost real time, assuming proper
+ fast row-wise indexing of 
+\begin_inset Formula $\mathbf{U}\,\left(\mathbf{V}\right)$
+\end_inset
+
+ exists (e.g.
+ using a batch request to an HBase table containing rows of 
+\begin_inset Formula $\mathbf{U}\,\left(\mathbf{V}\right)$
+\end_inset
+
+).
+ However, since operation of folding in new observations doesn't change
+ original decomposition and its spaces, such new observations cannot be
+ considered 'training' examples.
+ Typically, from time to time accumulated new observations can be added
+ to original input 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ and the whole decomposition can be recomputed again.
+\end_layout
+
+\begin_layout Standard
+Common applications for SVD include Latent Semantic Analysis (LSA), Principal
+ Component Analysis (PCA), dimensionality reduction and others.
 \end_layout
 
 \begin_layout Section
@@ -235,7 +348,7 @@ Input
 \begin_inset Formula $\mathbf{U}\left(\mathbf{U}_{\sigma}\right),\,\mathbf{V}\left(\mathbf{V}_{\sigma}\right)$
 \end_inset
 
-, are Mahout's Distributed Row Matrix format, i.e.
+, are in Mahout's Distributed Row Matrix format, i.e.
  set of sequence files where value is of 
 \family typewriter
 VectorWritable
@@ -250,12 +363,12 @@ VectorWritable
 Writable 
 \family default
 (for as long as it is instantiable thru a default constructor).
- That, among others, means that this method can be applied directly on the
- output of 
+ That, among other thnigs, means that this method can be applied directly
+ on the output of 
 \family typewriter
 seq2sparse 
 \family default
-where keys were of 
+where keys are of 
 \family typewriter
 Text
 \family default
@@ -302,6 +415,10 @@ Definition of output
  is always sequence file(s) of 
 \family typewriter
 (IntWritable,
+\begin_inset Newline newline
+\end_inset
+
+
 \family default
  
 \family typewriter
@@ -394,11 +511,23 @@ Options.
 \family default
 \size default
  (required): stochastic SVD oversampling.
+ The value of 
+\begin_inset Formula $k+p$
+\end_inset
+
+ directly impacts running time and memory requirements.
  
+\series bold
 \emph on
 k+p=500 is probably more than reasonable
+\series default
 \emph default
 .
+ Typically 
+\begin_inset Formula $k+p$
+\end_inset
+
+ is taken within range 50...200.
  
 \begin_inset Formula $p$
 \end_inset
@@ -497,7 +626,7 @@ Matrix mutliplications are the biggest bottleneck of this method as of the
  Tweaking this parameters for bigger blocks will help tremendeously but
  may cause OOM and/or GC thrashing which will again either decrease performance
  dramatically or even derail the whole job.
- So sweet balance must be striken here.
+ So balance must be striken here.
  Default is good for dense inputs and safe for sparse inputs).
 \end_layout
 
@@ -556,12 +685,12 @@ Since in this version projection block formation happens in mappers, for
  property.
  Increasing this significantly over HDFS size may result in network IO to
  mappers.
- Another caveat is that you sometimes don't want too many mappers because
+ Another caveat is that one sometimes does not want too many mappers because
  it may in fact increase time of the computation.
- Consquently, this option should probably left alone unless one has significant
- amount of mappers (as in thousands of map tasks) at which point reducing
- amount of mappers may actually improve the thruput (just a guesstimate
- at this point).
+ Consequently, this option should probably be left alone unless one has
+ significant amount of mappers (as in thousands of map tasks) at which point
+ reducing amount of mappers may actually improve the throughput (just a
+ guesstimate at this point).
  
 \end_layout
 
@@ -758,8 +887,11 @@ Embedded use
 \end_layout
 
 \begin_layout Standard
-It is possible to instantiate and use SSVDSolver class in embedded fashion
- in Hadoop-enabled applications.
+It is possible to instantiate and use 
+\family typewriter
+SSVDSolver
+\family default
+ class in embedded fashion in Hadoop-enabled applications.
  This class would have getter and setter methods for each option available
  via command line.
  See javadoc for details.
