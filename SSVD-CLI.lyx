@@ -130,7 +130,7 @@ i.
 \end_inset
 
  satisfy 
-\begin_inset Formula $\sigma_{i+1}\ge\sigma_{i}$
+\begin_inset Formula $\sigma_{i+1}\leq\sigma_{i}$
 \end_inset
 
  
@@ -301,9 +301,13 @@ Definition of output
 
  is always sequence file(s) of 
 \family typewriter
-(IntWritable, VectorWritable)
+(IntWritable,
 \family default
- where key corresponds to a row index of the input 
+ 
+\family typewriter
+VectorWritable)
+\family default
+ where key corresponds to a column index of the input 
 \begin_inset Formula $\mathbf{A}$
 \end_inset
 
