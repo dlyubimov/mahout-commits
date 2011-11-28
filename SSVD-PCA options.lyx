@@ -81,14 +81,14 @@ working notes
 \end_layout
 
 \begin_layout Section
+Mean of rows 
+\end_layout
+
+\begin_layout Subsection
 \begin_inset Formula $\mathbf{B}_{0}$
 \end_inset
 
  pipeline mods
-\end_layout
-
-\begin_layout Subsection
-Mean of rows 
 \end_layout
 
 \begin_layout Standard
@@ -218,6 +218,20 @@ Current
 \end_layout
 
 \begin_layout Standard
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
 The term 
 \begin_inset Formula $\Xi\boldsymbol{\Omega}$
 \end_inset
@@ -234,20 +248,25 @@ The term
 \begin_inset Formula $\Omega$
 \end_inset
 
- is dense (perhaps using ternary random 
-\begin_inset Formula $\boldsymbol{\Omega}$
+ is dense (potentially several orders of magnitude bigger than input 
+\begin_inset Formula $\mathbf{A}$
 \end_inset
 
- could help a bit but not by a huge margin perhaps).
+) and the median 
+\begin_inset Formula $\boldsymbol{\xi}$
+\end_inset
+
+ is dense as well, even that we don't actually have to materialize any of
  
+\begin_inset Formula $\Omega$
+\end_inset
+
+.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 
 \emph on
-\begin_inset Formula $\square$
-\end_inset
-
 Question is whether we could just ignore it since 
 \begin_inset Formula $\mathbb{E}\left(\boldsymbol{\xi}\boldsymbol{\Omega}\right)=0$
 \end_inset
@@ -256,7 +275,21 @@ Question is whether we could just ignore it since
 \emph default
 .
  
-\begin_inset Formula $\blacksquare$
+\end_layout
+
+\end_inset
+
+
+\begin_inset Marginal
+status open
+
+\begin_layout Plain Layout
+\begin_inset Formula $\Leftarrow$
+\end_inset
+
+Outstanding issue!!!
+\end_layout
+
 \end_inset
 
 
@@ -343,7 +376,7 @@ We see that all columns of
 \mathbf{W}_{*,i} & = & \mathbf{w}\\
  & = & \left(\mathbf{Q}^{\top}\boldsymbol{\Xi}\right)_{*,i}\\
  & = & \left[\sum_{i=1}^{m}\mathbf{Q}_{i,*}\right]\odot\boldsymbol{\xi}\\
- & = & \mathbf{s}\odot\boldsymbol{\xi}
+ & = & \mathbf{s}_{Q}\odot\boldsymbol{\xi}
 \end{eqnarray*}
 
 \end_inset
@@ -353,7 +386,7 @@ We see that all columns of
 
 \begin_layout Standard
 where 
-\begin_inset Formula $\mathbf{s}=\sum_{i=1}^{m}\mathbf{Q}_{i,*}$
+\begin_inset Formula $\mathbf{s}_{Q}=\sum_{i=1}^{m}\mathbf{Q}_{i,*}$
 \end_inset
 
  is sum of all rows of 
@@ -389,7 +422,7 @@ reference "eq:B-decomp"
 \end_inset
 
  can be computed column-wise as well with computation seeded by the 
-\begin_inset Formula $\mathbf{s}\odot\boldsymbol{\xi}$
+\begin_inset Formula $\mathbf{s}_{Q}\odot\boldsymbol{\xi}$
 \end_inset
 
  vector.
@@ -475,7 +508,7 @@ Let
 \end_layout
 
 \begin_layout Standard
-If we denote 
+Let 
 \begin_inset Formula $k\times k$
 \end_inset
 
@@ -483,7 +516,7 @@ If we denote
 \begin_inset Formula $\mathbf{C}=\sum_{i}^{n}\tilde{\mathbf{b}}_{i}\mathbf{w}^{\top}$
 \end_inset
 
-then we can rewrite 
+, and then we can rewrite 
 \begin_inset CommandInset ref
 LatexCommand formatted
 reference "eq:Csum"
@@ -503,10 +536,10 @@ reference "eq:Csum"
 
 \begin_layout Standard
 So we can compute 
-\begin_inset Formula $\sum_{i}\tilde{\mathbf{b}}_{i}\tilde{\mathbf{b}}_{i}^{\top}$
+\begin_inset Formula $\tilde{\mathbf{B}}=\sum_{i}\tilde{\mathbf{b}}_{i}\tilde{\mathbf{b}}_{i}^{\top}$
 \end_inset
 
- right away, that's what today's pipeline does.
+ right away, that's what Bt-job does.
  We also can add 
 \family roman
 \series medium
@@ -541,14 +574,100 @@ matrix
 \end_inset
 
  in front end as well.
+ Note that 
+\begin_inset Formula 
+\begin{eqnarray*}
+\mathbf{C} & = & \sum_{i}^{n}\tilde{\mathbf{b}}_{i}\mathbf{w}^{\top}\\
+ & = & \left(\sum_{i}^{n}\tilde{\mathbf{b}}_{i}\right)\mathbf{w}^{\top}\\
+ & = & \mathbf{s}_{\tilde{B}}\mathbf{w}^{\top}.
+\end{eqnarray*}
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-Note that we actually don't have to output 
+In this case, 
+\begin_inset Formula $\mathbf{s}_{\tilde{B}}$
+\end_inset
+
+ can be output by Bt job as well.
+ Hence 
+\begin_inset Formula $\mathbf{C}$
+\end_inset
+
+ can be computed as an outer product of two small k-vectors in the front
+ end as well.
+\end_layout
+
+\begin_layout Standard
+PCA would be primarily interested in 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ or 
+\begin_inset Formula $\mathbf{V}_{\sigma}$
+\end_inset
+
+ output of the decomposition in order to fold in new items back into PCA
+ space, so we need to correct 
+\series bold
+V 
+\series default
+job as well in this case to fix output of Bt-job.
+\end_layout
+
+\begin_layout Subsection
+Power Iterations (aka 
+\begin_inset Formula $\mathbf{B}_{i}$
+\end_inset
+
+ pipeline) additions
+\end_layout
+
+\begin_layout Standard
+Power iterations pipeline produces 
+\begin_inset Formula $\mathbf{B}_{i}^{\top}=\mathbf{A}^{\top}\mbox{qr}\left(\mathbf{A}\mathbf{B}_{i-1}^{\top}\right).\mathbf{Q}$
+\end_inset
+
+.
+ Similarly to versions of 
 \begin_inset Formula $\mathbf{B}$
 \end_inset
 
- since PCA is not really interested in 
+, each iteration would produce corrective vector 
+\begin_inset Formula $\mathbf{w}_{i-1}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Obviously, we need to amend power iteration work flow to fix output of previous
+ Bt-job on the fly with 
+\begin_inset Formula $\mathbf{w}_{i-1}$
+\end_inset
+
+to reconstruct correct 
+\begin_inset Formula $\mathbf{B}_{i-1}$
+\end_inset
+
+similarly to what is done in the 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Another note is that we run eigendecomposition only after the last iteration
+ so the term 
+\begin_inset Formula $\mathbf{s}_{\tilde{B}}$
+\end_inset
+
+ needs to be computed only during the last iteration.
 \end_layout
 
 \end_body

@@ -270,7 +270,7 @@ target "https://issues.apache.org/jira/browse/MAHOUT-792"
 \end_inset
 
  pipeline produces 
-\begin_inset Formula $\mathbf{B}_{i}^{\top}=\mathbf{A}^{\top}\mbox{qr}\left(\mathbf{A}\mathbf{B}^{\top}\right).\mathbf{Q}$
+\begin_inset Formula $\mathbf{B}_{i}^{\top}=\mathbf{A}^{\top}\mbox{qr}\left(\mathbf{A}\mathbf{B}_{i-1}^{\top}\right).\mathbf{Q}$
 \end_inset
 
 .
