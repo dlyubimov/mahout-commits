@@ -553,10 +553,10 @@ So we can compute
 \noun off
 \color none
 
-\begin_inset Formula $n\cdot\mathbf{w}_{i}\mathbf{w}_{i}^{\top}$
+\begin_inset Formula $n\cdot\mathbf{w}\mathbf{w}^{\top}$
 \end_inset
 
-in front end since it is a tiny matrix and at this point 
+ in front end since it is a tiny matrix and at this point 
 \begin_inset Formula $\mathbf{w}$
 \end_inset
 
@@ -565,12 +565,12 @@ in front end since it is a tiny matrix and at this point
 \begin_inset Formula $\left(k+p\right)\times\left(k+p\right)$
 \end_inset
 
-matrix 
+ matrix 
 \begin_inset Formula $\mathbf{C}$
 \end_inset
 
  and then subtracting 
-\begin_inset Formula $\mathbf{C}+\mathbf{C}^{\top}$
+\begin_inset Formula $\left[\mathbf{C}+\mathbf{C}^{\top}\right]$
 \end_inset
 
  in front end as well.
@@ -589,7 +589,7 @@ matrix
 
 \begin_layout Standard
 In this case, 
-\begin_inset Formula $\mathbf{s}_{\tilde{B}}$
+\begin_inset Formula $\mathbf{s}_{\tilde{B}}=\sum_{i}^{n}\tilde{\mathbf{b}}_{i}$
 \end_inset
 
  can be output by Bt job as well.
