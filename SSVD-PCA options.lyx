@@ -73,6 +73,10 @@
 \begin_body
 
 \begin_layout Title
+MAHOUT-817
+\begin_inset Newline newline
+\end_inset
+
 PCA options for SSVD
 \begin_inset Newline newline
 \end_inset
@@ -82,6 +86,192 @@ working notes
 
 \begin_layout Section
 Mean of rows 
+\end_layout
+
+\begin_layout Subsection
+Recap of SSVD flow.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Paragraph
+Modified SSVD Algorithm.
+\end_layout
+
+\begin_layout Plain Layout
+Given an 
+\begin_inset Formula $m\times n$
+\end_inset
+
+ matrix 
+\series bold
+A
+\series default
+, a target rank 
+\begin_inset Formula $k\in\mathbb{N}_{1}$
+\end_inset
+
+, an oversampling parameter 
+\begin_inset Formula $p\in\mathbb{N}_{1}$
+\end_inset
+
+, and the number of additional power iterations 
+\begin_inset Formula $q\in\mathbb{N}_{0}$
+\end_inset
+
+, this procedure computes an 
+\begin_inset Formula $m\times\left(k+p\right)$
+\end_inset
+
+ SVD 
+\begin_inset Formula $\mathbf{A=U}\boldsymbol{\Sigma}\mathbf{V}^{\top}$
+\end_inset
+
+(some notations are adjusted):
+\end_layout
+
+\begin_layout Enumerate
+Create seed for random 
+\begin_inset Formula $n\times\left(k+p\right)$
+\end_inset
+
+ matrix 
+\begin_inset Formula $\boldsymbol{\Omega}$
+\end_inset
+
+.
+ The seed defines matrix 
+\begin_inset Formula $\mathbf{\Omega}$
+\end_inset
+
+ using Gaussian unit vectors per one of suggestions in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Martinsson"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $\mathbf{Y=A\boldsymbol{\Omega}},\,\mathbf{Y}\in\mathbb{R}^{m\times\left(k+p\right)}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Column-orthonormalize 
+\begin_inset Formula $\mathbf{Y}\rightarrow\mathbf{Q}$
+\end_inset
+
+ by computing thin decomposition 
+\begin_inset Formula $\mathbf{Y}=\mathbf{Q}\mathbf{R}$
+\end_inset
+
+.
+ Also, 
+\begin_inset Formula $\mathbf{Q}\in\mathbb{R}^{m\times\left(k+p\right)},\,\mathbf{R}\in\mathbb{R}^{\left(k+p\right)\times\left(k+p\right)}$
+\end_inset
+
+.
+ I denote this as 
+\begin_inset Formula $\mathbf{Q}=\mbox{qr}\left(\mathbf{Y}\right).\mathbf{Q}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $\mathbf{B}_{0}=\mathbf{Q}^{\top}\mathbf{A}:\,\,\mathbf{B}\in\mathbb{R}^{\left(k+p\right)\times n}$
+\end_inset
+
+.
+ (Another way is 
+\begin_inset Formula $\mathbf{R}^{-1}\mathbf{Y}^{\top}\mathbf{A}$
+\end_inset
+
+, depending on whether we beleive if size of A less than size of Q).
+\end_layout
+
+\begin_layout Enumerate
+If 
+\begin_inset Formula $q>0$
+\end_inset
+
+ repeat: for 
+\begin_inset Formula $i=1..q$
+\end_inset
+
+: 
+\begin_inset Formula $\mathbf{B}_{i}^{\top}=\mathbf{A}^{\top}\mbox{qr}\left(\mathbf{A}\mathbf{B}_{i-1}^{\top}\right).\mathbf{Q}$
+\end_inset
+
+ (power iterations step)
+\end_layout
+
+\begin_layout Enumerate
+Compute Eigensolution of a small Hermitian 
+\begin_inset Formula $\mathbf{B}_{q}\mathbf{B}_{q}^{\top}=\mathbf{\hat{U}}\boldsymbol{\Lambda}\mathbf{\hat{U}}^{\top}$
+\end_inset
+
+.
+ 
+\begin_inset Formula $\mathbf{B}_{q}\mathbf{B}_{q}^{\top}\in\mathbb{R}^{\left(k+p\right)\times\left(k+p\right)}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Singular values 
+\begin_inset Formula $\mathbf{\boldsymbol{\Sigma}}=\boldsymbol{\Lambda}^{0.5}$
+\end_inset
+
+, or, in other words, 
+\begin_inset Formula $s_{i}=\sqrt{\sigma_{i}}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+If needed, compute 
+\begin_inset Formula $\mathbf{U}=\mathbf{Q}\hat{\mathbf{U}}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+If needed, compute 
+\begin_inset Formula $\mathbf{V}=\mathbf{B}_{q}^{\top}\hat{\mathbf{U}}\boldsymbol{\Sigma}^{-1}$
+\end_inset
+
+.
+ Another way is 
+\begin_inset Formula $\mathbf{V}=\mathbf{A}^{\top}\mathbf{U}\boldsymbol{\Sigma}^{-1}$
+\end_inset
+
+.
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -313,7 +503,12 @@ Moving onto
 \begin_inset Formula $\mathbf{BB}^{\top}$
 \end_inset
 
-: 
+.
+ Here and on we assume 
+\begin_inset Formula $\mathbf{B}\equiv\mathbf{B}_{0}$
+\end_inset
+
+ and omit the index for compactness.
 \end_layout
 
 \begin_layout Standard
@@ -428,7 +623,7 @@ reference "eq:B-decomp"
 \end_inset
 
  can be computed column-wise as well with computation seeded by the 
-\begin_inset Formula $\mathbf{s}_{Q}\circ\boldsymbol{\xi}$
+\begin_inset Formula $\mathbf{w}$
 \end_inset
 
  vector.
@@ -545,7 +740,7 @@ Let
 
 , and then we can rewrite 
 \begin_inset CommandInset ref
-LatexCommand formatted
+LatexCommand eqref
 reference "eq:Csum"
 
 \end_inset
@@ -663,7 +858,7 @@ Power Iterations (aka
 
 \begin_layout Standard
 Power iterations pipeline produces 
-\begin_inset Formula $\mathbf{B}_{i}^{\top}=\mathbf{A}^{\top}\mbox{qr}\left(\mathbf{A}\mathbf{B}_{i-1}^{\top}\right).\mathbf{Q}$
+\begin_inset Formula $\mathbf{B}_{i}^{\top}=\tilde{\mathbf{A}}^{\top}\mbox{qr}\left(\tilde{\mathbf{A}}\mathbf{B}_{i-1}^{\top}\right).\mathbf{Q}$
 \end_inset
 
 .
@@ -680,7 +875,7 @@ Power iterations pipeline produces
 \end_layout
 
 \begin_layout Standard
-Obviously, we need to amend power iteration work flow to fix output of previous
+First, we need to amend power iteration work flow to fix output of previous
  Bt-job on the fly with 
 \begin_inset Formula $\mathbf{w}_{i-1}$
 \end_inset
@@ -700,10 +895,41 @@ reference "eq:B-corr"
 
 \end_inset
 
-.
+:
 \end_layout
 
 \begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{B}_{i-1}=\tilde{\mathbf{B}}_{i-1}-\mathbf{W}_{i-1}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Second, again, 
+\begin_inset Formula $\tilde{\mathbf{A}}$
+\end_inset
+
+ multipliers are a problem because they would be dense and perhaps should
+ be decomposed in a way similar to 
+\begin_inset Formula $\mathbf{B}_{0}$
+\end_inset
+
+ pipeline.
+\end_layout
+
+\begin_layout Standard
+==============> to be ctd.
+ <==============
+\end_layout
+
+\begin_layout Standard
+
+\strikeout on
 Another note is that we run eigendecomposition only after the last iteration
  so the term 
 \begin_inset Formula $\mathbf{s}_{\tilde{B}}$
