@@ -592,6 +592,8 @@ k+p=500 is probably more than reasonable
  The most optimal mode from the running time point of view should be 1 block
  per 1 mapper.
  
+\emph on
+This cannot be less than k+p.
 \end_layout
 
 \begin_layout Labeling
@@ -618,7 +620,7 @@ k+p=500 is probably more than reasonable
  However, setting it too high may cause larger block values formed and written
  and may cause OOM.
 \begin_inset Foot
-status collapsed
+status open
 
 \begin_layout Plain Layout
 Matrix mutliplications are the biggest bottleneck of this method as of the
@@ -659,7 +661,7 @@ Matrix mutliplications are the biggest bottleneck of this method as of the
  input.
  
 \begin_inset Foot
-status collapsed
+status open
 
 \begin_layout Plain Layout
 
@@ -673,8 +675,8 @@ As of this day, I haven't heard of a case where somebody would actually
 
 \begin_layout Plain Layout
 Since in this version projection block formation happens in mappers, for
- significantly large -r and width of the input matrix the algorithm may
- not be able to read minimum 
+ a sufficiently wide input matrix the algorithm may not be able to read
+ minimum 
 \begin_inset Formula $k+p$
 \end_inset
 
@@ -683,8 +685,8 @@ Since in this version projection block formation happens in mappers, for
  If this happens, one of the recourses available is to force increase in
  the MapReduce split size using SequenceFileInputFormat.setMinSplitSize()
  property.
- Increasing this significantly over HDFS size may result in network IO to
- mappers.
+ Increasing this significantly over HDFS block size may result in network
+ IO to mappers.
  Another caveat is that one sometimes does not want too many mappers because
  it may in fact increase time of the computation.
  Consequently, this option should probably be left alone unless one has
@@ -792,8 +794,8 @@ Since in this version projection block formation happens in mappers, for
 \family default
 \size default
  optional.
- The number of reducers to use (where applicable): depends on size of the
- hadoop cluster.
+ The number of reducers to use (where applicable): depends on the size of
+ the hadoop cluster.
  At this point it could also be overwritten by a standard hadoop property
  using -D option
 \begin_inset Foot
@@ -806,10 +808,20 @@ TODO: reverify
 \end_inset
 
 .
+
+\series bold
+\emph on
+ Probably always needs to be specified as by default Hadoop would set it
+ to 1, which is certainly far below the cluster capacity.
+ 
+\series default
+\emph default
+Recommended value for this option ~ 95% or ~190% of available reducer capacity
+ to allow for opportunistic executions.
 \end_layout
 
 \begin_layout Paragraph
-Standard Options.
+Standard Mahout options.
  
 \end_layout
 
@@ -875,7 +887,11 @@ Standard Options.
 
 \family typewriter
 \size footnotesize
--ow
+-ow,
+\begin_inset space ~
+\end_inset
+
+--overwrite
 \size default
  
 \family default
