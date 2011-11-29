@@ -229,7 +229,7 @@ width "100col%"
 special "none"
 height "1in"
 height_special "totalheight"
-status open
+status collapsed
 
 \begin_layout Plain Layout
 The term 
@@ -277,11 +277,20 @@ Question is whether we could just ignore it since
  
 \end_layout
 
+\begin_layout Plain Layout
+Alternatively, we could just brute-force it by creating a separate distributed
+ computation of this over 
+\begin_inset Formula $n$
+\end_inset
+
+.
+\end_layout
+
 \end_inset
 
 
 \begin_inset Marginal
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \begin_inset Formula $\Leftarrow$
@@ -293,15 +302,6 @@ Outstanding issue!!!
 \end_inset
 
 
-\end_layout
-
-\begin_layout Standard
-Alternatively, we could just brute-force it by creating a separate distributed
- computation of this over 
-\begin_inset Formula $n$
-\end_inset
-
-.
 \end_layout
 
 \begin_layout Standard
@@ -350,24 +350,30 @@ Let
 \end_layout
 
 \begin_layout Standard
+We see that all columns of 
+\begin_inset Formula $\mathbf{W}$
+\end_inset
+
+ are identical, and, more specifically
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
 Let also 
-\begin_inset Formula $\mathbf{a}\odot\mathbf{b}=\left(\begin{matrix}a_{1}b_{1}\\
+\begin_inset Formula $\mathbf{a}\circ\mathbf{b}=\left(\begin{matrix}a_{1}b_{1}\\
 a_{2}b_{2}\\
 \vdots\\
 a_{k}b_{k}
 \end{matrix}\right)$
 \end_inset
 
- to be a notation for element-wise vector product.
+ to be a notation for element-wise vector product (Hadamard product?).
  
 \end_layout
 
-\begin_layout Standard
-We see that all columns of 
-\begin_inset Formula $\mathbf{W}$
 \end_inset
 
- are identical, and, more specifically,
+,
 \end_layout
 
 \begin_layout Standard
@@ -375,8 +381,8 @@ We see that all columns of
 \begin{eqnarray*}
 \mathbf{W}_{*,i} & = & \mathbf{w}\\
  & = & \left(\mathbf{Q}^{\top}\boldsymbol{\Xi}\right)_{*,i}\\
- & = & \left[\sum_{i=1}^{m}\mathbf{Q}_{i,*}\right]\odot\boldsymbol{\xi}\\
- & = & \mathbf{s}_{Q}\odot\boldsymbol{\xi}
+ & = & \left[\sum_{i=1}^{m}\mathbf{Q}_{i,*}\right]\circ\boldsymbol{\xi}\\
+ & = & \mathbf{s}_{Q}\circ\boldsymbol{\xi}\,\,\,\,\,\forall i\in\left[1,n\right],
 \end{eqnarray*}
 
 \end_inset
@@ -414,43 +420,48 @@ Q
 \series bold
 A
 \series default
-, the first thought is that
+, the first thought is that 
 \begin_inset CommandInset ref
-LatexCommand formatted
+LatexCommand eqref
 reference "eq:B-decomp"
 
 \end_inset
 
  can be computed column-wise as well with computation seeded by the 
-\begin_inset Formula $\mathbf{s}_{Q}\odot\boldsymbol{\xi}$
+\begin_inset Formula $\mathbf{s}_{Q}\circ\boldsymbol{\xi}$
 \end_inset
 
  vector.
 \end_layout
 
 \begin_layout Standard
-Flow problem with existing SSVD is the 
-\begin_inset Formula $\mathbf{s}$
+One problem with our first thought is that the 
+\begin_inset Formula $\mathbf{s}_{Q}$
 \end_inset
 
- term, which is not yet known at the time of formation of 
+ term is not yet known at the time of formation of 
 \begin_inset Formula $\mathbf{B}$
 \end_inset
 
- columns because formation of 
+ columns because formation of final 
 \begin_inset Formula $\mathbf{Q}$
 \end_inset
 
- blocks happens at the same pipeline that further on produces 
+ blocks happens in the same distributed map task that produces initial 
 \series bold
-B 
-\series default
-columns.
- But we probably can produce it by the time of final summations of 
-\begin_inset Formula $\mathbf{BB}^{\top}$
+
+\begin_inset Formula $\mathbf{Q}^{\top}\mathbf{A}$
 \end_inset
 
-.
+  
+\series default
+blocks.
+ Hence, the sum of Q rows at that moment would not be available.
+ But we probably can fix our output later at the time when 
+\begin_inset Formula $\mathbf{s}_{Q}$
+\end_inset
+
+ would already have been known.
 \end_layout
 
 \begin_layout Standard
@@ -463,11 +474,27 @@ Let
 \end_inset
 
 .
- Then 
-\begin_inset Formula $\mathbf{b}_{i}=\tilde{\mathbf{b}}_{i}-\mathbf{w}$
+ Then correction for 
+\series bold
+B
+\series default
+ output would be 
+\begin_inset Formula 
+\begin{equation}
+\mathbf{b}_{i}=\tilde{\mathbf{b}}_{i}-\mathbf{w}.\label{eq:B-corr}
+\end{equation}
+
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+Moving on to 
+\begin_inset Formula $\mathbf{BB}^{\top}$
+\end_inset
+
+:
 \end_layout
 
 \begin_layout Standard
@@ -498,7 +525,7 @@ Let
 \begin_inset Formula 
 \begin{eqnarray}
 \mathbf{BB}^{\top} & = & \sum_{i}^{n}\tilde{\mathbf{b}}_{i}\tilde{\mathbf{b}}_{i}^{\top}\\
- & - & \sum\left[\tilde{\mathbf{b}}_{i}\mathbf{w}^{\top}+\left(\tilde{\mathbf{b}}_{i}\mathbf{w}^{\top}\right)^{\top}\right]\label{eq:Csum}\\
+ & - & \sum_{i}^{n}\left[\tilde{\mathbf{b}}_{i}\mathbf{w}^{\top}+\left(\tilde{\mathbf{b}}_{i}\mathbf{w}^{\top}\right)^{\top}\right]\label{eq:Csum}\\
  & + & n\cdot\mathbf{ww}^{\top}.
 \end{eqnarray}
 
@@ -556,7 +583,8 @@ So we can compute
 \begin_inset Formula $n\cdot\mathbf{w}\mathbf{w}^{\top}$
 \end_inset
 
- in front end since it is a tiny matrix and at this point 
+ in front end before we do eigendecomposition since it is a tiny matrix
+ and at that point 
 \begin_inset Formula $\mathbf{w}$
 \end_inset
 
@@ -573,7 +601,7 @@ So we can compute
 \begin_inset Formula $\left[\mathbf{C}+\mathbf{C}^{\top}\right]$
 \end_inset
 
- in front end as well.
+ in the front end as well.
  Note that 
 \begin_inset Formula 
 \begin{eqnarray*}
@@ -615,7 +643,14 @@ PCA would be primarily interested in
 \series bold
 V 
 \series default
-job as well in this case to fix output of Bt-job.
+job as well in this case to fix output of Bt-job per 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:B-corr"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Subsection
@@ -656,6 +691,13 @@ to reconstruct correct
 
 similarly to what is done in the 
 \begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ per 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:B-corr"
+
 \end_inset
 
 .
