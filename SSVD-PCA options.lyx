@@ -545,39 +545,10 @@ Let
 \end_layout
 
 \begin_layout Standard
-We see that all columns of 
-\begin_inset Formula $\mathbf{W}$
-\end_inset
-
- are identical, and, more specifically
-\begin_inset Foot
-status collapsed
-
-\begin_layout Plain Layout
-Let also 
-\begin_inset Formula $\mathbf{a}\circ\mathbf{b}=\left(\begin{matrix}a_{1}b_{1}\\
-a_{2}b_{2}\\
-\vdots\\
-a_{k}b_{k}
-\end{matrix}\right)$
-\end_inset
-
- to be a notation for element-wise vector product (Hadamard product?).
- 
-\end_layout
-
-\end_inset
-
-,
-\end_layout
-
-\begin_layout Standard
 \begin_inset Formula 
 \begin{eqnarray*}
-\mathbf{W}_{*,i} & = & \mathbf{w}\\
- & = & \left(\mathbf{Q}^{\top}\boldsymbol{\Xi}\right)_{*,i}\\
- & = & \left[\sum_{i=1}^{m}\mathbf{Q}_{i,*}\right]\circ\boldsymbol{\xi}\\
- & = & \mathbf{s}_{Q}\circ\boldsymbol{\xi}\,\,\,\,\,\forall i\in\left[1,n\right],
+\mathbf{W} & = & \sum^{m}\mathbf{Q}_{i,*}\boldsymbol{\Xi}_{i,*}^{\top}\\
+ & = & \mathbf{s}_{Q}\boldsymbol{\xi}^{\top}
 \end{eqnarray*}
 
 \end_inset
@@ -587,7 +558,11 @@ a_{k}b_{k}
 
 \begin_layout Standard
 where 
-\begin_inset Formula $\mathbf{s}_{Q}=\sum_{i=1}^{m}\mathbf{Q}_{i,*}$
+\begin_inset Formula 
+\begin{equation}
+\mathbf{s}_{Q}=\sum_{i=1}^{m}\mathbf{Q}_{i,*}\label{eq:sq}
+\end{equation}
+
 \end_inset
 
  is sum of all rows of 
@@ -623,10 +598,14 @@ reference "eq:B-decomp"
 \end_inset
 
  can be computed column-wise as well with computation seeded by the 
-\begin_inset Formula $\mathbf{w}$
+\begin_inset Formula $\mathbf{s}_{Q}$
 \end_inset
 
- vector.
+ and 
+\begin_inset Formula $\boldsymbol{\xi}$
+\end_inset
+
+ vectors.
 \end_layout
 
 \begin_layout Standard
@@ -676,7 +655,7 @@ B
  output would be 
 \begin_inset Formula 
 \begin{equation}
-\mathbf{b}_{i}=\tilde{\mathbf{b}}_{i}-\mathbf{w}.\label{eq:B-corr}
+\mathbf{b}_{i}=\tilde{\mathbf{b}}_{i}-\xi_{i}\mathbf{s}_{Q}.\label{eq:B-corr}
 \end{equation}
 
 \end_inset
@@ -706,9 +685,9 @@ Moving on to
 \begin_layout Standard
 \begin_inset Formula 
 \begin{eqnarray*}
-\mathbf{b}_{i}\mathbf{b}_{i}^{\top} & = & \left(\tilde{\mathbf{b}}_{i}-\mathbf{w}\right)\left(\tilde{\mathbf{b}}_{i}-\mathbf{w}\right)^{\top}\\
- & = & \tilde{\mathbf{b}}_{i}\tilde{\mathbf{b}}_{i}^{\top}-\tilde{\mathbf{b}}_{i}\mathbf{w}^{\top}-\mathbf{w}\tilde{\mathbf{b}}_{i}^{\top}-\mathbf{w}\mathbf{w}^{\top}\\
- & = & \tilde{\mathbf{b}}_{i}\tilde{\mathbf{b}}_{i}^{\top}-\tilde{\mathbf{b}}_{i}\mathbf{w}^{\top}-\left(\tilde{\mathbf{b}}_{i}\mathbf{w}^{\top}\right)^{\top}+\mathbf{w}\mathbf{w}^{\top}.
+\mathbf{b}_{i}\mathbf{b}_{i}^{\top} & = & \left(\tilde{\mathbf{b}}_{i}-\mathbf{\xi_{i}\mathbf{s}_{Q}}\right)\left(\tilde{\mathbf{b}}_{i}-\xi_{i}\mathbf{s}_{Q}\right)^{\top}\\
+ & = & \tilde{\mathbf{b}}_{i}\tilde{\mathbf{b}}_{i}^{\top}-\xi_{i}\tilde{\mathbf{b}}_{i}\mathbf{\mathbf{s}}_{Q}^{\top}-\mathbf{\xi_{i}\mathbf{s}}_{Q}\tilde{\mathbf{b}}_{i}^{\top}-\mathbf{\xi_{i}^{2}}\mathbf{s}_{Q}\mathbf{s}_{Q}^{\top}\\
+ & = & \tilde{\mathbf{b}}_{i}\tilde{\mathbf{b}}_{i}^{\top}-\left[\xi_{i}\tilde{\mathbf{b}}_{i}\mathbf{s}_{Q}^{\top}+\left(\xi_{i}\tilde{\mathbf{b}}_{i}\mathbf{s}_{Q}^{\top}\right)^{\top}\right]+\mathbf{\xi_{i}^{2}}\mathbf{s}_{Q}\mathbf{s}_{Q}^{\top}.
 \end{eqnarray*}
 
 \end_inset
@@ -717,39 +696,20 @@ Moving on to
 \end_layout
 
 \begin_layout Standard
-\begin_inset Formula 
-\begin{eqnarray}
-\mathbf{BB}^{\top} & = & \sum_{i}^{n}\tilde{\mathbf{b}}_{i}\tilde{\mathbf{b}}_{i}^{\top}\\
- & - & \sum_{i}^{n}\left[\tilde{\mathbf{b}}_{i}\mathbf{w}^{\top}+\left(\tilde{\mathbf{b}}_{i}\mathbf{w}^{\top}\right)^{\top}\right]\label{eq:Csum}\\
- & + & n\cdot\mathbf{ww}^{\top}.
-\end{eqnarray}
-
+Let 
+\begin_inset Formula $\mathbf{C}=\left[\sum_{i}^{n}\xi_{i}\tilde{\mathbf{b}}_{i}\right]\mathbf{s}_{Q}^{\top}$
 \end_inset
 
-
+, then 
 \end_layout
 
 \begin_layout Standard
-Let 
-\begin_inset Formula $k\times k$
-\end_inset
-
- matrix 
-\begin_inset Formula $\mathbf{C}=\sum_{i}^{n}\tilde{\mathbf{b}}_{i}\mathbf{w}^{\top}$
-\end_inset
-
-, and then we can rewrite 
-\begin_inset CommandInset ref
-LatexCommand eqref
-reference "eq:Csum"
-
-\end_inset
-
- as 
 \begin_inset Formula 
-\[
-\mathbf{BB}^{\top}=\sum_{i}^{n}\tilde{\mathbf{b}}_{i}\tilde{\mathbf{b}}_{i}^{\top}-\mathbf{C}-\mathbf{C}^{\top}+n\cdot\mathbf{ww}^{\top}.
-\]
+\begin{eqnarray}
+\mathbf{BB}^{\top} & = & \sum_{i}^{n}\tilde{\mathbf{b}}_{i}\tilde{\mathbf{b}}_{i}^{\top}\\
+ & - & \left[\mathbf{C}+\mathbf{C}^{\top}\right]\label{eq:Csum}\\
+ & + & n\|\boldsymbol{\xi}\|_{2}^{2}\mathbf{s}_{Q}\mathbf{s}_{Q}^{\top}.
+\end{eqnarray}
 
 \end_inset
 
@@ -762,7 +722,11 @@ So we can compute
 \end_inset
 
  right away, that's what Bt-job does.
- We also can add 
+ 
+\end_layout
+
+\begin_layout Standard
+We also can add 
 \family roman
 \series medium
 \shape up
@@ -774,54 +738,56 @@ So we can compute
 \uwave off
 \noun off
 \color none
-
-\begin_inset Formula $n\cdot\mathbf{w}\mathbf{w}^{\top}$
+the term 
+\begin_inset Formula $n\|\boldsymbol{\xi}\|_{2}^{2}\mathbf{s}_{Q}\mathbf{s}_{Q}^{\top}$
 \end_inset
+
 
  in front end before we do eigendecomposition since it is a tiny matrix
  and at that point 
-\begin_inset Formula $\mathbf{w}$
+\begin_inset Formula $\mathbf{s}_{Q}$
 \end_inset
 
  is already known.
- The task boils down to computing small 
-\begin_inset Formula $\left(k+p\right)\times\left(k+p\right)$
-\end_inset
-
- matrix 
-\begin_inset Formula $\mathbf{C}$
-\end_inset
-
- and then subtracting 
-\begin_inset Formula $\left[\mathbf{C}+\mathbf{C}^{\top}\right]$
-\end_inset
-
- in the front end as well.
- Note that 
-\begin_inset Formula 
-\begin{eqnarray*}
-\mathbf{C} & = & \sum_{i}^{n}\tilde{\mathbf{b}}_{i}\mathbf{w}^{\top}\\
- & = & \left(\sum_{i}^{n}\tilde{\mathbf{b}}_{i}\right)\mathbf{w}^{\top}\\
- & = & \mathbf{s}_{\tilde{B}}\mathbf{w}^{\top}.
-\end{eqnarray*}
-
-\end_inset
-
-
+ 
 \end_layout
 
 \begin_layout Standard
-In this case, 
-\begin_inset Formula $\mathbf{s}_{\tilde{B}}=\sum_{i}^{n}\tilde{\mathbf{b}}_{i}$
+Bt-job can also aggregate and collect vector 
+\begin_inset Formula 
+\begin{equation}
+\mathbf{s}_{\tilde{B}}=\sum_{i}^{n}\xi_{i}\mathbf{\tilde{b}}_{i}.\label{eq:sb}
+\end{equation}
+
 \end_inset
 
- can be output by Bt job as well.
- Hence 
-\begin_inset Formula $\mathbf{C}$
+Then we also can produce 
+\begin_inset Formula 
+\begin{equation}
+\mathbf{C}=\mathbf{s}_{\tilde{B}}\mathbf{s}_{Q}^{\top}
+\end{equation}
+
 \end_inset
 
- can be computed as an outer product of two small k-vectors in the front
- end as well.
+in the front end.
+\end_layout
+
+\begin_layout Standard
+So, Bt job needs to be amended to produce 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:sq"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:sb"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
@@ -843,6 +809,14 @@ job as well in this case to fix output of Bt-job per
 LatexCommand eqref
 reference "eq:B-corr"
 
+\end_inset
+
+ which we must seed with 
+\begin_inset Formula $\boldsymbol{\xi}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{s}_{Q}$
 \end_inset
 
 .
@@ -876,11 +850,7 @@ Power iterations pipeline produces
 
 \begin_layout Standard
 First, we need to amend power iteration work flow to fix output of previous
- Bt-job on the fly with 
-\begin_inset Formula $\mathbf{w}_{i-1}$
-\end_inset
-
-to reconstruct correct 
+ Bt-job on the fly with to reconstruct correct 
 \begin_inset Formula $\mathbf{B}_{i-1}$
 \end_inset
 
@@ -888,7 +858,7 @@ similarly to what is done in the
 \begin_inset Formula $\mathbf{V}$
 \end_inset
 
- per 
+ job per 
 \begin_inset CommandInset ref
 LatexCommand eqref
 reference "eq:B-corr"
