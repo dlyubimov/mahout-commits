@@ -742,7 +742,6 @@ the term
 \begin_inset Formula $n\|\boldsymbol{\xi}\|_{2}^{2}\mathbf{s}_{Q}\mathbf{s}_{Q}^{\top}$
 \end_inset
 
-
  in front end before we do eigendecomposition since it is a tiny matrix
  and at that point 
 \begin_inset Formula $\mathbf{s}_{Q}$
@@ -782,7 +781,7 @@ reference "eq:sq"
 
  and 
 \begin_inset CommandInset ref
-LatexCommand ref
+LatexCommand eqref
 reference "eq:sb"
 
 \end_inset
