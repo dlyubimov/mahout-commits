@@ -38,6 +38,10 @@ res$v <- (t(b) %*% e$vectors %*% diag(1/e$values))[,1:k]
 return(res)
 }
 
+
+
+#############
+## ssvd with pci options
 ssvd.cpci <- function ( x, k, p=25, qiter=0 ) { 
 
 a <- as.matrix(x)
@@ -63,9 +67,9 @@ xio = t(omega) %*% cbind(xi)
 for (i in 1:r ) y[,i]<- y[,i]-xio[i]
 
 #debug -- fixed a
-fixeda<- a
-for (i in 1:m) fixeda[i,]<- fixeda[i,]-xi
-sum(y-fixeda %*% omega)
+#fixeda<- a
+#for (i in 1:m) fixeda[i,]<- fixeda[i,]-xi
+#sum(y-fixeda %*% omega)
 
 
 
@@ -107,7 +111,7 @@ bs <- b %*% cbind(xi)
 C <-cbind(qs) %*% t(bs)
 
 
-bbt <- b %*% t(b) -C -t(C) +n*sum(xi * xi)* (qs %*% t(qs))
+bbt <- b %*% t(b) -C -t(C) + sum(xi * xi)* (qs %*% t(qs))
 
 e <- eigen(bbt, symmetric=T)
 
@@ -118,14 +122,14 @@ uhat=e$vectors[1:k,1:k]
 
 res$u <- (q %*% e$vectors)[,1:k]
 
-# fix b 
-b <- b - qs %*% rbind(xi) 
 
 # debug 
-fixedb <- t(q) %*% fixeda
-sum(b-fixedb)
-fixedbbt=b %*% t(b)
-sum(bbt-fixedbbt) #fail!
+# fix b 
+# b <- b - qs %*% rbind(xi) 
+#fixedb <- t(q) %*% fixeda
+#sum(b-fixedb)
+#fixedbbt=b %*% t(b)
+#sum(bbt-fixedbbt) 
 
 res$v <- (t(b- qs %*% rbind(xi) ) %*% e$vectors %*% diag(1/e$values))[,1:k]
 
