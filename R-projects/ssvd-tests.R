@@ -34,8 +34,8 @@ xi <- xi / m
 xfixed=matrix(nrow=m,ncol=n)
 for ( i in 1:m) xfixed[i,]=x[i,]-xi
 
-respci=ssvd.cpci(x,k,qiter=1)
-ressvd=ssvd.svd(xfixed,k,qiter=1)
-
-respci$svalues
-ressvd$svalues
+	respci=ssvd.cpci(x,k,qiter=0)
+	ressvd=ssvd.svd(xfixed,k,qiter=1)
+	
+	respci$svalues
+	ressvd$svalues

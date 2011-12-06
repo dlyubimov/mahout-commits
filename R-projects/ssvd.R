@@ -64,7 +64,7 @@ y <- a %*% omega
 
 #fix y
 xio = t(omega) %*% cbind(xi)
-for (i in 1:r ) y[,i]<- y[,i]-xio[i]
+#for (i in 1:r ) y[,i]<- y[,i]-xio[i]
 
 #debug -- fixed a
 #fixeda<- a
@@ -93,7 +93,7 @@ for ( i in 1:qiter ) {
 
   # fix y 
   xio = b %*% cbind(xi)
-  for (i in 1:r ) y[,i]<- y[,i]-xio[i]
+  #for (i in 1:r ) y[,i]<- y[,i]-xio[i]
 
   q <- qr.Q(qr(y))
   b <- t(q) %*% a
