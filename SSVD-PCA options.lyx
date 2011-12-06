@@ -286,10 +286,21 @@ This option considers that data points are rows in the
 \begin_inset Formula $m\times n$
 \end_inset
 
- input matrix 
+ input matrix
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Here and on I use tilde notation to denote something that hasn't yet been
+ adjusted for the effects of mean subtraction.
+\end_layout
+
+\end_inset
+
+ 
 \begin_inset Formula 
 \[
-\mathbf{A}=\left(\begin{matrix}\mathbf{a}_{1}\\
+\tilde{\mathbf{A}}=\left(\begin{matrix}\mathbf{a}_{1}\\
 \mathbf{a}_{2}\\
 \vdots\\
 \mathbf{a}_{m}
@@ -319,18 +330,18 @@ Mean of rows is n-vector
 \end_layout
 
 \begin_layout Standard
-Let
-\begin_inset Formula $\tilde{\mathbf{A}}$
+Let 
+\begin_inset Formula $\mathbf{A}$
 \end_inset
 
  be 
-\begin_inset Formula $\mathbf{A}$
+\begin_inset Formula $\tilde{\mathbf{A}}$
 \end_inset
 
  with the mean subtracted.
 \begin_inset Formula 
 \[
-\tilde{\mathbf{A}}=\left(\begin{matrix}\mathbf{a_{1}}-\mathbf{\boldsymbol{\xi}}\\
+\mathbf{A}=\left(\begin{matrix}\mathbf{a_{1}}-\mathbf{\boldsymbol{\xi}}\\
 \mathbf{a_{2}}-\mathbf{\boldsymbol{\xi}}\\
 \vdots\\
 \mathbf{a}_{m}-\mathbf{\boldsymbol{\xi}}
@@ -362,15 +373,19 @@ We denote
 
 \end_layout
 
+\begin_layout Paragraph
+Fixing Y.
+\end_layout
+
 \begin_layout Standard
 \begin_inset Formula $\mathbf{B}_{0}$
 \end_inset
 
  pipeline starts with notion that since 
-\begin_inset Formula $\tilde{\mathbf{A}}$
+\begin_inset Formula $\mathbf{A}$
 \end_inset
 
- is dense, its mutliplications are very expensive.
+ is dense, its actual formation and mutliplications are very expensive.
  Hence, we factorize 
 \begin_inset Formula $\mathbf{Y}$
 \end_inset
@@ -381,8 +396,8 @@ We denote
 \begin_layout Standard
 \begin_inset Formula 
 \begin{eqnarray*}
-\mathbf{Y} & = & \tilde{\mathbf{A}}\boldsymbol{\Omega}\\
- & = & \mathbf{A}\boldsymbol{\Omega}-\Xi\boldsymbol{\Omega}
+\mathbf{Y} & = & \mathbf{A}\boldsymbol{\Omega}\\
+ & = & \tilde{\mathbf{A}}\boldsymbol{\Omega}-\Xi\boldsymbol{\Omega}
 \end{eqnarray*}
 
 \end_inset
@@ -396,7 +411,7 @@ Current
 \end_inset
 
  pipeline already takes care of 
-\begin_inset Formula $\mathbf{A}\boldsymbol{\Omega}$
+\begin_inset Formula $\tilde{\mathbf{A}}\boldsymbol{\Omega}$
 \end_inset
 
 , but the term 
@@ -408,38 +423,37 @@ Current
 \end_layout
 
 \begin_layout Standard
-\begin_inset Box Boxed
-position "t"
-hor_pos "c"
-has_inner_box 1
-inner_pos "t"
-use_parbox 0
-use_makebox 0
-width "100col%"
-special "none"
-height "1in"
-height_special "totalheight"
-status open
-
-\begin_layout Plain Layout
 The term 
 \begin_inset Formula $\Xi\boldsymbol{\Omega}$
 \end_inset
 
  will have identical rows 
-\begin_inset Formula $\mathbf{\boldsymbol{\Omega}}^{\top}\boldsymbol{\xi}.$
+\begin_inset Formula 
+\[
+\mathbf{s}_{\Omega}=\mathbf{\boldsymbol{\Omega}}^{\top}\boldsymbol{\xi}.
+\]
+
 \end_inset
 
- so we need to precompute just one dense n-vector 
-\begin_inset Formula $\mathbf{\boldsymbol{\Omega}}^{\top}\boldsymbol{\xi}.$
+ so we need to precompute just one dense 
+\begin_inset Formula $\left(k+p\right)$
 \end_inset
 
- This computation is very expensive since matrix 
+-vector 
+\begin_inset Formula $\mathbf{\boldsymbol{\Omega}}^{\top}\boldsymbol{\xi}$
+\end_inset
+
+ before we enter Q-job.
+ This computation 
+\emph on
+may 
+\emph default
+turn out fairly expensive since matrix 
 \begin_inset Formula $\Omega$
 \end_inset
 
  is dense (potentially several orders of magnitude bigger than input 
-\begin_inset Formula $\mathbf{A}$
+\begin_inset Formula $\tilde{\mathbf{A}}$
 \end_inset
 
 ) and the median 
@@ -452,7 +466,10 @@ The term
 \end_inset
 
 .
-\end_layout
+\emph on
+
+\begin_inset Foot
+status collapsed
 
 \begin_layout Plain Layout
 
@@ -464,29 +481,34 @@ Question is whether we could just ignore it since
 
 \emph default
 .
+ This question is more or less answered, it looks the answer is no, we should
+ not be ignoring this product by default.
  
 \end_layout
 
 \begin_layout Plain Layout
-Alternatively, we could just brute-force it by creating a separate distributed
- computation of this over 
-\begin_inset Formula $n$
+One question for experimentation is whether it is worth to create a separate
+ distributed job for this.
+ its 
+\begin_inset Formula $n\times k$
+\end_inset
+
+ iterations.
+ maybe it is not, assuming 
+\begin_inset Formula $n\approx10^{7}$
+\end_inset
+
+ and 
+\begin_inset Formula $k\approx10^{2}$
 \end_inset
 
 .
-\end_layout
-
+ it would also require artificial map splits for this since there's no input
+ for 
+\begin_inset Formula $\boldsymbol{\Omega}$
 \end_inset
 
-
-\begin_inset Marginal
-status collapsed
-
-\begin_layout Plain Layout
-\begin_inset Formula $\Leftarrow$
-\end_inset
-
-Outstanding issue!!!
+.
 \end_layout
 
 \end_inset
@@ -495,16 +517,27 @@ Outstanding issue!!!
 \end_layout
 
 \begin_layout Standard
-Moving onto 
+Formally, fixing rows of Y will therefore look like 
+\begin_inset Formula 
+\begin{equation}
+\mathbf{Y}_{l,*}=\left(\tilde{\mathbf{A}}\boldsymbol{\Omega}\right)_{l,*}-\mathbf{s}_{\Omega}.\label{eq:fix-Y}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Fixing 
 \begin_inset Formula $\mathbf{B}$
 \end_inset
 
- and 
-\begin_inset Formula $\mathbf{BB}^{\top}$
-\end_inset
-
 .
- Here and on we assume 
+\end_layout
+
+\begin_layout Standard
+Here and on we assume 
 \begin_inset Formula $\mathbf{B}\equiv\mathbf{B}_{0}$
 \end_inset
 
@@ -514,8 +547,8 @@ Moving onto
 \begin_layout Standard
 \begin_inset Formula 
 \begin{eqnarray}
-\mathbf{B} & = & \mathbf{Q}^{\top}\tilde{\mathbf{A}}\\
- & = & \mathbf{Q}^{\top}\mathbf{A}-\mathbf{Q}^{\top}\boldsymbol{\Xi}.\label{eq:B-decomp}
+\mathbf{B} & = & \mathbf{Q}^{\top}\mathbf{A}\\
+ & = & \mathbf{Q}^{\top}\tilde{\mathbf{A}}-\mathbf{Q}^{\top}\boldsymbol{\Xi}.\label{eq:B-decomp}
 \end{eqnarray}
 
 \end_inset
@@ -525,7 +558,7 @@ Moving onto
 
 \begin_layout Standard
 Again, current pipeline takes care of 
-\begin_inset Formula $\mathbf{Q}^{\top}\mathbf{A}$
+\begin_inset Formula $\mathbf{Q}^{\top}\mathbf{\tilde{A}}$
 \end_inset
 
  but product 
@@ -579,7 +612,7 @@ Since
 \end_inset
 
  pipeline computes 
-\begin_inset Formula $\mathbf{Q}^{\top}\mathbf{A}$
+\begin_inset Formula $\mathbf{Q}^{\top}\tilde{\mathbf{A}}$
 \end_inset
 
  column-wise over columns of 
@@ -587,9 +620,9 @@ Since
 Q
 \series default
  and 
-\series bold
-A
-\series default
+\begin_inset Formula $\tilde{\mathbf{A}}$
+\end_inset
+
 , the first thought is that 
 \begin_inset CommandInset ref
 LatexCommand eqref
@@ -639,20 +672,60 @@ blocks.
 \end_layout
 
 \begin_layout Standard
-Let 
+Hence, we won't actually ever form 
+\begin_inset Formula $\mathbf{B}$
+\end_inset
+
+ in this pipeline.
+ Instead, we will produce 
+\begin_inset Formula $\tilde{\mathbf{B}}=\mathbf{Q}^{\top}\mathbf{\tilde{A}}$
+\end_inset
+
+ and vector 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:sq"
+
+\end_inset
+
+ and provide a way to produce columns of 
+\begin_inset Formula $\mathbf{B}$
+\end_inset
+
+ on the fly given columns of 
+\begin_inset Formula $\tilde{\mathbf{B}}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{s}_{Q}$
+\end_inset
+
+ in the future jobs.
+\end_layout
+
+\begin_layout Standard
+Let denote 
+\emph on
+columns
+\emph default
+ 
 \begin_inset Formula $\mathbf{b}_{i}=\mathbf{B}_{*,i}$
 \end_inset
 
-, 
-\begin_inset Formula $\tilde{\mathbf{b}}_{i}=\left(\mathbf{Q}^{\top}\mathbf{A}\right)_{*,i}$
+, and 
+\begin_inset Formula $\tilde{\mathbf{b}}_{i}=\tilde{\mathbf{B}}_{*,i}$
 \end_inset
 
 .
  Then correction for 
 \series bold
-B
+
+\begin_inset Formula $\mathbf{B}$
+\end_inset
+
+ 
 \series default
- output would be 
+columns will look like 
 \begin_inset Formula 
 \begin{equation}
 \mathbf{b}_{i}=\tilde{\mathbf{b}}_{i}-\xi_{i}\mathbf{s}_{Q}.\label{eq:B-corr}
@@ -661,6 +734,26 @@ B
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+Getting a little ahead, we will use 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:B-corr"
+
+\end_inset
+
+ to fix columns of B in V-job and ABt-job.
+ Those two jobs are the primary customers of this equation.
+\end_layout
+
+\begin_layout Paragraph
+Fixing 
+\begin_inset Formula $\mathbf{BB}^{\top}$
+\end_inset
+
+ on the fly (in front end).
 \end_layout
 
 \begin_layout Standard
@@ -696,19 +789,24 @@ Moving on to
 \end_layout
 
 \begin_layout Standard
-Let 
+Let's denote 
+\begin_inset Formula $\left(k+p\right)\times\left(k+p\right)$
+\end_inset
+
+ matrix 
 \begin_inset Formula $\mathbf{C}=\left[\sum_{i}^{n}\xi_{i}\tilde{\mathbf{b}}_{i}\right]\mathbf{s}_{Q}^{\top}$
 \end_inset
 
-, then 
+.
+ Taking sum,
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \begin{eqnarray}
-\mathbf{BB}^{\top} & = & \sum_{i}^{n}\tilde{\mathbf{b}}_{i}\tilde{\mathbf{b}}_{i}^{\top}\\
- & - & \left[\mathbf{C}+\mathbf{C}^{\top}\right]\label{eq:Csum}\\
- & + & n\|\boldsymbol{\xi}\|_{2}^{2}\mathbf{s}_{Q}\mathbf{s}_{Q}^{\top}.
+\mathbf{BB}^{\top} & = & \tilde{\mathbf{B}}\tilde{\mathbf{B}}^{\top}-\\
+ & - & \left[\mathbf{C}+\mathbf{C}^{\top}\right]+\label{eq:Csum}\\
+ & + & \|\boldsymbol{\xi}\|_{2}^{2}\mathbf{s}_{Q}\mathbf{s}_{Q}^{\top}.\label{eq:fix-BBt}
 \end{eqnarray}
 
 \end_inset
@@ -717,12 +815,12 @@ Let
 \end_layout
 
 \begin_layout Standard
-So we can compute 
-\begin_inset Formula $\tilde{\mathbf{B}}=\sum_{i}\tilde{\mathbf{b}}_{i}\tilde{\mathbf{b}}_{i}^{\top}$
+Bt-job already produces 
+\begin_inset Formula $\tilde{\mathbf{B}}\tilde{\mathbf{B}}^{\top}$
 \end_inset
 
- right away, that's what Bt-job does.
- 
+ partial products (1 per reducer) and front end finishes the summation.
+ So no change here.
 \end_layout
 
 \begin_layout Standard
@@ -739,7 +837,7 @@ We also can add
 \noun off
 \color none
 the term 
-\begin_inset Formula $n\|\boldsymbol{\xi}\|_{2}^{2}\mathbf{s}_{Q}\mathbf{s}_{Q}^{\top}$
+\begin_inset Formula $\|\boldsymbol{\xi}\|_{2}^{2}\mathbf{s}_{Q}\mathbf{s}_{Q}^{\top}$
 \end_inset
 
  in front end before we do eigendecomposition since it is a tiny matrix
@@ -755,7 +853,7 @@ the term
 Bt-job can also aggregate and collect vector 
 \begin_inset Formula 
 \begin{equation}
-\mathbf{s}_{\tilde{B}}=\sum_{i}^{n}\xi_{i}\mathbf{\tilde{b}}_{i}.\label{eq:sb}
+\mathbf{s}_{\tilde{B}}=\tilde{\mathbf{B}}\boldsymbol{\xi}=\sum_{i}^{n}\xi_{i}\mathbf{\tilde{b}}_{i}.\label{eq:sb}
 \end{equation}
 
 \end_inset
@@ -768,11 +866,11 @@ Then we also can produce
 
 \end_inset
 
-in the front end.
+in the front end as well.
 \end_layout
 
 \begin_layout Standard
-So, Bt job needs to be amended to produce 
+Bottom line, Bt job needs to be augmented to produce 
 \begin_inset CommandInset ref
 LatexCommand eqref
 reference "eq:sq"
@@ -786,7 +884,7 @@ reference "eq:sb"
 
 \end_inset
 
-.
+ if PCA computation is desired.
 \end_layout
 
 \begin_layout Standard
@@ -831,16 +929,48 @@ Power Iterations (aka
 
 \begin_layout Standard
 Power iterations pipeline produces 
-\begin_inset Formula $\mathbf{B}_{i}^{\top}=\tilde{\mathbf{A}}^{\top}\mbox{qr}\left(\tilde{\mathbf{A}}\mathbf{B}_{i-1}^{\top}\right).\mathbf{Q}$
+\begin_inset Formula $\mathbf{B}_{i}^{\top}=\mathbf{A}^{\top}\mbox{qr}\left(\mathbf{A}\mathbf{B}_{i-1}^{\top}\right).\mathbf{Q}$
 \end_inset
 
 .
- Similarly to versions of 
-\begin_inset Formula $\mathbf{B}$
+ Here and on in power iteration-related sections I use index 
+\begin_inset Formula $i$
 \end_inset
 
-, each iteration would produce corrective vector 
-\begin_inset Formula $\mathbf{w}_{i-1}$
+ to denote the iteration number.
+\end_layout
+
+\begin_layout Standard
+Here, we assume that 
+\begin_inset Formula $\mathbf{s}_{Q,0}\equiv\mathbf{s}_{Q}$
+\end_inset
+
+, 
+\begin_inset Formula $\mathbf{s}_{\tilde{B},0}\equiv\mathbf{s}_{\tilde{B}}$
+\end_inset
+
+ and 
+\begin_inset Formula $\boldsymbol{\xi}$
+\end_inset
+
+ are known and are results of 
+\begin_inset Formula $\mathbf{B}_{0}$
+\end_inset
+
+ pipeline above.
+\end_layout
+
+\begin_layout Standard
+We also assume outer loop 
+\begin_inset Formula $\forall i\in\left[1,q\right]$
+\end_inset
+
+ for all the following steps.
+\end_layout
+
+\begin_layout Paragraph
+Fixing 
+\begin_inset Formula $\mathbf{B}_{i-1}$
 \end_inset
 
 .
@@ -848,63 +978,238 @@ Power iterations pipeline produces
 \end_layout
 
 \begin_layout Standard
-First, we need to amend power iteration work flow to fix output of previous
- Bt-job on the fly with to reconstruct correct 
-\begin_inset Formula $\mathbf{B}_{i-1}$
+First, the on-the fly correction for 
+\begin_inset Formula $\mathbf{B}$
 \end_inset
 
-similarly to what is done in the 
-\begin_inset Formula $\mathbf{V}$
-\end_inset
-
- job per 
+ columns must be applied per 
 \begin_inset CommandInset ref
 LatexCommand eqref
 reference "eq:B-corr"
 
 \end_inset
 
-:
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\[
-\mathbf{B}_{i-1}=\tilde{\mathbf{B}}_{i-1}-\mathbf{W}_{i-1}.
-\]
-
+ using 
+\begin_inset Formula $\mathbf{s}_{Q,i-1}$
 \end_inset
 
-
-\end_layout
-
-\begin_layout Standard
-Second, again, 
-\begin_inset Formula $\tilde{\mathbf{A}}$
-\end_inset
-
- multipliers are a problem because they would be dense and perhaps should
- be decomposed in a way similar to 
+ produced by previous iteration or 
 \begin_inset Formula $\mathbf{B}_{0}$
 \end_inset
 
- pipeline.
-\end_layout
-
-\begin_layout Standard
-==============> to be ctd.
- <==============
-\end_layout
-
-\begin_layout Standard
-
-\strikeout on
-Another note is that we run eigendecomposition only after the last iteration
- so the term 
-\begin_inset Formula $\mathbf{s}_{\tilde{B}}$
+ iteration as at this point we would have access to 
+\begin_inset Formula $\tilde{\mathbf{B}}_{i-1}$
 \end_inset
 
- needs to be computed only during the last iteration.
+ and 
+\begin_inset Formula $\mathbf{s}_{Q,i-1}$
+\end_inset
+
+.
+ So, the mapper of ABt-job must be preloaded with 
+\begin_inset Formula $\left(k+p\right)$
+\end_inset
+
+-long 
+\begin_inset Formula $\mathbf{s}_{Q,i-1}$
+\end_inset
+
+ vector known from previous iteration.
+\end_layout
+
+\begin_layout Paragraph
+Fixing 
+\begin_inset Formula $\mathbf{Y}_{i}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Next, we consider 
+\begin_inset Formula 
+\begin{eqnarray*}
+\mathbf{Y}_{i} & = & \mathbf{A}\mathbf{B}_{i-1}^{\top}\\
+ & = & \mathbf{\tilde{A}}\mathbf{B}_{i-1}^{\top}-\boldsymbol{\Xi}\mathbf{B}_{i-1}^{\top}.
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Again, 
+\begin_inset Formula $\mathbf{\Xi}\mathbf{B}_{i-1}^{\top}$
+\end_inset
+
+ term would have identical rows 
+\begin_inset Formula $\mathbf{B}_{i-1}\boldsymbol{\xi}$
+\end_inset
+
+ but the problem is that it needs to be known before ABt job.
+ But we alrady know it from the previous iteration as 
+\begin_inset Formula $\mathbf{s}_{\tilde{B},i-1}.$
+\end_inset
+
+ The rows of 
+\begin_inset Formula $\mathbf{Y}_{i}$
+\end_inset
+
+, 
+\begin_inset Formula $l$
+\end_inset
+
+-th of which I denote as 
+\begin_inset Formula $\left(\mathbf{Y}_{i}\right)_{l,*}$
+\end_inset
+
+, must be corrected per 
+\begin_inset Formula 
+\begin{equation}
+\left(\mathbf{Y}_{i}\right)_{l,*}=\left(\mathbf{\tilde{A}B}_{i-1}^{\top}\right)_{l,*}-\mathbf{s}_{\tilde{B},i-1}.\label{eq:Y_i-corr}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The row 
+\begin_inset Formula $\left(\mathbf{\tilde{A}B}_{i-1}^{\top}\right)_{l,*}$
+\end_inset
+
+ is known at the time of the reducing of ABt-job.
+ So reducers of ABt-job must be preloaded with 
+\begin_inset Formula $\mathbf{s}_{\tilde{B},i-1}$
+\end_inset
+
+ 
+\begin_inset Formula $\left(k+p\right)$
+\end_inset
+
+-long vector in order to finish correction of 
+\begin_inset Formula $\mathbf{Y}_{i}$
+\end_inset
+
+ rows before handing them off to first step of QR.
+ So, practically no additional effort here.
+ Notice similarity between 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:Y_i-corr"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:fix-Y"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Paragraph
+Fixing 
+\begin_inset Formula $\mathbf{B}_{i}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Similarly to 
+\begin_inset Formula $\mathbf{B}_{0}$
+\end_inset
+
+ pipeline, we don't produce 
+\begin_inset Formula $\mathbf{B}_{i}$
+\end_inset
+
+ output directly in this iteration.
+ Instead, we produce 
+\begin_inset Formula $\tilde{\mathbf{B}}_{i}=\mathbf{Q}_{i}^{\top}\mathbf{\tilde{A}}$
+\end_inset
+
+ and 
+\begin_inset Formula $\left(k+p\right)$
+\end_inset
+
+-long vector 
+\begin_inset Formula $\mathbf{s}_{Q,i}$
+\end_inset
+
+ exactly per 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:sq"
+
+\end_inset
+
+.
+ Nothing new here.
+ (in fact, code producing 
+\begin_inset Formula $\mathbf{s}_{Q}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{s}_{Q,i}$
+\end_inset
+
+ would be exactly the same and shares Bt job with 
+\begin_inset Formula $\mathbf{B}_{0}$
+\end_inset
+
+ pipeline).
+ Subsequent jobs will use 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:fix-BBt"
+
+\end_inset
+
+ to fix columns of B the same way as was discussed there.
+\end_layout
+
+\begin_layout Subsection
+Fixing 
+\begin_inset Formula $\mathbf{BB}^{\top}$
+\end_inset
+
+ and the rest of pipeline with power iterations.
+\end_layout
+
+\begin_layout Standard
+In case 
+\begin_inset Formula $q$
+\end_inset
+
+ power iterations are enabled, fixing 
+\begin_inset Formula $\mathbf{BB}^{\top}$
+\end_inset
+
+steps and on run exactly as defined in 
+\begin_inset Formula $\mathbf{B}_{0}$
+\end_inset
+
+ pipeline, except they must assume 
+\begin_inset Formula $\mathbf{\tilde{B}}\equiv\tilde{\mathbf{B}}_{q}$
+\end_inset
+
+,
+\begin_inset Formula $\mathbf{s}_{Q}\equiv\mathbf{s}_{Q,q}$
+\end_inset
+
+, 
+\begin_inset Formula $\mathbf{s}_{\tilde{B}}\equiv\mathbf{s}_{\tilde{B},q}$
+\end_inset
+
+.
+ 
 \end_layout
 
 \end_body

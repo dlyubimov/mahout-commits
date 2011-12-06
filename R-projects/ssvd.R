@@ -63,8 +63,8 @@ if ( fixY ) {
   #debug
   cat ("fixing Y...\n");
 
-  xio = t(omega) %*% cbind(xi)
-  for (i in 1:r ) y[,i]<- y[,i]-xio[i]
+  s_o = t(omega) %*% cbind(xi)
+  for (i in 1:r ) y[,i]<- y[,i]-s_o[i]
 }
 
 
@@ -75,6 +75,12 @@ b<- t(q) %*% a
 # compute sum of q rows 
 s_q <- cbind(colSums(q))
 
+# compute B*xi
+# of course in MR implementation 
+# it will be collected as sums of ( B[,i] * xi[i] ) and reduced after.
+s_b <- b %*% cbind(xi)
+
+
 #power iterations
 for ( i in 1:qiter ) { 
 
@@ -84,10 +90,9 @@ for ( i in 1:qiter ) {
   y <- a %*% t(b)
 
   # fix y 
-  if ( fixY ) { 
-    xio = b %*% cbind(xi)
-    for (i in 1:r ) y[,i]<- y[,i]-xio[i]
-  }
+  if ( fixY )  
+    for (i in 1:r ) y[,i]<- y[,i]-s_b[i]
+  
 
   q <- qr.Q(qr(y))
   b <- t(q) %*% a
@@ -95,13 +100,12 @@ for ( i in 1:qiter ) {
   # recompute s_{q}
   s_q <- cbind(colSums(q))
 
+  #recompute s_{b}
+  s_b <- b %*% cbind(xi)
+
 }
 
-# compute B*xi
-# of course in MR implementation 
-# it will be collected as sums of ( B[,i] * xi[i] ) and reduced after.
 
-s_b <- b %*% cbind(xi)
 
 #C is the outer product of S_q and S_b per doc
 C <- s_q %*% t(s_b)

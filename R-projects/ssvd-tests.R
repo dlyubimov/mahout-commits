@@ -2,7 +2,7 @@ n<-100
 m<-200
 k<-10
 
-qi<-0
+qi<-1
 
 #simulated input
 svalsim<-diag(k:1)
@@ -10,10 +10,11 @@ svalsim<-diag(k:1)
 usim<- qr.Q(qr(matrix(rnorm(m*k, mean=3), nrow=m,ncol=k)))
 vsim<- qr.Q(qr( matrix(rnorm(n*k,mean=5), nrow=n,ncol=k)))
 
-xisim=(1:n) * 1000
+xisim=(1:n) 
 
 x<- usim %*% svalsim %*% t(vsim) 
 for (i in 1:m) x[i,]<- x[i,]+xisim
+
 
 xi <- colMeans(x)
 
