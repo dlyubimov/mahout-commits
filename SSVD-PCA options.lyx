@@ -419,7 +419,7 @@ width "100col%"
 special "none"
 height "1in"
 height_special "totalheight"
-status collapsed
+status open
 
 \begin_layout Plain Layout
 The term 
@@ -427,11 +427,11 @@ The term
 \end_inset
 
  will have identical rows 
-\begin_inset Formula $\boldsymbol{\xi}\boldsymbol{\Omega}$
+\begin_inset Formula $\mathbf{\boldsymbol{\Omega}}^{\top}\boldsymbol{\xi}.$
 \end_inset
 
  so we need to precompute just one dense n-vector 
-\begin_inset Formula $\boldsymbol{\xi}\mathbf{\boldsymbol{\Omega}}.$
+\begin_inset Formula $\mathbf{\boldsymbol{\Omega}}^{\top}\boldsymbol{\xi}.$
 \end_inset
 
  This computation is very expensive since matrix 
@@ -458,7 +458,7 @@ The term
 
 \emph on
 Question is whether we could just ignore it since 
-\begin_inset Formula $\mathbb{E}\left(\boldsymbol{\xi}\boldsymbol{\Omega}\right)=0$
+\begin_inset Formula $\mathbb{E}\left(\mathbf{\boldsymbol{\Omega}}^{\top}\boldsymbol{\xi}.\right)=0$
 \end_inset
 
 

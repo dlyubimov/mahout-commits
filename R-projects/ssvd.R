@@ -42,7 +42,7 @@ return(res)
 
 #############
 ## ssvd with pci options
-ssvd.cpci <- function ( x, k, p=25, qiter=0 ) { 
+ssvd.cpca <- function ( x, k, p=25, qiter=0, fixY=T ) { 
 
 a <- as.matrix(x)
 m <- nrow(a)
@@ -52,26 +52,20 @@ r <- k+p
 
 
 # compute median xi
-xi<-rep(0,n)
-for (i in 1:m ) xi <- xi + a[i,]
-xi <- xi / m
-
-
+xi<-colMeans(a)
 
 omega <- matrix ( rnorm(r*n), nrow=n, ncol=r)
 
 y <- a %*% omega
 
 #fix y
-xio = t(omega) %*% cbind(xi)
-#for (i in 1:r ) y[,i]<- y[,i]-xio[i]
+if ( fixY ) { 
+  #debug
+  cat ("fixing Y...\n");
 
-#debug -- fixed a
-#fixeda<- a
-#for (i in 1:m) fixeda[i,]<- fixeda[i,]-xi
-#sum(y-fixeda %*% omega)
-
-
+  xio = t(omega) %*% cbind(xi)
+  for (i in 1:r ) y[,i]<- y[,i]-xio[i]
+}
 
 
 q <- qr.Q(qr(y))
@@ -79,39 +73,41 @@ q <- qr.Q(qr(y))
 b<- t(q) %*% a
 
 # compute sum of q rows 
-qs <- rep(0,r)
-for ( i in 1:r) qs[i] <- sum(q[,i])
-qs <- cbind(qs)
+s_q <- cbind(colSums(q))
 
 #power iterations
 for ( i in 1:qiter ) { 
 
   # fix b 
-  b <- b - qs %*% rbind(xi) 
+  b <- b - s_q %*% rbind(xi) 
 
   y <- a %*% t(b)
 
   # fix y 
-  xio = b %*% cbind(xi)
-  #for (i in 1:r ) y[,i]<- y[,i]-xio[i]
+  if ( fixY ) { 
+    xio = b %*% cbind(xi)
+    for (i in 1:r ) y[,i]<- y[,i]-xio[i]
+  }
 
   q <- qr.Q(qr(y))
   b <- t(q) %*% a
 
-  qs <- rep(0,r)
-  for ( i in 1:r) qs[i] <- sum(q[,i])
-  qs <- cbind(qs)
+  # recompute s_{q}
+  s_q <- cbind(colSums(q))
 
 }
 
-# compute Bxi
-bs <- b %*% cbind(xi)
+# compute B*xi
+# of course in MR implementation 
+# it will be collected as sums of ( B[,i] * xi[i] ) and reduced after.
 
-#C
-C <-cbind(qs) %*% t(bs)
+s_b <- b %*% cbind(xi)
 
+#C is the outer product of S_q and S_b per doc
+C <- s_q %*% t(s_b)
 
-bbt <- b %*% t(b) -C -t(C) + sum(xi * xi)* (qs %*% t(qs))
+# fixing BB'
+bbt <- b %*% t(b) -C -t(C) + sum(xi * xi)* (s_q %*% t(s_q))
 
 e <- eigen(bbt, symmetric=T)
 
@@ -122,16 +118,7 @@ uhat=e$vectors[1:k,1:k]
 
 res$u <- (q %*% e$vectors)[,1:k]
 
-
-# debug 
-# fix b 
-# b <- b - qs %*% rbind(xi) 
-#fixedb <- t(q) %*% fixeda
-#sum(b-fixedb)
-#fixedbbt=b %*% t(b)
-#sum(bbt-fixedbbt) 
-
-res$v <- (t(b- qs %*% rbind(xi) ) %*% e$vectors %*% diag(1/e$values))[,1:k]
+res$v <- (t(b- s_q %*% rbind(xi) ) %*% e$vectors %*% diag(1/e$values))[,1:k]
 
 return(res)
 
