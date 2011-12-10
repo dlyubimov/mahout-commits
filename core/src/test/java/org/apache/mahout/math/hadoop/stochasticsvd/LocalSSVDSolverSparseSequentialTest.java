@@ -93,7 +93,7 @@ public class LocalSSVDSolverSparseSequentialTest extends MahoutTestCase {
     closeables.addFirst(w);
 
     int n = 100;
-    int m = 20000;
+    int m = 2000;
     double percent = 5;
 
     VectorWritable vw = new VectorWritable();
