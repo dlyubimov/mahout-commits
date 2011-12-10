@@ -247,7 +247,6 @@ public class ABtDenseOutJob {
     }
 
     private final Deque<Closeable> closeables = new LinkedList<Closeable>();
-    protected final SparseRowBlockWritable accum = new SparseRowBlockWritable();
 
     protected int blockHeight;
 
@@ -295,7 +294,6 @@ public class ABtDenseOutJob {
                           Context context) throws IOException,
       InterruptedException {
 
-      accum.clear();
 
       if (key.getTaskId() != lastTaskId) {
         setupBlock(context, key);
