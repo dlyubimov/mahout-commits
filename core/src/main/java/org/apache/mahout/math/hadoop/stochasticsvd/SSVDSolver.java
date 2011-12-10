@@ -314,10 +314,15 @@ public class SSVDSolver {
                    new Path(btPath, BtJob.OUTPUT_BT + "-*"),
                    qPath,
                    ablockRows,
-                   minSplitSize,
+                   /*
+                    * AB' job does not need min split size optimizations
+                    */
+                   /* minSplitSize, */
+                   -1,
                    k,
                    p,
-                   outerBlockHeight,
+                   outerBlockHeight, 
+                   /*Integer.MAX_VALUE,*/
                    reduceTasks);
 
         btPath = new Path(outputPath, String.format("Bt-job-%d", i + 1));

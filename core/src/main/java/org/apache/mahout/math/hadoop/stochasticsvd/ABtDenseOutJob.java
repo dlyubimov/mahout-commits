@@ -49,6 +49,7 @@ import org.apache.mahout.common.IOUtils;
 import org.apache.mahout.common.Pair;
 import org.apache.mahout.common.iterator.sequencefile.PathType;
 import org.apache.mahout.common.iterator.sequencefile.SequenceFileDirIterator;
+import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.SequentialAccessSparseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
@@ -60,11 +61,11 @@ import org.apache.mahout.math.hadoop.stochasticsvd.qr.QRFirstStep;
  * 
  */
 @SuppressWarnings("deprecation")
-public class ABtJob {
+public class ABtDenseOutJob {
 
   public static final String PROP_BT_PATH = "ssvd.Bt.path";
 
-  private ABtJob() {
+  private ABtDenseOutJob() {
   }
 
   /**
@@ -84,18 +85,15 @@ public class ABtJob {
    */
   public static class ABtMapper
       extends
-      Mapper<Writable, VectorWritable, SplitPartitionedWritable, SparseRowBlockWritable> {
+      Mapper<Writable, VectorWritable, SplitPartitionedWritable, DenseBlockWritable> {
 
     private SplitPartitionedWritable outKey;
     private final Deque<Closeable> closeables = new ArrayDeque<Closeable>();
     private SequenceFileDirIterator<IntWritable, VectorWritable> btInput;
     private Vector[] aCols;
-    // private Vector[] yiRows;
-    // private VectorWritable outValue = new VectorWritable();
+    private double[][] yiCols;
     private int aRowCount;
     private int kp;
-    private int blockHeight;
-    private SparseRowBlockAccumulator yiCollector;
 
     @Override
     protected void map(Writable key, VectorWritable value, Context context)
@@ -146,10 +144,12 @@ public class ABtJob {
     protected void cleanup(Context context) throws IOException,
       InterruptedException {
       try {
-        // yiRows= new Vector[aRowCount];
-
+        
         int lastRowIndex = -1;
 
+        yiCols = new double[kp][];
+        for ( int i = 0; i < kp; i++ ) yiCols[i] = new double[aRowCount];
+        
         while (btInput.hasNext()) {
           Pair<IntWritable, VectorWritable> btRec = btInput.next();
           int btIndex = btRec.getFirst().get();
@@ -164,31 +164,31 @@ public class ABtJob {
             Vector.Element aEl = aColIter.next();
             j = aEl.index();
 
-            // outKey.setTaskItemOrdinal(j);
-            // outValue.set(btVec.times(aEl.get())); // assign might work better
-            // // with memory after all.
-            // context.write(outKey, outValue);
-            yiCollector.collect((long) j, btVec.times(aEl.get()));
+            /*
+             * assume btVec is dense 
+             */
+            for ( int s=0; s<kp; s++ ) {
+              yiCols[s][j]+=aEl.get()*btVec.getQuick(s);
+            }
+            
           }
           if (lastRowIndex < j) {
             lastRowIndex = j;
           }
+          /*
+           * btIndex is supposed to be an unique 1..n
+           * so we can free some memory here.
+           */
+          aCols[btIndex]=null; 
         }
         aCols = null;
-
-        // output empty rows if we never output partial products for them
-        // this happens in sparse matrices when last rows are all zeros
-        // and is subsequently causing shorter Q matrix row count which we
-        // probably don't want to repair there but rather here.
-        Vector yDummy =
-          new SequentialAccessSparseVector(kp);
-        // outValue.set(yDummy);
-        for (lastRowIndex += 1; lastRowIndex < aRowCount; lastRowIndex++) {
-          // outKey.setTaskItemOrdinal(lastRowIndex);
-          // context.write(outKey, outValue);
-
-          yiCollector.collect((long) lastRowIndex, yDummy);
-        }
+        
+        /*
+         * so now we have stuff in yi 
+         */
+        DenseBlockWritable dbw = new DenseBlockWritable();
+        dbw.setBlock(yiCols);
+        context.write(outKey, dbw);
 
       } finally {
         IOUtils.close(closeables);
@@ -219,28 +219,6 @@ public class ABtJob {
                                                                  context
                                                                    .getConfiguration());
       closeables.addFirst(btInput);
-      OutputCollector<LongWritable, SparseRowBlockWritable> yiBlockCollector =
-        new OutputCollector<LongWritable, SparseRowBlockWritable>() {
-
-          @Override
-          public void collect(LongWritable blockKey,
-                              SparseRowBlockWritable block) throws IOException {
-            outKey.setTaskItemOrdinal((int) blockKey.get());
-            try {
-              context.write(outKey, block);
-            } catch (InterruptedException exc) {
-              throw new IOException("Interrupted", exc);
-            }
-          }
-        };
-        
-//      blockHeight =
-//        context.getConfiguration().getInt(BtJob.PROP_OUTER_PROD_BLOCK_HEIGHT,
-//                                          -1);
-      yiCollector =
-        new SparseRowBlockAccumulator(Integer.MAX_VALUE, yiBlockCollector);
-      closeables.addFirst(yiCollector);
-    }
 
   }
 
@@ -250,7 +228,7 @@ public class ABtJob {
    */
   public static class QRReducer
       extends
-      Reducer<SplitPartitionedWritable, SparseRowBlockWritable, SplitPartitionedWritable, VectorWritable> {
+      Reducer<SplitPartitionedWritable, DenseBlockWritable, SplitPartitionedWritable, VectorWritable> {
 
     // hack: partition number formats in hadoop, copied. this may stop working
     // if it gets
@@ -313,14 +291,11 @@ public class ABtJob {
 
     @Override
     protected void reduce(SplitPartitionedWritable key,
-                          Iterable<SparseRowBlockWritable> values,
+                          Iterable<DenseBlockWritable> values,
                           Context context) throws IOException,
       InterruptedException {
 
       accum.clear();
-      for (SparseRowBlockWritable bw : values) {
-        accum.plusBlock(bw);
-      }
 
       if (key.getTaskId() != lastTaskId) {
         setupBlock(context, key);
@@ -424,7 +399,7 @@ public class ABtJob {
 
     Job job = new Job(oldApiJob);
     job.setJobName("ABt-job");
-    job.setJarByClass(ABtJob.class);
+    job.setJarByClass(ABtDenseOutJob.class);
 
     job.setInputFormatClass(SequenceFileInputFormat.class);
     FileInputFormat.setInputPaths(job, inputAPaths);
@@ -438,7 +413,7 @@ public class ABtJob {
                                                       CompressionType.BLOCK);
 
     job.setMapOutputKeyClass(SplitPartitionedWritable.class);
-    job.setMapOutputValueClass(SparseRowBlockWritable.class);
+    job.setMapOutputValueClass(DenseBlockWritable.class);
 
     job.setOutputKeyClass(SplitPartitionedWritable.class);
     job.setOutputValueClass(VectorWritable.class);
