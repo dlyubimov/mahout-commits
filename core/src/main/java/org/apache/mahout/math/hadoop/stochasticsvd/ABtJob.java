@@ -218,6 +218,7 @@ public class ABtJob {
                                                                  true,
                                                                  context
                                                                    .getConfiguration());
+      // TODO: how do i release all that stuff??
       closeables.addFirst(btInput);
       OutputCollector<LongWritable, SparseRowBlockWritable> yiBlockCollector =
         new OutputCollector<LongWritable, SparseRowBlockWritable>() {
@@ -233,12 +234,11 @@ public class ABtJob {
             }
           }
         };
-        
-//      blockHeight =
-//        context.getConfiguration().getInt(BtJob.PROP_OUTER_PROD_BLOCK_HEIGHT,
-//                                          -1);
+      blockHeight =
+        context.getConfiguration().getInt(BtJob.PROP_OUTER_PROD_BLOCK_HEIGHT,
+                                          -1);
       yiCollector =
-        new SparseRowBlockAccumulator(Integer.MAX_VALUE, yiBlockCollector);
+        new SparseRowBlockAccumulator(blockHeight, yiBlockCollector);
       closeables.addFirst(yiCollector);
     }
 
@@ -444,6 +444,7 @@ public class ABtJob {
     job.setOutputValueClass(VectorWritable.class);
 
     job.setMapperClass(ABtMapper.class);
+    job.setCombinerClass(BtJob.OuterProductCombiner.class);
     job.setReducerClass(QRReducer.class);
 
     job.getConfiguration().setInt(QJob.PROP_AROWBLOCK_SIZE, aBlockRows);
