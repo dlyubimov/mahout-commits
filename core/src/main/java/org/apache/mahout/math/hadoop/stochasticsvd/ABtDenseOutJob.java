@@ -32,7 +32,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.Writable;
@@ -94,6 +93,7 @@ public class ABtDenseOutJob {
     private double[][] yiCols;
     private int aRowCount;
     private int kp;
+    private int blockHeight;
 
     @Override
     protected void map(Writable key, VectorWritable value, Context context)
@@ -128,8 +128,8 @@ public class ABtDenseOutJob {
     private void extendAColIfNeeded(int col, int rowCount) {
       if (aCols[col] == null) {
         aCols[col] =
-            new SequentialAccessSparseVector(rowCount < 10000 ? 10000 : rowCount,
-                                             16);
+          new SequentialAccessSparseVector(rowCount < 10000 ? 10000 : rowCount,
+                                           16);
       } else if (aCols[col].size() < rowCount) {
         Vector newVec =
           new SequentialAccessSparseVector(rowCount << 1,
@@ -144,51 +144,122 @@ public class ABtDenseOutJob {
     protected void cleanup(Context context) throws IOException,
       InterruptedException {
       try {
-        
+
         int lastRowIndex = -1;
 
         yiCols = new double[kp][];
-        for ( int i = 0; i < kp; i++ ) yiCols[i] = new double[aRowCount];
-        
-        while (btInput.hasNext()) {
-          Pair<IntWritable, VectorWritable> btRec = btInput.next();
-          int btIndex = btRec.getFirst().get();
-          Vector btVec = btRec.getSecond().get();
-          Vector aCol;
-          if (btIndex > aCols.length || (aCol = aCols[btIndex]) == null) {
-            continue;
-          }
-          int j = -1;
-          for (Iterator<Vector.Element> aColIter = aCol.iterateNonZero(); aColIter
-              .hasNext(); ) {
-            Vector.Element aEl = aColIter.next();
-            j = aEl.index();
 
-            /*
-             * assume btVec is dense 
-             */
-            for ( int s=0; s<kp; s++ ) {
-              yiCols[s][j]+=aEl.get()*btVec.getQuick(s);
-            }
-            
-          }
-          if (lastRowIndex < j) {
-            lastRowIndex = j;
-          }
-          /*
-           * btIndex is supposed to be an unique 1..n
-           * so we can free some memory here.
-           */
-          aCols[btIndex]=null; 
+        for (int i = 0; i < kp; i++) { 
+          yiCols[i] = new double[Math.min(aRowCount, blockHeight)];
         }
-        aCols = null;
         
+        int numPasses = (aRowCount - 1) / blockHeight + 1;
+
+        String propBtPathStr = context.getConfiguration().get(PROP_BT_PATH);
+        Validate.notNull(propBtPathStr, "Bt input is not set");
+        Path btPath = new Path(propBtPathStr);
+
         /*
-         * so now we have stuff in yi 
+         * so it turns out that it may be much more efficient to do a few
+         * independent passes over Bt accumulating the entire block in memory
+         * than pass huge amount of blocks out to combiner. so we aim of course
+         * to fit entire s x (k+p) dense block in memory where s is the number
+         * of A rows in this split. If A is much sparser than (k+p) avg # of
+         * elements per row then the block may exceed the split size. if this
+         * happens, and if the given blockHeight is not high enough to
+         * accomodate this (because of memory constraints), then we start
+         * splitting s into several passes. since computation is cpu-bound
+         * anyway, it should be o.k. for supersparse inputs. (as ok it can be
+         * that projection is thicker than the original anyway, why would one
+         * use that many k+p then).
          */
-        DenseBlockWritable dbw = new DenseBlockWritable();
-        dbw.setBlock(yiCols);
-        context.write(outKey, dbw);
+        for (int pass = 0; pass < numPasses; pass++) {
+
+          btInput =
+            new SequenceFileDirIterator<IntWritable, VectorWritable>(btPath,
+                                                                     PathType.GLOB,
+                                                                     null,
+                                                                     null,
+                                                                     true,
+                                                                     context
+                                                                       .getConfiguration());
+          closeables.addFirst(btInput);
+
+          int aRowBegin = pass * blockHeight;
+          int bh = Math.min(blockHeight, aRowCount - aRowBegin);
+
+          /*
+           * check if we need to trim block allocation
+           */
+          if (pass > 0) {
+            if (bh != blockHeight) {
+
+              for (int i = 0; i < kp; i++)
+                yiCols[i] = null;
+              for (int i = 0; i < kp; i++)
+                yiCols[i] = new double[bh];
+            } else {
+              for (int i = 0; i < kp; i++)
+                Arrays.fill(yiCols[i], 0.0);
+            }
+          }
+
+          while (btInput.hasNext()) {
+            Pair<IntWritable, VectorWritable> btRec = btInput.next();
+            int btIndex = btRec.getFirst().get();
+            Vector btVec = btRec.getSecond().get();
+            Vector aCol;
+            if (btIndex > aCols.length || (aCol = aCols[btIndex]) == null) {
+
+              /* 100% zero A column in the block, skip it as sparse */
+              continue;
+            }
+            int j = -1;
+            for (Iterator<Vector.Element> aColIter = aCol.iterateNonZero(); aColIter
+              .hasNext();) {
+              Vector.Element aEl = aColIter.next();
+              j = aEl.index();
+
+              /*
+               * now we compute only swathes between aRowBegin..aRowBegin+bh
+               * exclusive. it seems like a deficiency but in fact i think it
+               * will balance itself out: either A is dense and then we
+               * shouldn't have more than one pass and therefore filter
+               * conditions will never kick in. Or, the only situation where we
+               * can't fit Y_i block in memory is when A input is much sparser
+               * than k+p per row. But if this is the case, then we'd be looking
+               * at very few elements without engaging them in any operations so
+               * even then it should be ok.
+               */
+              if (j < aRowBegin)
+                continue;
+              else if (j >= aRowBegin + bh)
+                break;
+
+              /*
+               * assume btVec is dense
+               */
+              for (int s = 0; s < kp; s++) {
+                yiCols[s][j - aRowBegin] += aEl.get() * btVec.getQuick(s);
+              }
+
+            }
+            if (lastRowIndex < j) {
+              lastRowIndex = j;
+            }
+          }
+
+          /*
+           * so now we have stuff in yi
+           */
+          DenseBlockWritable dbw = new DenseBlockWritable();
+          dbw.setBlock(yiCols);
+          outKey.setTaskItemOrdinal(pass);
+          context.write(outKey, dbw);
+
+          closeables.remove(btInput);
+          btInput.close();
+        }
 
       } finally {
         IOUtils.close(closeables);
@@ -206,20 +277,12 @@ public class ABtDenseOutJob {
       kp = k + p;
 
       outKey = new SplitPartitionedWritable(context);
-      String propBtPathStr = context.getConfiguration().get(PROP_BT_PATH);
-      Validate.notNull(propBtPathStr, "Bt input is not set");
-      Path btPath = new Path(propBtPathStr);
 
-      btInput =
-        new SequenceFileDirIterator<IntWritable, VectorWritable>(btPath,
-                                                                 PathType.GLOB,
-                                                                 null,
-                                                                 null,
-                                                                 true,
-                                                                 context
-                                                                   .getConfiguration());
-      closeables.addFirst(btInput);
+      blockHeight =
+        context.getConfiguration().getInt(BtJob.PROP_OUTER_PROD_BLOCK_HEIGHT,
+                                          -1);
 
+    }
   }
 
   /**
@@ -232,7 +295,8 @@ public class ABtDenseOutJob {
 
     // hack: partition number formats in hadoop, copied. this may stop working
     // if it gets
-    // out of sync with newer hadoop version. But unfortunately rules of forming
+    // out of sync with newer hadoop version. But unfortunately rules of
+    // forming
     // output file names are not sufficiently exposed so we need to hack it
     // if we write the same split output from either mapper or reducer.
     // alternatively, we probably can replace it by our own output file namnig
@@ -256,6 +320,7 @@ public class ABtDenseOutJob {
     protected OutputCollector<Writable, DenseBlockWritable> qhatCollector;
     protected OutputCollector<Writable, VectorWritable> rhatCollector;
     protected QRFirstStep qr;
+    protected Vector yiRow;
 
     @Override
     protected void setup(Context context) throws IOException,
@@ -294,15 +359,28 @@ public class ABtDenseOutJob {
                           Context context) throws IOException,
       InterruptedException {
 
-
       if (key.getTaskId() != lastTaskId) {
         setupBlock(context, key);
       }
 
+      Iterator<DenseBlockWritable> iter = values.iterator();
+      DenseBlockWritable dbw = iter.next();
+      double[][] yiCols = dbw.getBlock();
+      if (iter.hasNext()) {
+        throw new IOException("Unexpected extra Y_i block in reducer input.");
+      }
+
       long blockBase = key.getTaskItemOrdinal() * blockHeight;
-      for (int k = 0; k < accum.getNumRows(); k++) {
-        Vector yiRow = accum.getRows()[k];
-        key.setTaskItemOrdinal(blockBase + accum.getRowIndices()[k]);
+      int bh = yiCols[0].length;
+      if (yiRow == null) {
+        yiRow = new DenseVector(yiCols.length);
+      }
+
+      for (int k = 0; k < bh; k++) {
+        for (int j = 0; j < yiCols.length; j++)
+          yiRow.setQuick(j, yiCols[j][k]);
+
+        key.setTaskItemOrdinal(blockBase + k);
         qr.collect(key, yiRow);
       }
 

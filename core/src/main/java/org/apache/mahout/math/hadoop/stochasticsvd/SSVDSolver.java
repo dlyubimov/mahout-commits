@@ -100,13 +100,14 @@ public class SSVDSolver {
   private boolean computeV = true;
   private String uPath;
   private String vPath;
+  private int outerBlockHeight = 30000;
+  private int abtBlockHeight = 200000;
 
   // configured stuff
   private final Configuration conf;
   private final Path[] inputPath;
   private final Path outputPath;
   private final int ablockRows;
-  private final int outerBlockHeight;
   private final int k;
   private final int p;
   private int q;
@@ -144,14 +145,12 @@ public class SSVDSolver {
                     Path[] inputPath,
                     Path outputPath,
                     int ablockRows,
-                    int outerBlockHeight,
                     int k,
                     int p,
                     int reduceTasks) {
     this.conf = conf;
     this.inputPath = inputPath;
     this.outputPath = outputPath;
-    this.outerBlockHeight = outerBlockHeight;
     this.ablockRows = ablockRows;
     this.k = k;
     this.p = p;
@@ -252,6 +251,38 @@ public class SSVDSolver {
     this.overwrite = overwrite;
   }
 
+  public int getOuterBlockHeight() {
+    return outerBlockHeight;
+  }
+
+  /**
+   * The height of outer blocks during Q'A multiplication. Higher values allow
+   * to produce less keys for combining and shuffle and sort therefore somewhat
+   * improving running time; but require larger blocks to be formed in RAM (so
+   * setting this too high can lead to OOM).
+   * 
+   * @param outerBlockHeight
+   */
+  public void setOuterBlockHeight(int outerBlockHeight) {
+    this.outerBlockHeight = outerBlockHeight;
+  }
+
+  public int getAbtBlockHeight() {
+    return abtBlockHeight;
+  }
+
+  /**
+   * the block height of Y_i during power iterations. It is probably important
+   * to set it higher than default 200,000 for extremely sparse inputs and when
+   * more ram is available. y_i block height and ABt job would occupy approx.
+   * abtBlockHeight x (k+p) x sizeof (double) (as dense).
+   * 
+   * @param abtBlockHeight
+   */
+  public void setAbtBlockHeight(int abtBlockHeight) {
+    this.abtBlockHeight = abtBlockHeight;
+  }
+
   /**
    * run all SSVD jobs.
    * 
@@ -309,21 +340,17 @@ public class SSVDSolver {
       for (int i = 0; i < q; i++) {
 
         qPath = new Path(outputPath, String.format("ABt-job-%d", i + 1));
-        ABtJob.run(conf,
-                   inputPath,
-                   new Path(btPath, BtJob.OUTPUT_BT + "-*"),
-                   qPath,
-                   ablockRows,
-                   /*
-                    * AB' job does not need min split size optimizations
-                    */
-                   /* minSplitSize, */
-                   -1,
-                   k,
-                   p,
-                   outerBlockHeight, 
-                   /*Integer.MAX_VALUE,*/
-                   reduceTasks);
+        Path btPathGlob = new Path(btPath, BtJob.OUTPUT_BT + "-*");
+        ABtDenseOutJob.run(conf,
+                           inputPath,
+                           btPathGlob,
+                           qPath,
+                           ablockRows,
+                           -1,
+                           k,
+                           p,
+                           outerBlockHeight,
+                           reduceTasks);
 
         btPath = new Path(outputPath, String.format("Bt-job-%d", i + 1));
 
@@ -339,9 +366,6 @@ public class SSVDSolver {
                   labelType,
                   i == q - 1);
       }
-
-      // we don't need BBt now.
-      // BBtJob.run(conf, new Path(btPath, BtJob.OUTPUT_BT + "-*"), bbtPath, 1);
 
       UpperTriangular bbt =
         loadAndSumUpperTriangularMatrices(fs, new Path(btPath, BtJob.OUTPUT_BBT
@@ -481,8 +505,8 @@ public class SSVDSolver {
     throw new IOException("Unable to open input files to determine input label type.");
   }
 
-  private static final Pattern OUTPUT_FILE_PATTERN = Pattern
-    .compile("(\\w+)-(m|r)-(\\d+)(\\.\\w+)?");
+  private static final Pattern OUTPUT_FILE_PATTERN =
+    Pattern.compile("(\\w+)-(m|r)-(\\d+)(\\.\\w+)?");
 
   static final Comparator<FileStatus> PARTITION_COMPARATOR =
     new Comparator<FileStatus>() {
@@ -541,8 +565,7 @@ public class SSVDSolver {
     Arrays.sort(files, PARTITION_COMPARATOR);
 
     for (FileStatus fstat : files) {
-      for (VectorWritable value : new SequenceFileValueIterable<VectorWritable>(fstat
-                                                                                  .getPath(),
+      for (VectorWritable value : new SequenceFileValueIterable<VectorWritable>(fstat.getPath(),
                                                                                 true,
                                                                                 conf)) {
         Vector v = value.get();
@@ -584,8 +607,7 @@ public class SSVDSolver {
 
     DenseVector result = null;
     for (FileStatus fstat : files) {
-      for (VectorWritable value : new SequenceFileValueIterable<VectorWritable>(fstat
-                                                                                  .getPath(),
+      for (VectorWritable value : new SequenceFileValueIterable<VectorWritable>(fstat.getPath(),
                                                                                 true,
                                                                                 conf)) {
         Vector v = value.get();
@@ -629,8 +651,7 @@ public class SSVDSolver {
 
     UpperTriangular result = null;
     for (FileStatus fstat : files) {
-      for (VectorWritable value : new SequenceFileValueIterable<VectorWritable>(fstat
-                                                                                  .getPath(),
+      for (VectorWritable value : new SequenceFileValueIterable<VectorWritable>(fstat.getPath(),
                                                                                 true,
                                                                                 conf)) {
         Vector v = value.get();
