@@ -44,12 +44,16 @@ public class SSVDCli extends AbstractJob {
     addInputOption();
     addOutputOption();
     addOption("rank", "k", "decomposition rank", true);
-    addOption("oversampling", "p", "oversampling", true);
+    addOption("oversampling", "p", "oversampling", "15");
     addOption("blockHeight", "r", "Y block height (must be > (k+p))", "10000");
     addOption("outerProdBlockHeight",
               "oh",
-              "block height of outer products during multiplication, increase for sparse input",
-              "10000");
+              "block height of outer products during multiplication, increase for sparse inputs",
+              "30000");
+    addOption("abtBlockHeight", 
+              "abth",
+              "block height of Y_i in ABtJob during AB' multiplication, increase for extremely sparse inputs",
+              "200000");
     addOption("minSplitSize", "s", "minimum split size", "-1");
     addOption("computeU", "U", "compute U (true/false)", "true");
     addOption("uHalfSigma",
@@ -83,6 +87,7 @@ public class SSVDCli extends AbstractJob {
     int p = Integer.parseInt(pargs.get("--oversampling"));
     int r = Integer.parseInt(pargs.get("--blockHeight"));
     int h = Integer.parseInt(pargs.get("--outerProdBlockHeight"));
+    int abh = Integer.parseInt(pargs.get("--abtBlockHeight"));
     int q = Integer.parseInt(pargs.get("--powerIter"));
     int minSplitSize = Integer.parseInt(pargs.get("--minSplitSize"));
     boolean computeU = Boolean.parseBoolean(pargs.get("--computeU"));
@@ -103,7 +108,6 @@ public class SSVDCli extends AbstractJob {
                      new Path[] { new Path(input) },
                      new Path(tempDir),
                      r,
-                     h,
                      k,
                      p,
                      reduceTasks);
@@ -112,6 +116,8 @@ public class SSVDCli extends AbstractJob {
     solver.setComputeV(computeV);
     solver.setcUHalfSigma(cUHalfSigma);
     solver.setcVHalfSigma(cVHalfSigma);
+    solver.setOuterBlockHeight(h);
+    solver.setAbtBlockHeight(abh);
     solver.setQ(q);
     solver.setOverwrite(overwrite);
 
