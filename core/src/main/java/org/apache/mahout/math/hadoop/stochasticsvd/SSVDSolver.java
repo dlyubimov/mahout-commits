@@ -346,10 +346,10 @@ public class SSVDSolver {
                            btPathGlob,
                            qPath,
                            ablockRows,
-                           -1,
+                           minSplitSize,
                            k,
                            p,
-                           outerBlockHeight,
+                           abtBlockHeight,
                            reduceTasks);
 
         btPath = new Path(outputPath, String.format("Bt-job-%d", i + 1));
