@@ -40,6 +40,7 @@ import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.Writable;
 import org.apache.mahout.common.IOUtils;
 import org.apache.mahout.common.RandomUtils;
+import org.apache.mahout.common.iterator.sequencefile.PathFilters;
 import org.apache.mahout.common.iterator.sequencefile.SequenceFileValueIterable;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Vector;
@@ -291,7 +292,7 @@ public class SSVDSolver {
    */
   public void run() throws IOException {
 
-    Deque<Closeable> closeables = new LinkedList<Closeable>();
+    Deque<Closeable> closeables = Lists.<Closeable>newLinkedList();
     try {
       Class<? extends Writable> labelType =
         sniffInputLabelType(inputPath, conf);
@@ -332,7 +333,7 @@ public class SSVDSolver {
                 k,
                 p,
                 outerBlockHeight,
-                reduceTasks > 1000 ? 1000 : reduceTasks,
+                Math.min(1000, reduceTasks),
                 labelType,
                 q <= 0);
 
@@ -362,7 +363,7 @@ public class SSVDSolver {
                   k,
                   p,
                   outerBlockHeight,
-                  reduceTasks > 1000 ? 1000 : reduceTasks,
+                  Math.min(1000, reduceTasks),
                   labelType,
                   i == q - 1);
       }
@@ -494,9 +495,17 @@ public class SSVDSolver {
       if (fstats == null || fstats.length == 0) {
         continue;
       }
-      SequenceFile.Reader r =
-        new SequenceFile.Reader(fs, fstats[0].getPath(), conf);
+
+      FileStatus firstSeqFile;
+      if (!fstats[0].isDir()) {
+        firstSeqFile = fstats[0];
+      } else {
+        firstSeqFile = fs.listStatus(fstats[0].getPath(), PathFilters.logsCRCFilter())[0];
+      }
+
+      SequenceFile.Reader r = null;
       try {
+        r = new SequenceFile.Reader(fs, firstSeqFile.getPath(), conf);
         return r.getKeyClass().asSubclass(Writable.class);
       } finally {
         Closeables.closeQuietly(r);
