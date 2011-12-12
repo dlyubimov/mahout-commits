@@ -33,7 +33,7 @@ import org.apache.mahout.math.Matrix;
 import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
-import org.apache.mahout.math.hadoop.stochasticsvd.qr.GrammSchmidt;
+import org.apache.mahout.math.hadoop.stochasticsvd.qr.GramSchmidt;
 
 public class SSVDTestsHelper {
 
@@ -107,7 +107,7 @@ public class SSVDTestsHelper {
         result.setQuick(i, j, rnd.nextDouble() - 0.5);
       }
     }
-    GrammSchmidt.orthonormalizeColumns(result);
+    GramSchmidt.orthonormalizeColumns(result);
     SSVDPrototypeTest.assertOrthonormality(result, false, 1.0e-10);
     return result;
   }
