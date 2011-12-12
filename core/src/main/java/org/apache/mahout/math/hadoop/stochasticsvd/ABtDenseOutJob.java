@@ -128,11 +128,11 @@ public class ABtDenseOutJob {
     private void extendAColIfNeeded(int col, int rowCount) {
       if (aCols[col] == null) {
         aCols[col] =
-          new SequentialAccessSparseVector(rowCount < 10000 ? 10000 : rowCount,
+          new SequentialAccessSparseVector(rowCount < blockHeight ? blockHeight : rowCount,
                                            16);
       } else if (aCols[col].size() < rowCount) {
         Vector newVec =
-          new SequentialAccessSparseVector(rowCount << 1,
+          new SequentialAccessSparseVector(rowCount + blockHeight,
                                            aCols[col]
                                              .getNumNondefaultElements() << 1);
         newVec.viewPart(0, aCols[col].size()).assign(aCols[col]);
@@ -153,11 +153,12 @@ public class ABtDenseOutJob {
           yiCols[i] = new double[Math.min(aRowCount, blockHeight)];
         }
         
-        int numPasses = (aRowCount - 1) / blockHeight + 1;
+        final int numPasses = (aRowCount - 1) / blockHeight + 1;
 
         String propBtPathStr = context.getConfiguration().get(PROP_BT_PATH);
         Validate.notNull(propBtPathStr, "Bt input is not set");
-        Path btPath = new Path(propBtPathStr);
+        final Path btPath = new Path(propBtPathStr);
+        final DenseBlockWritable dbw = new DenseBlockWritable();
 
         /*
          * so it turns out that it may be much more efficient to do a few
@@ -252,7 +253,6 @@ public class ABtDenseOutJob {
           /*
            * so now we have stuff in yi
            */
-          DenseBlockWritable dbw = new DenseBlockWritable();
           dbw.setBlock(yiCols);
           outKey.setTaskItemOrdinal(pass);
           context.write(outKey, dbw);
