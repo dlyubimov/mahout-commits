@@ -113,7 +113,7 @@ public class ABtDenseOutJob {
           extendAColIfNeeded(i, aRowCount + 1);
           aCols[i].setQuick(aRowCount, vec.getQuick(i));
         }
-      } else {
+      } else if ( vec.size()>0 ){
         for (Iterator<Vector.Element> vecIter = vec.iterateNonZero(); vecIter
           .hasNext();) {
           Vector.Element vecEl = vecIter.next();
@@ -128,8 +128,8 @@ public class ABtDenseOutJob {
     private void extendAColIfNeeded(int col, int rowCount) {
       if (aCols[col] == null) {
         aCols[col] =
-          new SequentialAccessSparseVector(rowCount < blockHeight ? blockHeight : rowCount,
-                                           16);
+          new SequentialAccessSparseVector(rowCount < blockHeight ? blockHeight
+              : rowCount, 1);
       } else if (aCols[col].size() < rowCount) {
         Vector newVec =
           new SequentialAccessSparseVector(rowCount + blockHeight,
@@ -149,10 +149,10 @@ public class ABtDenseOutJob {
 
         yiCols = new double[kp][];
 
-        for (int i = 0; i < kp; i++) { 
+        for (int i = 0; i < kp; i++) {
           yiCols[i] = new double[Math.min(aRowCount, blockHeight)];
         }
-        
+
         final int numPasses = (aRowCount - 1) / blockHeight + 1;
 
         String propBtPathStr = context.getConfiguration().get(PROP_BT_PATH);
@@ -210,7 +210,8 @@ public class ABtDenseOutJob {
             int btIndex = btRec.getFirst().get();
             Vector btVec = btRec.getSecond().get();
             Vector aCol;
-            if (btIndex > aCols.length || (aCol = aCols[btIndex]) == null) {
+            if (btIndex > aCols.length || (aCol = aCols[btIndex]) == null
+                || aCol.size() == 0 ) {
 
               /* 100% zero A column in the block, skip it as sparse */
               continue;
