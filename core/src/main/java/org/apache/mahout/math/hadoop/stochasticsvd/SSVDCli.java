@@ -44,35 +44,35 @@ public class SSVDCli extends AbstractJob {
     addInputOption();
     addOutputOption();
     addOption("rank", "k", "decomposition rank", true);
-    addOption("oversampling", "p", "oversampling", "15");
-    addOption("blockHeight", "r", "Y block height (must be > (k+p))", "10000");
+    addOption("oversampling", "p", "oversampling", String.valueOf(15));
+    addOption("blockHeight", "r", "Y block height (must be > (k+p))", String.valueOf(10000));
     addOption("outerProdBlockHeight",
               "oh",
               "block height of outer products during multiplication, increase for sparse inputs",
-              "30000");
+              String.valueOf(30000));
     addOption("abtBlockHeight", 
               "abth",
               "block height of Y_i in ABtJob during AB' multiplication, increase for extremely sparse inputs",
-              "200000");
-    addOption("minSplitSize", "s", "minimum split size", "-1");
-    addOption("computeU", "U", "compute U (true/false)", "true");
+              String.valueOf(200000));
+    addOption("minSplitSize", "s", "minimum split size", String.valueOf(-1));
+    addOption("computeU", "U", "compute U (true/false)", String.valueOf(true));
     addOption("uHalfSigma",
               "uhs",
               "Compute U as UHat=U x pow(Sigma,0.5)",
-              "false");
-    addOption("computeV", "V", "compute V (true/false)", "true");
+              String.valueOf(false));
+    addOption("computeV", "V", "compute V (true/false)", String.valueOf(true));
     addOption("vHalfSigma",
               "vhs",
               "compute V as VHat= V x pow(Sigma,0.5)",
-              "false");
+              String.valueOf(false));
     addOption("reduceTasks",
               "t",
               "number of reduce tasks (where applicable)",
-              "1");
+              String.valueOf(1));
     addOption("powerIter",
               "q",
               "number of additional power iterations (0..2 is good)",
-              "0");
+              String.valueOf(0));
     addOption(DefaultOptionCreator.overwriteOption().create());
 
     Map<String, String> pargs = parseArguments(args);
@@ -80,9 +80,6 @@ public class SSVDCli extends AbstractJob {
       return -1;
     }
 
-    String input = pargs.get("--input");
-    String output = pargs.get("--output");
-    String tempDir = pargs.get("--tempDir");
     int k = Integer.parseInt(pargs.get("--rank"));
     int p = Integer.parseInt(pargs.get("--oversampling"));
     int r = Integer.parseInt(pargs.get("--blockHeight"));
@@ -105,8 +102,8 @@ public class SSVDCli extends AbstractJob {
 
     SSVDSolver solver =
       new SSVDSolver(conf,
-                     new Path[] { new Path(input) },
-                     new Path(tempDir),
+                     new Path[] { getInputPath() },
+                     getTempPath(),
                      r,
                      k,
                      p,
@@ -126,16 +123,16 @@ public class SSVDCli extends AbstractJob {
     // housekeeping
     FileSystem fs = FileSystem.get(conf);
 
-    Path outPath = new Path(output);
-    fs.mkdirs(outPath);
+    fs.mkdirs(getOutputPath());
 
-    SequenceFile.Writer sigmaW =
-      SequenceFile.createWriter(fs,
+    SequenceFile.Writer sigmaW = null;
+
+    try {
+      sigmaW = SequenceFile.createWriter(fs,
                                 conf,
-                                new Path(outPath, "sigma"),
+                                getOutputPath("sigma"),
                                 NullWritable.class,
                                 VectorWritable.class);
-    try {
       Writable sValues =
         new VectorWritable(new DenseVector(Arrays.copyOf(solver
           .getSingularValues(), k), true));
@@ -149,7 +146,7 @@ public class SSVDCli extends AbstractJob {
       FileStatus[] uFiles = fs.globStatus(new Path(solver.getUPath()));
       if (uFiles != null) {
         for (FileStatus uf : uFiles) {
-          fs.rename(uf.getPath(), outPath);
+          fs.rename(uf.getPath(), getOutputPath());
         }
       }
     }
@@ -157,7 +154,7 @@ public class SSVDCli extends AbstractJob {
       FileStatus[] vFiles = fs.globStatus(new Path(solver.getVPath()));
       if (vFiles != null) {
         for (FileStatus vf : vFiles) {
-          fs.rename(vf.getPath(), outPath);
+          fs.rename(vf.getPath(), getOutputPath());
         }
       }
 
