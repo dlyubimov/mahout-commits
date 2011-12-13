@@ -22,14 +22,11 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Deque;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.common.collect.Lists;
-import com.google.common.io.Closeables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -46,6 +43,9 @@ import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 import org.apache.mahout.math.ssvd.EigenSolverWrapper;
+
+import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 
 /**
  * Stochastic SVD solver (API class).
