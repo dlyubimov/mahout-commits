@@ -510,11 +510,7 @@ Options.
 \begin_inset Formula $k+p$
 \end_inset
 
- directly (as in 
-\begin_inset Formula $O\left(\left[k+p\right]^{3}\right)$
-\end_inset
-
- impacts running time and memory requirements.
+ directly impacts running time and memory requirements.
  
 \series bold
 \emph on
