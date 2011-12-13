@@ -113,7 +113,7 @@ public class ABtDenseOutJob {
           extendAColIfNeeded(i, aRowCount + 1);
           aCols[i].setQuick(aRowCount, vec.getQuick(i));
         }
-      } else if ( vec.size()>0 ){
+      } else if (vec.size() > 0) {
         for (Iterator<Vector.Element> vecIter = vec.iterateNonZero(); vecIter
           .hasNext();) {
           Vector.Element vecEl = vecIter.next();
@@ -211,7 +211,7 @@ public class ABtDenseOutJob {
             Vector btVec = btRec.getSecond().get();
             Vector aCol;
             if (btIndex > aCols.length || (aCol = aCols[btIndex]) == null
-                || aCol.size() == 0 ) {
+                || aCol.size() == 0) {
 
               /* 100% zero A column in the block, skip it as sparse */
               continue;
