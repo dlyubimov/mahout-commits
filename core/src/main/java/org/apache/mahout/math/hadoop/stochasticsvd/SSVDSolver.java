@@ -397,7 +397,6 @@ public class SSVDSolver {
       }
 
       // save/redistribute UHat
-      //
       double[][] uHat = eigenWrapper.getUHat();
 
       fs.mkdirs(uHatPath);
@@ -567,10 +566,11 @@ public class SSVDSolver {
 
     List<double[]> denseData = Lists.newArrayList();
 
-    // int m=0;
 
-    // assume it is partitioned output, so we need to read them up
-    // in order of partitions.
+    /*
+     * assume it is partitioned output, so we need to read them up in order of
+     * partitions.
+     */
     Arrays.sort(files, PARTITION_COMPARATOR);
 
     for (FileStatus fstat : files) {
@@ -610,8 +610,10 @@ public class SSVDSolver {
       return null;
     }
 
-    // assume it is partitioned output, so we need to read them up
-    // in order of partitions.
+    /*
+     * assume it is partitioned output, so we need to read them up in order of
+     * partitions.
+     */
     Arrays.sort(files, PARTITION_COMPARATOR);
 
     DenseVector result = null;
@@ -654,8 +656,10 @@ public class SSVDSolver {
       return null;
     }
 
-    // assume it is partitioned output, so we need to read them up
-    // in order of partitions.
+    /*
+     * assume it is partitioned output, so we need to read them up in order of
+     * partitions.
+     */
     Arrays.sort(files, PARTITION_COMPARATOR);
 
     UpperTriangular result = null;
