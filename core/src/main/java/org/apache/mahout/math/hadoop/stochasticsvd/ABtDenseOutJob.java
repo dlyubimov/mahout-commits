@@ -460,20 +460,6 @@ public class ABtDenseOutJob {
 
     JobConf oldApiJob = new JobConf(conf);
 
-    // MultipleOutputs
-    // .addNamedOutput(oldApiJob,
-    // QJob.OUTPUT_QHAT,
-    // org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
-    // SplitPartitionedWritable.class,
-    // DenseBlockWritable.class);
-    //
-    // MultipleOutputs
-    // .addNamedOutput(oldApiJob,
-    // QJob.OUTPUT_RHAT,
-    // org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
-    // SplitPartitionedWritable.class,
-    // VectorWritable.class);
-
     Job job = new Job(oldApiJob);
     job.setJobName("ABt-job");
     job.setJarByClass(ABtDenseOutJob.class);
@@ -504,9 +490,6 @@ public class ABtDenseOutJob {
     job.getConfiguration().setInt(QRFirstStep.PROP_K, k);
     job.getConfiguration().setInt(QRFirstStep.PROP_P, p);
     job.getConfiguration().set(PROP_BT_PATH, inputBtGlob.toString());
-
-    // number of reduce tasks doesn't matter. we don't actually
-    // send anything to reducers.
 
     job.setNumReduceTasks(numReduceTasks);
 
