@@ -5,10 +5,10 @@ k<-10
 qi<-1
 
 #simulated input
-svalsim<-diag(k:1)
+svalsim<-diag(c(k:1,rep(0.1,n-k)))
 
-usim<- qr.Q(qr(matrix(rnorm(m*k, mean=3), nrow=m,ncol=k)))
-vsim<- qr.Q(qr( matrix(rnorm(n*k,mean=5), nrow=n,ncol=k)))
+usim<- qr.Q(qr(matrix(rnorm(m*n, mean=3), nrow=m,ncol=n)))
+vsim<- qr.Q(qr( matrix(rnorm(n*n,mean=5), nrow=n,ncol=n)))
 
 xisim=(1:n) 
 
@@ -19,7 +19,7 @@ for (i in 1:m) x[i,]<- x[i,]+xisim
 xi <- colMeans(x)
 
 # SVD test: compare k singular values out of ssvd.svd and regular svd
-res <- ssvd.svd(x,k, qiter=1 );
+res <- ssvd.svd1(x,k, qiter=0 );
 
 res$svalues
 

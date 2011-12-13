@@ -38,6 +38,52 @@ res$v <- (t(b) %*% e$vectors %*% diag(1/e$values))[,1:k]
 return(res)
 }
 
+#SSVD with Q=YR^-1 substitute.
+# this is just a simulation, because it is suboptimal to verify the actual result
+ssvd.svd1 <- function(x, k, p=25, qiter=0 ) { 
+
+a <- as.matrix(x)
+m <- nrow(a)
+n <- ncol(a)
+p <- min( min(m,n)-k,p)
+r <- k+p
+
+omega <- matrix ( rnorm(r*n), nrow=n, ncol=r)
+
+# in reality we of course don't need to form and persist y
+# but this is just verification
+y <- a %*% omega
+
+yty <- t(y) %*% y
+R <- chol(yty, pivot = T)
+q <- y %*% solve(R)
+
+b<- t( q ) %*% a   
+
+#power iterations
+for ( i in 1:qiter ) { 
+  y <- a %*% t(b)
+
+  yty <- t(y) %*% y
+  R <- chol(yty, pivot = T)
+  q <- y %*% solve(R)
+  b <- t(q) %*% a
+}
+
+bbt <- b %*% t(b)
+
+e <- eigen(bbt, symmetric=T)
+
+res <- list()
+
+res$svalues <- sqrt(e$values)[1:k]
+uhat=e$vectors[1:k,1:k]
+
+res$u <- (q %*% e$vectors)[,1:k]
+res$v <- (t(b) %*% e$vectors %*% diag(1/e$values))[,1:k]
+
+return(res)
+}
 
 
 #############

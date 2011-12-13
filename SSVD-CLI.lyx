@@ -3,6 +3,9 @@
 \begin_document
 \begin_header
 \textclass article
+\begin_preamble
+
+\end_preamble
 \use_default_options true
 \maintain_unincluded_children false
 \language english
@@ -377,6 +380,12 @@ Text
 status open
 
 \begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fn:(TODO:-re-verify)"
+
+\end_inset
+
 (TODO: re-verify)
 \end_layout
 
@@ -458,7 +467,12 @@ Usage
 status collapsed
 
 \begin_layout Plain Layout
-As of Mahout 0.6 trunk
+As of Mahout 0.6 trunk.
+ 
+\begin_inset Newline newline
+\end_inset
+
+12/13/2011 adjusted for MAHOUT-922 changes.
 \end_layout
 
 \end_inset
@@ -491,7 +505,28 @@ Options.
 \family default
 \size default
  (required): the requested SVD rank (minimum number of singular values and
- dimensions in U, V matrices) 
+ dimensions in U, V matrices).
+ The value of 
+\begin_inset Formula $k+p$
+\end_inset
+
+ directly (as in 
+\begin_inset Formula $O\left(\left[k+p\right]^{3}\right)$
+\end_inset
+
+ impacts running time and memory requirements.
+ 
+\series bold
+\emph on
+k+p=500 is probably more than reasonable
+\series default
+\emph default
+.
+ Typically 
+\begin_inset Formula $k+p$
+\end_inset
+
+ is taken within range 20...200.
 \end_layout
 
 \begin_layout Labeling
@@ -510,30 +545,22 @@ Options.
 <int-value>
 \family default
 \size default
- (required): stochastic SVD oversampling.
- The value of 
-\begin_inset Formula $k+p$
-\end_inset
-
- directly impacts running time and memory requirements.
- 
-\series bold
-\emph on
-k+p=500 is probably more than reasonable
-\series default
-\emph default
-.
- Typically 
-\begin_inset Formula $k+p$
-\end_inset
-
- is taken within range 50...200.
+ (optional, default 15): stochastic SVD oversampling.
  
 \begin_inset Formula $p$
 \end_inset
 
- doesn't seem to have to be very significant (perhaps 5..10).
+ doesn't seem to have to be very significant.
+ If power iterations (
+\begin_inset Formula $q>0$
+\end_inset
+
+) are used then p perhaps could be kept quite low, not to exceed 10% of
  
+\begin_inset Formula $k$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Labeling
@@ -586,7 +613,11 @@ k+p=500 is probably more than reasonable
 \family default
 \size default
  (optional, default 10,000): the number of rows of source matrix for block
- computations.
+ computations during 
+\begin_inset Formula $\mathbf{Y}=\mathbf{QR}$
+\end_inset
+
+ decomposition.
  Taller blocking causes more memory use but produces less blocks and therefore
  somewhat better running times.
  The most optimal mode from the running time point of view should be 1 block
@@ -594,6 +625,7 @@ k+p=500 is probably more than reasonable
  
 \emph on
 This cannot be less than k+p.
+ 
 \end_layout
 
 \begin_layout Labeling
@@ -613,28 +645,95 @@ This cannot be less than k+p.
 \size default
  
 \family default
-(optional, default 10,000): the block height in multiplication operations.
- With extreme sparse matrices increasing that parameter will lead to better
- performance by reducing computational pressure on the shuffle and sort
- and grouping sparse records together.
- However, setting it too high may cause larger block values formed and written
- and may cause OOM.
+(optional, default 30,000): the block height during 
+\begin_inset Formula $\mathbf{B}=\mathbf{Q}^{\top}\mathbf{A}$
+\end_inset
+
+ operation
 \begin_inset Foot
-status open
+status collapsed
 
 \begin_layout Plain Layout
-Matrix mutliplications are the biggest bottleneck of this method as of the
- time of this writing.
- Tweaking this parameters for bigger blocks will help tremendeously but
- may cause OOM and/or GC thrashing which will again either decrease performance
- dramatically or even derail the whole job.
- So balance must be striken here.
- Default is good for dense inputs and safe for sparse inputs).
+\begin_inset CommandInset label
+LatexCommand label
+name "fn:With-extreme-sparse"
+
+\end_inset
+
+With extreme sparse matrices increasing this parameter may lead to better
+ performance by reducing computational pressure on the shuffle and sort
+ and grouping sparse records together.
 \end_layout
 
 \end_inset
 
+
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fn:GC thrashing warning"
+
+\end_inset
+
+ Watch for GC thrashing and swap.
+ Values too high may cause GC thrashing and/or swapping, both of which are
+ capable of bringing job performance down to a halt.
+ Don't starve jobs for memory.
+ Defaults are believed to work well for -Xmx800mb or above per child task.
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Labeling
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
+-abth,
+\begin_inset space ~
+\end_inset
+
+--abtBlockHeight
+\begin_inset space ~
+\end_inset
+
+<int-value>
+\size default
  
+\family default
+(optional, default 200,000): the block height during 
+\begin_inset Formula $\mathbf{Y}_{i}=\mathbf{A}\mathbf{B}_{i}^{\top}$
+\end_inset
+
+ multiplication
+\begin_inset script superscript
+
+\begin_layout Plain Layout
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fn:With-extreme-sparse"
+
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fn:GC thrashing warning"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Labeling
@@ -661,7 +760,7 @@ Matrix mutliplications are the biggest bottleneck of this method as of the
  input.
  
 \begin_inset Foot
-status open
+status collapsed
 
 \begin_layout Plain Layout
 
@@ -798,11 +897,16 @@ Since in this version projection block formation happens in mappers, for
  the hadoop cluster.
  At this point it could also be overwritten by a standard hadoop property
  using -D option
-\begin_inset Foot
-status collapsed
+\begin_inset script superscript
 
 \begin_layout Plain Layout
-TODO: reverify
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fn:(TODO:-re-verify)"
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
