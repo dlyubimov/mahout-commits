@@ -294,15 +294,14 @@ public class ABtDenseOutJob {
       extends
       Reducer<SplitPartitionedWritable, DenseBlockWritable, SplitPartitionedWritable, VectorWritable> {
 
-    // hack: partition number formats in hadoop, copied. this may stop working
-    // if it gets
-    // out of sync with newer hadoop version. But unfortunately rules of
-    // forming
-    // output file names are not sufficiently exposed so we need to hack it
-    // if we write the same split output from either mapper or reducer.
-    // alternatively, we probably can replace it by our own output file namnig
-    // management
-    // completely and bypass MultipleOutputs entirely.
+    /*
+     * HACK: partition number formats in hadoop, copied. this may stop working
+     * if it gets out of sync with newer hadoop version. But unfortunately rules
+     * of forming output file names are not sufficiently exposed so we need to
+     * hack it if we write the same split output from either mapper or reducer.
+     * alternatively, we probably can replace it by our own output file naming
+     * management completely and bypass MultipleOutputs entirely.
+     */
 
     private static final NumberFormat NUMBER_FORMAT = NumberFormat
       .getInstance();
