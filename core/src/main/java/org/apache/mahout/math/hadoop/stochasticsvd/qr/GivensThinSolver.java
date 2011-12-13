@@ -391,8 +391,10 @@ public class GivensThinSolver {
     assert qt2[0].length == r;
     double[] cs = new double[2];
 
-    // pairwise givens(a,b) so that a come off main diagonal in r1
-    // and bs come off u-th upper subdiagonal in r2.
+    /*
+     * pairwise givens(a,b) so that a come off main diagonal in r1 and bs come
+     * off u-th upper subdiagonal in r2.
+     */
     for (int v = 0; v < kp; v++) {
       for (int u = v; u < kp; u++) {
         givens(r1[u][u], r2[u - v][u], cs);
