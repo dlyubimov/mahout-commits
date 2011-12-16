@@ -44,7 +44,7 @@ reg <- diag(regrate,k)
 		for ( i in 1:n ) { 
 			if ( nv[i] > 0 ) { 
 				# indices of a[,i] where it is non-zero
-			    uind <- (1:length(a[,i]))[a[,i]!=0]
+			    uind <- (1:m)[a[,i]!=0]
 			    # form submatrix of u with rows in uind
 			    utsubm <- as.matrix(ut[,uind])
 			    utu <- utsubm %*% t(utsubm)  
@@ -55,7 +55,7 @@ reg <- diag(regrate,k)
 		for ( i in 1:m ) { 
 			if ( nu[i] > 0 ) { 
 				#indices of a[i,] where non-zero entries are found
-				vind <- (1:length(a[i,]))[a[i,]!=0]
+				vind <- (1:n)[a[i,]!=0]
 				vtsubm <- as.matrix(vt [, vind])
 					
 				vtv <- vtsubm %*% t(vtsubm)
