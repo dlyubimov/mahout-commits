@@ -37,6 +37,8 @@ vt <- matrix(rep(0,k*n), nrow=k, ncol=n);
 #TODO: figure out count normalization
 nu <- rowSums(matrix(as.numeric(a!=0),nrow=nrow(a),ncol=ncol(a)))
 nv <- colSums(matrix(as.numeric(a!=0),nrow=nrow(a),ncol=ncol(a)))
+nu <- nu/mean(nu)
+nv <- nv/mean(nv)
 
 reg <- diag(regrate,k)
 
