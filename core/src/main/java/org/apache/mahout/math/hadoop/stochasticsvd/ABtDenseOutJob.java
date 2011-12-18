@@ -188,8 +188,7 @@ public class ABtDenseOutJob {
                                                                        null,
                                                                        null,
                                                                        true,
-                                                                       FileSystem.getLocal(context.getConfiguration())
-                                                                                 .getConf());
+                                                                       new Configuration());
 
           } else {
 
