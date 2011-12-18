@@ -205,6 +205,8 @@ public final class BtJob {
         String rLocalPathStr = "";
         Validate.notNull(rFiles,
                          "RHat input comes empty from distributed cache.");
+        Validate.isTrue(rFiles.length > 0,
+                        "RHat input comes empty from distributed cache.");
 
         for (Path rFile : rFiles) {
 

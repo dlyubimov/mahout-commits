@@ -305,6 +305,8 @@ public class ABtDenseOutJob {
         String btLocalPathStr = "";
         Validate.notNull(btFiles,
                          "BT input comes empty from distributed cache.");
+        Validate.isTrue(btFiles.length > 0,
+                        "BT input comes empty from distributed cache.");
 
         for (Path btFile : btFiles) {
 
