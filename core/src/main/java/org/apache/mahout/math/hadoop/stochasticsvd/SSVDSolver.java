@@ -337,8 +337,12 @@ public class SSVDSolver {
                seed,
                reduceTasks);
 
-      // restrict number of reducers to a reasonable number
-      // so we don't have to run too many additions in the frontend.
+      /*
+       * restrict number of reducers to a reasonable number so we don't have to
+       * run too many additions in the frontend when reconstructing BBt for the
+       * last B' and BB' computations. The user may not realize that and gives a
+       * bit too many (I would be happy i that were ever the case though).
+       */
 
       BtJob.run(conf,
                 inputPath,
@@ -348,7 +352,8 @@ public class SSVDSolver {
                 k,
                 p,
                 outerBlockHeight,
-                Math.min(1000, reduceTasks),
+                q <= 0 ? Math.min(1000, reduceTasks) : reduceTasks,
+                broadcast,
                 labelType,
                 q <= 0);
 
@@ -379,7 +384,8 @@ public class SSVDSolver {
                   k,
                   p,
                   outerBlockHeight,
-                  Math.min(1000, reduceTasks),
+                  i == q - 1 ? Math.min(1000, reduceTasks) : reduceTasks,
+                  broadcast,
                   labelType,
                   i == q - 1);
       }
