@@ -61,6 +61,9 @@ public final class SequenceFileDirValueIterator<V extends Writable>
     } else {
       statuses = pathType == PathType.GLOB ? fs.globStatus(path, filter) : fs.listStatus(path, filter);
     }
+    // prevent NPEs
+    if (statuses == null)
+      statuses = new FileStatus[0];
     if (ordering != null) {
       Arrays.sort(statuses, ordering);
     }
