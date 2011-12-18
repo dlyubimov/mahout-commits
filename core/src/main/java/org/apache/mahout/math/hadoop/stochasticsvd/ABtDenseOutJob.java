@@ -303,9 +303,6 @@ public class ABtDenseOutJob {
         Path[] btFiles =
           DistributedCache.getLocalCacheFiles(context.getConfiguration());
 
-        // DEBUG: stdout
-        System.out.printf("list of files: " + btFiles);
-
         String btLocalPathStr = "";
         Validate.notNull(btFiles,
                          "BT input comes empty from distributed cache.");
