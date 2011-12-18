@@ -539,7 +539,8 @@ public class ABtDenseOutJob {
            * new api is not enabled yet in our dependencies at this time, still
            * using deprecated one
            */
-          DistributedCache.addCacheFile(fstat.getPath().toUri(), conf);
+          DistributedCache.addCacheFile(fstat.getPath().toUri(),
+                                        job.getConfiguration());
         }
       }
     }
