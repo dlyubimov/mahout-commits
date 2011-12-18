@@ -152,6 +152,7 @@ public class LocalSSVDSolverSparseSequentialTest extends MahoutTestCase {
     
     ssvd.setOverwrite(true);
     ssvd.setQ(q);
+    ssvd.setBroadcast(false);
     ssvd.run();
 
     double[] stochasticSValues = ssvd.getSingularValues();

@@ -117,7 +117,7 @@ public class SSVDSolver {
   private boolean cUHalfSigma;
   private boolean cVHalfSigma;
   private boolean overwrite;
-  private boolean broadcast = false;
+  private boolean broadcast = true;
 
   /**
    * create new SSVD solver. Required parameters are passed to constructor to

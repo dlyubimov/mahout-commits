@@ -133,7 +133,7 @@ public class ABtJob {
       if (aCols[col] == null) {
         aCols[col] =
           new SequentialAccessSparseVector(rowCount < 10000 ? 10000 : rowCount,
-                                           16);
+                                           1);
       } else if (aCols[col].size() < rowCount) {
         Vector newVec =
           new SequentialAccessSparseVector(rowCount << 1,
