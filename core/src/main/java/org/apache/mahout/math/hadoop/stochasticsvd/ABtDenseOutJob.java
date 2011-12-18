@@ -306,13 +306,14 @@ public class ABtDenseOutJob {
         System.out.printf("list of files: " + btFiles);
 
         String btLocalPathStr = "";
-        if (btFiles != null) {
-          for (Path btFile : btFiles) {
+        Validate.notNull(btFiles,
+                         "BT input comes empty from distributed cache.");
 
-            if (btLocalPathStr.length() > 0)
-              btLocalPathStr += Path.SEPARATOR_CHAR;
-            btLocalPathStr += btFile;
-          }
+        for (Path btFile : btFiles) {
+
+          if (btLocalPathStr.length() > 0)
+            btLocalPathStr += Path.SEPARATOR_CHAR;
+          btLocalPathStr += btFile;
         }
         btLocalPath = new Path(btLocalPathStr);
       }
