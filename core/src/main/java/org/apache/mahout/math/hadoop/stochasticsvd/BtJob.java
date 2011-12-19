@@ -28,7 +28,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -206,12 +205,14 @@ public final class BtJob {
         Validate.notNull(rFiles,
                          "no RHat files in distributed cache job definition");
 
+        Configuration conf = new Configuration();
+        conf.set("fs.default.name", "file:");
+
         rhatInput =
           new SequenceFileDirValueIterator<VectorWritable>(rFiles,
                                                            SSVDSolver.PARTITION_COMPARATOR,
                                                            true,
-                                                           FileSystem.getLocal(new Configuration())
-                                                                     .getConf());
+                                                           conf);
 
       } else {
         Path rPath = new Path(qJobPath, QJob.OUTPUT_RHAT + "-*");
