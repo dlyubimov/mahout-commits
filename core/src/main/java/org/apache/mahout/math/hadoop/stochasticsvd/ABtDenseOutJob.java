@@ -188,6 +188,7 @@ public class ABtDenseOutJob {
                                                                        null,
                                                                        true,
                                                                        new Configuration());
+            
 
           } else {
 
@@ -200,6 +201,7 @@ public class ABtDenseOutJob {
                                                                        context.getConfiguration());
           }
           closeables.addFirst(btInput);
+          Validate.isTrue(btInput.hasNext(),"Empty B' input!");
 
           int aRowBegin = pass * blockHeight;
           int bh = Math.min(blockHeight, aRowCount - aRowBegin);

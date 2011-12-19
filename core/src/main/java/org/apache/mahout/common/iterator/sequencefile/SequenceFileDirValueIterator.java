@@ -55,7 +55,7 @@ public final class SequenceFileDirValueIterator<V extends Writable>
                                       final boolean reuseKeyValueInstances,
                                       final Configuration conf) throws IOException {
     FileStatus[] statuses;
-    FileSystem fs = path.getFileSystem(conf);
+    FileSystem fs = FileSystem.get(conf);
     if (filter == null) {
       statuses = pathType == PathType.GLOB ? fs.globStatus(path) : fs.listStatus(path);
     } else {

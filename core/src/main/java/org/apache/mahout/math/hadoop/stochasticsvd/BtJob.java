@@ -228,6 +228,9 @@ public final class BtJob {
                                                          true,
                                                          distributedRHat ? new Configuration()
                                                              : context.getConfiguration());
+      
+      Validate.isTrue(rhatInput.hasNext(),"Empty R-hat input!");
+
       closeables.addFirst(rhatInput);
       outputs = new MultipleOutputs(new JobConf(context.getConfiguration()));
       closeables.addFirst(new IOUtils.MultipleOutputsCloseableAdapter(outputs));
