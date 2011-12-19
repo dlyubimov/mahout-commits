@@ -221,8 +221,7 @@ public final class BtJob {
 
       SequenceFileDirValueIterator<VectorWritable> rhatInput =
         new SequenceFileDirValueIterator<VectorWritable>(rPath,
-                                                         distributedRHat ? PathType.LIST
-                                                             : PathType.GLOB,
+                                                         PathType.GLOB,
                                                          null,
                                                          SSVDSolver.PARTITION_COMPARATOR,
                                                          true,
