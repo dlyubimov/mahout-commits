@@ -353,7 +353,7 @@ public class SSVDSolver {
                 p,
                 outerBlockHeight,
                 q <= 0 ? Math.min(1000, reduceTasks) : reduceTasks,
-                broadcast,
+                /* broadcast,*/ false,
                 labelType,
                 q <= 0);
 
@@ -385,8 +385,7 @@ public class SSVDSolver {
                   p,
                   outerBlockHeight,
                   i == q - 1 ? Math.min(1000, reduceTasks) : reduceTasks,
-                  /*broadcast,*/
-                  false,
+                  broadcast,
                   labelType,
                   i == q - 1);
       }
