@@ -206,7 +206,7 @@ public final class BtJob {
                          "no RHat files in distributed cache job definition");
 
         Configuration conf = new Configuration();
-        conf.set("fs.default.name", "file:");
+        conf.set("fs.default.name", "file:///");
 
         rhatInput =
           new SequenceFileDirValueIterator<VectorWritable>(rFiles,
