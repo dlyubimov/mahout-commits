@@ -193,7 +193,7 @@ public final class BtJob {
        * files rather than hdfs path.
        */
 
-      Path rPath;
+      SequenceFileDirValueIterator<VectorWritable> rhatInput;
 
       boolean distributedRHat =
         context.getConfiguration().get(PROP_RHAT_BROADCAST) != null;
@@ -202,31 +202,22 @@ public final class BtJob {
         Path[] rFiles =
           DistributedCache.getLocalCacheFiles(context.getConfiguration());
 
-        String rLocalPathStr = "";
-        Validate.notNull(rFiles,
-                         "RHat input comes empty from distributed cache.");
-        Validate.isTrue(rFiles.length > 0,
-                        "RHat input comes empty from distributed cache.");
+        rhatInput =
+          new SequenceFileDirValueIterator<VectorWritable>(rFiles,
+                                                           SSVDSolver.PARTITION_COMPARATOR,
+                                                           true,
+                                                           new Configuration());
 
-        for (Path rFile : rFiles) {
-
-          if (rLocalPathStr.length() > 0)
-            rLocalPathStr += ",";
-          rLocalPathStr += rFile;
-        }
-        rPath = new Path(rLocalPathStr);
       } else {
-        rPath = new Path(qJobPath, QJob.OUTPUT_RHAT + "-*");
+        Path rPath = new Path(qJobPath, QJob.OUTPUT_RHAT + "-*");
+        rhatInput =
+          new SequenceFileDirValueIterator<VectorWritable>(rPath,
+                                                           PathType.GLOB,
+                                                           null,
+                                                           SSVDSolver.PARTITION_COMPARATOR,
+                                                           true,
+                                                           context.getConfiguration());
       }
-
-      SequenceFileDirValueIterator<VectorWritable> rhatInput =
-        new SequenceFileDirValueIterator<VectorWritable>(rPath,
-                                                         PathType.GLOB,
-                                                         null,
-                                                         SSVDSolver.PARTITION_COMPARATOR,
-                                                         true,
-                                                         distributedRHat ? new Configuration()
-                                                             : context.getConfiguration());
 
       Validate.isTrue(rhatInput.hasNext(), "Empty R-hat input!");
 
