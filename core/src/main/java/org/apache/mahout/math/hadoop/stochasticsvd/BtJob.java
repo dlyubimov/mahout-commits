@@ -211,7 +211,7 @@ public final class BtJob {
         for (Path rFile : rFiles) {
 
           if (rLocalPathStr.length() > 0)
-            rLocalPathStr += Path.SEPARATOR_CHAR;
+            rLocalPathStr += ",";
           rLocalPathStr += rFile;
         }
         rPath = new Path(rLocalPathStr);
@@ -228,8 +228,8 @@ public final class BtJob {
                                                          true,
                                                          distributedRHat ? new Configuration()
                                                              : context.getConfiguration());
-      
-      Validate.isTrue(rhatInput.hasNext(),"Empty R-hat input!");
+
+      Validate.isTrue(rhatInput.hasNext(), "Empty R-hat input!");
 
       closeables.addFirst(rhatInput);
       outputs = new MultipleOutputs(new JobConf(context.getConfiguration()));
