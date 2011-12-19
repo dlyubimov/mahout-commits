@@ -132,7 +132,7 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
     ssvd.setAbtBlockHeight(400);
     ssvd.setOverwrite(true);
     ssvd.setQ(q);
-    ssvd.setBroadcast(true);
+    ssvd.setBroadcast(false);
     ssvd.run();
 
     double[] stochasticSValues = ssvd.getSingularValues();
