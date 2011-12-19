@@ -98,7 +98,8 @@ public class ABtDenseOutJob {
     private int kp;
     private int blockHeight;
     private boolean distributedBt;
-    private Path btLocalPath;
+    private Path[] btLocalPath;
+    private Configuration localFsConfig;
 
     @Override
     protected void map(Writable key, VectorWritable value, Context context)
@@ -183,12 +184,9 @@ public class ABtDenseOutJob {
 
             btInput =
               new SequenceFileDirIterator<IntWritable, VectorWritable>(btLocalPath,
-                                                                       PathType.LIST,
-                                                                       null,
                                                                        null,
                                                                        true,
-                                                                       new Configuration());
-            
+                                                                       localFsConfig);
 
           } else {
 
@@ -201,7 +199,7 @@ public class ABtDenseOutJob {
                                                                        context.getConfiguration());
           }
           closeables.addFirst(btInput);
-          Validate.isTrue(btInput.hasNext(),"Empty B' input!");
+          Validate.isTrue(btInput.hasNext(), "Empty B' input!");
 
           int aRowBegin = pass * blockHeight;
           int bh = Math.min(blockHeight, aRowCount - aRowBegin);
@@ -301,22 +299,11 @@ public class ABtDenseOutJob {
       distributedBt = context.getConfiguration().get(PROP_BT_BROADCAST) != null;
       if (distributedBt) {
 
-        Path[] btFiles =
+        btLocalPath =
           DistributedCache.getLocalCacheFiles(context.getConfiguration());
 
-        String btLocalPathStr = "";
-        Validate.notNull(btFiles,
-                         "BT input comes empty from distributed cache.");
-        Validate.isTrue(btFiles.length > 0,
-                        "BT input comes empty from distributed cache.");
-
-        for (Path btFile : btFiles) {
-
-          if (btLocalPathStr.length() > 0)
-            btLocalPathStr += Path.SEPARATOR_CHAR;
-          btLocalPathStr += btFile;
-        }
-        btLocalPath = new Path(btLocalPathStr);
+        localFsConfig = new Configuration();
+        localFsConfig.set("fs.default.name", "file:///");
       }
 
     }
