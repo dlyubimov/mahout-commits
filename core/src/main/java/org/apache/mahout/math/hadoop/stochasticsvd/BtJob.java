@@ -229,6 +229,14 @@ public final class BtJob {
                                                          distributedRHat ? new Configuration()
                                                              : context.getConfiguration());
       closeables.addFirst(rhatInput);
+      
+      // debug 
+      int cnt = 0; 
+      while ( rhatInput.hasNext()) { 
+        cnt++;rhatInput.next();
+      }
+      if ( true ) throw new IOException (String.format("read %d Rhat matrices.",cnt));
+      
       outputs = new MultipleOutputs(new JobConf(context.getConfiguration()));
       closeables.addFirst(new IOUtils.MultipleOutputsCloseableAdapter(outputs));
 
@@ -237,7 +245,7 @@ public final class BtJob {
       /*
        * it's so happens that current QRLastStep's implementation preloads R
        * sequence into memory in the constructor so it's ok to close rhat input
-       * now.
+       * now if it is consumed
        */
       if (!rhatInput.hasNext()) {
         closeables.remove(rhatInput);
