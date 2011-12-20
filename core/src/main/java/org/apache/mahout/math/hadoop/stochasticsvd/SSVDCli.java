@@ -71,7 +71,7 @@ public class SSVDCli extends AbstractJob {
     addOption("reduceTasks",
               "t",
               "number of reduce tasks (where applicable)",
-              String.valueOf(1));
+              true);
     addOption("powerIter",
               "q",
               "number of additional power iterations (0..2 is good)",
