@@ -80,11 +80,16 @@ als.alswr <- function(a, k, regrate, iter = 20) {
 	
 }
 
+als.extrSValues <- function ( u, v ) { 
+  return (sqrt(apply(u,2,function(x) sum(x*x))*
+	apply(v,2,function(x) sum(x*x))))
+}
+
 # test 
 als.test1 <- function() {
 	
-	n <- 1000
-	m <- 2000
+	n <- 100
+	m <- 200
 	k <- 10
 	regrate <- 1e-06
 	iter <- 20
@@ -103,9 +108,11 @@ als.test1 <- function() {
 	for (i in 1:m) for (j in 1:n) if (runif(1) < 0.97) 
 		a[i, j] = 0
 	
+	#res <- als.alswr(a, k, regrate, iter)
 	
-	#res <- ssvd.alsreg ( a, k, regrate,iter )
-	res <- als.alswr(a, k, regrate, iter)
+	res <- als.alsreg ( a, k, regrate,iter )
+	svalues <-als.extrSValues(res$u,res$v)
+	
 	
 	#error per element
 	sum(a - res$u %*% t(res$v))/(ncol(a) * nrow(a))
