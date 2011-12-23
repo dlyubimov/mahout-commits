@@ -36,6 +36,7 @@ import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Matrix;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
+import org.apache.mahout.math.function.Functions;
 
 public class VJob {
   private static final String OUTPUT_V = "v";
@@ -143,7 +144,7 @@ public class VJob {
 
       sValues = SSVDHelper.loadVector(sigmaPath, context.getConfiguration());
       if (context.getConfiguration().get(PROP_V_HALFSIGMA) != null) {
-        sValues.assign(SSVDHelper.FUNC_SQRT);
+        sValues.assign(Functions.SQRT);
       }
 
     }

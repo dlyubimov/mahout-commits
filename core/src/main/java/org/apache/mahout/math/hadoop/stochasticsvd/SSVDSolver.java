@@ -33,6 +33,7 @@ import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.DistributedRowMatrixWriter;
 import org.apache.mahout.math.Matrix;
 import org.apache.mahout.math.Vector;
+import org.apache.mahout.math.function.Functions;
 import org.apache.mahout.math.ssvd.EigenSolverWrapper;
 
 import com.google.common.collect.Lists;
@@ -434,7 +435,7 @@ public class SSVDSolver {
       Matrix uHat = new DenseMatrix(eigenWrapper.getUHat());
       svalues=new DenseVector(eigenWrapper.getEigenValues());
       
-      svalues.assign(SSVDHelper.FUNC_SQRT);
+      svalues.assign(Functions.SQRT);
 
       // save/redistribute UHat
       fs.mkdirs(uHatPath);

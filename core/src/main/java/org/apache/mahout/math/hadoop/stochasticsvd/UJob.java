@@ -37,6 +37,7 @@ import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Matrix;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
+import org.apache.mahout.math.function.Functions;
 
 /**
  * Computes U=Q*Uhat of SSVD (optionally adding x pow(Sigma, 0.5) )
@@ -145,7 +146,7 @@ public class UJob {
 
       if (context.getConfiguration().get(PROP_U_HALFSIGMA) != null) {
         sValues = SSVDHelper.loadVector(sigmaPath, context.getConfiguration());
-        sValues.assign(SSVDHelper.FUNC_SQRT);
+        sValues.assign(Functions.SQRT);
       }
 
     }

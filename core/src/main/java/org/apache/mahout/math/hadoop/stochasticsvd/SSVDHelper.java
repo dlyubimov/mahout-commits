@@ -21,7 +21,7 @@ import org.apache.mahout.common.iterator.sequencefile.SequenceFileValueIterable;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
-import org.apache.mahout.math.function.DoubleFunction;
+import org.apache.mahout.math.function.Functions;
 
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
@@ -34,13 +34,6 @@ import com.google.common.io.Closeables;
  */
 
 public class SSVDHelper {
-
-  static final DoubleFunction FUNC_SQRT = new DoubleFunction() {
-    @Override
-    public double apply(double x) {
-      return Math.sqrt(x);
-    }
-  };
 
   /**
    * load single vector from an hdfs file (possibly presented as glob).
@@ -221,6 +214,27 @@ public class SSVDHelper {
                                         Path glob,
                                         Configuration conf) throws IOException {
 
+    SequenceFileDirValueIterator<VectorWritable> iter =
+      new SequenceFileDirValueIterator<VectorWritable>(glob,
+                                                       PathType.GLOB,
+                                                       null,
+                                                       PARTITION_COMPARATOR,
+                                                       true,
+                                                       conf);
+
+    try {
+      Vector v = null;
+      while (iter.hasNext()) {
+        if (v == null)
+          v = new DenseVector(iter.next().get());
+        else
+          v.assign(iter.next().get(), Functions.PLUS);
+      }
+
+    } finally {
+      Closeables.closeQuietly(iter);
+    }
+
     FileStatus[] files = fs.globStatus(glob);
     if (files == null) {
       return null;
@@ -267,35 +281,30 @@ public class SSVDHelper {
                                                           Configuration conf)
     throws IOException {
 
-    FileStatus[] files = fs.globStatus(glob);
-    if (files == null) {
-      return null;
-    }
-
     /*
-     * assume it is partitioned output, so we need to read them up in order of
-     * partitions.
+     * there still may be more than one file in glob and only one of them must
+     * contain the matrix.
      */
-    Arrays.sort(files, PARTITION_COMPARATOR);
 
-    UpperTriangular result = null;
-    for (FileStatus fstat : files) {
-      for (VectorWritable value : new SequenceFileValueIterable<VectorWritable>(fstat.getPath(),
-                                                                                true,
-                                                                                conf)) {
-        Vector v = value.get();
-        if (result == null) {
-          result = new UpperTriangular(v);
-        } else {
-          throw new IOException("Unexpected overrun in upper triangular matrix files");
-        }
-      }
-    }
+    SequenceFileDirValueIterator<VectorWritable> iter =
+      new SequenceFileDirValueIterator<VectorWritable>(glob,
+                                                       PathType.GLOB,
+                                                       null,
+                                                       null,
+                                                       true,
+                                                       conf);
+    try {
+      if (!iter.hasNext())
+        throw new IOException("No triangular matrices found");
+      Vector v = iter.next().get();
+      UpperTriangular result = new UpperTriangular(v);
+      if (iter.hasNext())
+        throw new IOException("Unexpected overrun in upper triangular matrix files");
+      return result;
 
-    if (result == null) {
-      throw new IOException("Unexpected underrun in upper triangular matrix files");
+    } finally {
+      iter.close();
     }
-    return result;
   }
 
 }
