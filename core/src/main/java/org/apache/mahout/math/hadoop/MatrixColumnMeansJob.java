@@ -33,6 +33,7 @@ import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.mahout.common.iterator.sequencefile.SequenceFileValueIterator;
+import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 import org.apache.mahout.math.function.Functions;
@@ -47,11 +48,17 @@ import com.google.common.io.Closeables;
 public class MatrixColumnMeansJob {
 
   public static final String VECTOR_CLASS =
-      "DistributedRowMatrix.columnMeans.vector.class";
+    "DistributedRowMatrix.columnMeans.vector.class";
 
+  public static Vector run(Configuration conf,
+                           Path inputPath,
+                           Path outputVectorTmpPath) throws IOException {
+    return run(conf, inputPath, outputVectorTmpPath);
+  }
+  
   /**
    * Job for calculating column-wise mean of a DistributedRowMatrix
-   *
+   * 
    * @param initialConf
    * @param inputPath
    *          path to DistributedRowMatrix input
@@ -59,50 +66,61 @@ public class MatrixColumnMeansJob {
    *          path for temporary files created during job
    * @param vectorClass
    *          String of desired class for returned vector e.g. DenseVector,
-   *          RandomAccessSparseVector
+   *          RandomAccessSparseVector (may be null for {@link DenseVector} )
    * @return Vector containing column-wise mean of DistributedRowMatrix
    */
-  public static Vector run(Configuration initialConf, Path inputPath,
-      Path outputVectorTmpPath, String vectorClass) throws IOException,
-      InterruptedException, ClassNotFoundException, IllegalArgumentException,
-      SecurityException, InstantiationException, IllegalAccessException,
-      InvocationTargetException, NoSuchMethodException {
+  public static Vector run(Configuration initialConf,
+                           Path inputPath,
+                           Path outputVectorTmpPath,
+                           String vectorClass) throws IOException {
 
-    initialConf.set(VECTOR_CLASS, vectorClass);
-    JobConf oldApiConf = new JobConf(initialConf);
-    org.apache.hadoop.mapred.FileOutputFormat.setOutputPath(oldApiConf,
-        outputVectorTmpPath);
-    Job job = new Job(initialConf);
-    outputVectorTmpPath.getFileSystem(job.getConfiguration()).delete(
-        outputVectorTmpPath, true);
-    job.setNumReduceTasks(1);
-    FileOutputFormat.setOutputPath(job, outputVectorTmpPath);
-    FileInputFormat.addInputPath(job, inputPath);
-    job.setInputFormatClass(SequenceFileInputFormat.class);
-    job.setOutputFormatClass(SequenceFileOutputFormat.class);
-    FileOutputFormat.setOutputPath(job, outputVectorTmpPath);
-
-    job.setMapperClass(MatrixColumnMeansMapper.class);
-    job.setReducerClass(MatrixColumnMeansReducer.class);
-    job.setMapOutputKeyClass(NullWritable.class);
-    job.setMapOutputValueClass(VectorWritable.class);
-    job.setOutputKeyClass(IntWritable.class);
-    job.setOutputValueClass(VectorWritable.class);
-    job.submit();
-    job.waitForCompletion(true);
-
-    Path tmpFile = new Path(outputVectorTmpPath, "part-r-00000");
-    SequenceFileValueIterator<VectorWritable> iterator =
-        new SequenceFileValueIterator<VectorWritable>(tmpFile, true, oldApiConf);
     try {
-      if (iterator.hasNext()) {
-        return iterator.next().get();
-      } else {
-        return (Vector) Class.forName(vectorClass).getConstructor(int.class)
-            .newInstance(0);
+      initialConf.set(VECTOR_CLASS,
+                      vectorClass == null ? DenseVector.class.getName()
+                          : vectorClass);
+
+      @SuppressWarnings("deprecation")
+      JobConf oldApiConf = new JobConf(initialConf);
+
+      org.apache.hadoop.mapred.FileOutputFormat.setOutputPath(oldApiConf,
+                                                              outputVectorTmpPath);
+      Job job = new Job(initialConf);
+      outputVectorTmpPath.getFileSystem(job.getConfiguration())
+                         .delete(outputVectorTmpPath, true);
+      job.setNumReduceTasks(1);
+      FileOutputFormat.setOutputPath(job, outputVectorTmpPath);
+      FileInputFormat.addInputPath(job, inputPath);
+      job.setInputFormatClass(SequenceFileInputFormat.class);
+      job.setOutputFormatClass(SequenceFileOutputFormat.class);
+      FileOutputFormat.setOutputPath(job, outputVectorTmpPath);
+
+      job.setMapperClass(MatrixColumnMeansMapper.class);
+      job.setReducerClass(MatrixColumnMeansReducer.class);
+      job.setMapOutputKeyClass(NullWritable.class);
+      job.setMapOutputValueClass(VectorWritable.class);
+      job.setOutputKeyClass(IntWritable.class);
+      job.setOutputValueClass(VectorWritable.class);
+      job.submit();
+      job.waitForCompletion(true);
+
+      Path tmpFile = new Path(outputVectorTmpPath, "part-r-00000");
+      SequenceFileValueIterator<VectorWritable> iterator =
+        new SequenceFileValueIterator<VectorWritable>(tmpFile, true, oldApiConf);
+      try {
+        if (iterator.hasNext()) {
+          return iterator.next().get();
+        } else {
+          return (Vector) Class.forName(vectorClass).getConstructor(int.class)
+                               .newInstance(0);
+        }
+      } finally {
+        Closeables.closeQuietly(iterator);
       }
-    } finally {
-      Closeables.closeQuietly(iterator);
+    } catch (Throwable thr) {
+      if (thr instanceof IOException)
+        throw (IOException) thr;
+      else
+        throw new IOException(thr);
     }
   }
 
@@ -128,7 +146,7 @@ public class MatrixColumnMeansJob {
      */
     @Override
     public void map(IntWritable r, VectorWritable v, Context context)
-        throws IOException {
+      throws IOException {
       if (runningSum == null) {
         try {
           /*
@@ -136,8 +154,8 @@ public class MatrixColumnMeansJob {
            * vector using the parameter VECTOR_CLASS
            */
           runningSum =
-              (Vector) Class.forName(vectorClass).getConstructor(int.class)
-                  .newInstance(v.get().size() + 1);
+            (Vector) Class.forName(vectorClass).getConstructor(int.class)
+                          .newInstance(v.get().size() + 1);
         } catch (Exception e) {
           e.printStackTrace();
         }
@@ -155,7 +173,7 @@ public class MatrixColumnMeansJob {
      */
     @Override
     public void cleanup(Context context) throws InterruptedException,
-        IOException {
+      IOException {
       if (runningSum != null) {
         context.write(NullWritable.get(), new VectorWritable(runningSum));
       }
@@ -182,8 +200,10 @@ public class MatrixColumnMeansJob {
     }
 
     @Override
-    public void reduce(NullWritable n, Iterable<VectorWritable> vectors,
-        Context context) throws IOException, InterruptedException {
+    public void reduce(NullWritable n,
+                       Iterable<VectorWritable> vectors,
+                       Context context) throws IOException,
+      InterruptedException {
 
       /**
        * Add together partial column-wise sums from mappers
@@ -202,13 +222,14 @@ public class MatrixColumnMeansJob {
        */
       if (outputVector != null) {
         outputVectorWritable.set(outputVector.viewPart(1,
-            outputVector.size() - 1).divide(outputVector.get(0)));
+                                                       outputVector.size() - 1)
+                                             .divide(outputVector.get(0)));
         context.write(one, outputVectorWritable);
       } else {
         try {
           Vector emptyVector =
-              (Vector) Class.forName(vectorClass).getConstructor(int.class)
-                  .newInstance(0);
+            (Vector) Class.forName(vectorClass).getConstructor(int.class)
+                          .newInstance(0);
           context.write(one, new VectorWritable(emptyVector));
         } catch (Exception e) {
           e.printStackTrace();
