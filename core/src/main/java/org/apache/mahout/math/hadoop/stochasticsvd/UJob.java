@@ -135,7 +135,7 @@ public class UJob {
       Path uHatPath = new Path(context.getConfiguration().get(PROP_UHAT_PATH));
       Path sigmaPath = new Path(context.getConfiguration().get(PROP_SIGMA_PATH));
 
-      uHat = new DenseMatrix(SSVDSolver.loadDistributedRowMatrix(fs,
+      uHat = new DenseMatrix(SSVDHelper.loadDistributedRowMatrix(fs,
           uHatPath, context.getConfiguration()));
       // since uHat is (k+p) x (k+p)
       kp = uHat.columnSize();
@@ -144,11 +144,8 @@ public class UJob {
       uRowWritable = new VectorWritable(uRow);
 
       if (context.getConfiguration().get(PROP_U_HALFSIGMA) != null) {
-        sValues = new DenseVector(SSVDSolver.loadDistributedRowMatrix(fs,
-            sigmaPath, context.getConfiguration())[0], true);
-        for (int i = 0; i < k; i++) {
-          sValues.setQuick(i, Math.sqrt(sValues.getQuick(i)));
-        }
+        sValues = SSVDHelper.loadVector(sigmaPath, context.getConfiguration());
+        sValues.assign(SSVDHelper.FUNC_SQRT);
       }
 
     }

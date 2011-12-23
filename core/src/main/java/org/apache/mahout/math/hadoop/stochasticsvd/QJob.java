@@ -60,7 +60,8 @@ public final class QJob {
   public static final String PROP_OMEGA_SEED = "ssvd.omegaseed";
   public static final String PROP_K = QRFirstStep.PROP_K;
   public static final String PROP_P = QRFirstStep.PROP_P;
-  public static final String PROP_AROWBLOCK_SIZE = QRFirstStep.PROP_AROWBLOCK_SIZE;
+  public static final String PROP_AROWBLOCK_SIZE =
+    QRFirstStep.PROP_AROWBLOCK_SIZE;
 
   public static final String OUTPUT_RHAT = "R";
   public static final String OUTPUT_QHAT = "QHat";
@@ -80,18 +81,18 @@ public final class QJob {
     private Omega omega;
     private int kp;
 
-
     private QRFirstStep qr;
 
     @Override
     protected void setup(Context context) throws IOException,
       InterruptedException {
-      
+
       int k = Integer.parseInt(context.getConfiguration().get(PROP_K));
       int p = Integer.parseInt(context.getConfiguration().get(PROP_P));
       kp = k + p;
-      long omegaSeed = Long.parseLong(context.getConfiguration().get(PROP_OMEGA_SEED));
-      omega = new Omega(omegaSeed, k, p);
+      long omegaSeed =
+        Long.parseLong(context.getConfiguration().get(PROP_OMEGA_SEED));
+      omega = new Omega(omegaSeed, k + p);
 
       outputs = new MultipleOutputs(new JobConf(context.getConfiguration()));
       closeables.addFirst(new Closeable() {
@@ -131,9 +132,9 @@ public final class QJob {
                         qhatCollector,
                         rhatCollector);
       closeables.addFirst(qr);// important: qr closes first!!
-      yRow=new DenseVector(kp);
+      yRow = new DenseVector(kp);
     }
-    
+
     @Override
     protected void map(Writable key, VectorWritable value, Context context)
       throws IOException, InterruptedException {
@@ -141,10 +142,9 @@ public final class QJob {
       qr.collect(key, yRow);
     }
 
-
-
     @Override
-    protected void cleanup(Context context) throws IOException, InterruptedException {
+    protected void cleanup(Context context) throws IOException,
+      InterruptedException {
       IOUtils.close(closeables);
     }
   }
@@ -161,18 +161,16 @@ public final class QJob {
     InterruptedException, IOException {
 
     JobConf oldApiJob = new JobConf(conf);
-    MultipleOutputs
-      .addNamedOutput(oldApiJob,
-                      OUTPUT_QHAT,
-                      org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
-                      SplitPartitionedWritable.class,
-                      DenseBlockWritable.class);
-    MultipleOutputs
-      .addNamedOutput(oldApiJob,
-                      OUTPUT_RHAT,
-                      org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
-                      SplitPartitionedWritable.class,
-                      VectorWritable.class);
+    MultipleOutputs.addNamedOutput(oldApiJob,
+                                   OUTPUT_QHAT,
+                                   org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
+                                   SplitPartitionedWritable.class,
+                                   DenseBlockWritable.class);
+    MultipleOutputs.addNamedOutput(oldApiJob,
+                                   OUTPUT_RHAT,
+                                   org.apache.hadoop.mapred.SequenceFileOutputFormat.class,
+                                   SplitPartitionedWritable.class,
+                                   VectorWritable.class);
 
     Job job = new Job(oldApiJob);
     job.setJobName("Q-job");

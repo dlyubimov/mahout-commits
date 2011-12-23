@@ -46,10 +46,15 @@ public class VJob {
 
   private Job job;
 
-  public void start(Configuration conf, Path inputPathBt, Path inputUHatPath,
-      Path inputSigmaPath, Path outputPath, int k, int numReduceTasks,
-      boolean vHalfSigma) throws ClassNotFoundException, InterruptedException,
-      IOException {
+  public void start(Configuration conf,
+                    Path inputPathBt,
+                    Path inputUHatPath,
+                    Path inputSigmaPath,
+                    Path outputPath,
+                    int k,
+                    int numReduceTasks,
+                    boolean vHalfSigma) throws ClassNotFoundException,
+    InterruptedException, IOException {
 
     job = new Job(conf);
     job.setJobName("V-job");
@@ -64,7 +69,8 @@ public class VJob {
     job.getConfiguration().set("mapreduce.output.basename", OUTPUT_V);
     FileOutputFormat.setCompressOutput(job, true);
     FileOutputFormat.setOutputCompressorClass(job, DefaultCodec.class);
-    SequenceFileOutputFormat.setOutputCompressionType(job, CompressionType.BLOCK);
+    SequenceFileOutputFormat.setOutputCompressionType(job,
+                                                      CompressionType.BLOCK);
 
     job.setMapOutputKeyClass(IntWritable.class);
     job.setMapOutputValueClass(VectorWritable.class);
@@ -86,7 +92,7 @@ public class VJob {
   }
 
   public void waitForCompletion() throws IOException, ClassNotFoundException,
-      InterruptedException {
+    InterruptedException {
     job.waitForCompletion(false);
 
     if (!job.isSuccessful()) {
@@ -99,8 +105,8 @@ public class VJob {
       Mapper<IntWritable, VectorWritable, IntWritable, VectorWritable> {
 
     private Matrix uHat;
-    private DenseVector vRow;
-    private DenseVector sValues;
+    private Vector vRow;
+    private Vector sValues;
     private VectorWritable vRowWritable;
     private int kp;
     private int k;
@@ -110,35 +116,34 @@ public class VJob {
       throws IOException, InterruptedException {
       Vector qRow = value.get();
       for (int i = 0; i < k; i++) {
-        vRow.setQuick(i,
-                      qRow.dot(uHat.viewColumn(i)) / sValues.getQuick(i));
+        vRow.setQuick(i, qRow.dot(uHat.viewColumn(i)) / sValues.getQuick(i));
       }
       context.write(key, vRowWritable); // U inherits original A row labels.
     }
 
     @Override
     protected void setup(Context context) throws IOException,
-        InterruptedException {
+      InterruptedException {
       super.setup(context);
       FileSystem fs = FileSystem.get(context.getConfiguration());
       Path uHatPath = new Path(context.getConfiguration().get(PROP_UHAT_PATH));
 
-      Path sigmaPath = new Path(context.getConfiguration().get(PROP_SIGMA_PATH));
+      Path sigmaPath =
+        new Path(context.getConfiguration().get(PROP_SIGMA_PATH));
 
-      uHat = new DenseMatrix(SSVDSolver.loadDistributedRowMatrix(fs,
-          uHatPath, context.getConfiguration()));
+      uHat =
+        new DenseMatrix(SSVDHelper.loadDistributedRowMatrix(fs,
+                                                            uHatPath,
+                                                            context.getConfiguration()));
       // since uHat is (k+p) x (k+p)
       kp = uHat.columnSize();
       k = context.getConfiguration().getInt(PROP_K, kp);
       vRow = new DenseVector(k);
       vRowWritable = new VectorWritable(vRow);
 
-      sValues = new DenseVector(SSVDSolver.loadDistributedRowMatrix(fs,
-          sigmaPath, context.getConfiguration())[0], true);
+      sValues = SSVDHelper.loadVector(sigmaPath, context.getConfiguration());
       if (context.getConfiguration().get(PROP_V_HALFSIGMA) != null) {
-        for (int i = 0; i < k; i++) {
-          sValues.setQuick(i, Math.sqrt(sValues.getQuick(i)));
-        }
+        sValues.assign(SSVDHelper.FUNC_SQRT);
       }
 
     }

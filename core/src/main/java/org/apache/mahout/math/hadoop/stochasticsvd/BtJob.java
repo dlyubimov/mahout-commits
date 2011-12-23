@@ -210,7 +210,7 @@ public final class BtJob {
 
         rhatInput =
           new SequenceFileDirValueIterator<VectorWritable>(rFiles,
-                                                           SSVDSolver.PARTITION_COMPARATOR,
+                                                           SSVDHelper.PARTITION_COMPARATOR,
                                                            true,
                                                            conf);
 
@@ -220,7 +220,7 @@ public final class BtJob {
           new SequenceFileDirValueIterator<VectorWritable>(rPath,
                                                            PathType.GLOB,
                                                            null,
-                                                           SSVDSolver.PARTITION_COMPARATOR,
+                                                           SSVDHelper.PARTITION_COMPARATOR,
                                                            true,
                                                            context.getConfiguration());
       }

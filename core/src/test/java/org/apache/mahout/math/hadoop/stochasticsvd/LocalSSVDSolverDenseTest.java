@@ -135,7 +135,7 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
     ssvd.setBroadcast(false);
     ssvd.run();
 
-    double[] stochasticSValues = ssvd.getSingularValues();
+    Vector stochasticSValues = ssvd.getSingularValues();
     System.out.println("--SSVD solver singular values:");
     dumpSv(stochasticSValues);
 
@@ -167,12 +167,12 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
     // used to generate surrogate input
 
     for (int i = 0; i < k; i++) {
-      assertTrue(Math.abs((singularValues.getQuick(i) - stochasticSValues[i])
+      assertTrue(Math.abs((singularValues.getQuick(i) - stochasticSValues.getQuick(i))
           / singularValues.getQuick(i)) <= s_precisionPct / 100);
     }
 
     double[][] mQ =
-      SSVDSolver.loadDistributedRowMatrix(fs, new Path(svdOutPath, "Bt-job/"
+      SSVDHelper.loadDistributedRowMatrix(fs, new Path(svdOutPath, "Bt-job/"
           + BtJob.OUTPUT_Q + "-*"), conf);
 
     SSVDPrototypeTest.assertOrthonormality(new DenseMatrix(mQ),
@@ -180,23 +180,23 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
                                            s_epsilon);
 
     double[][] u =
-      SSVDSolver.loadDistributedRowMatrix(fs,
+      SSVDHelper.loadDistributedRowMatrix(fs,
                                           new Path(svdOutPath, "U/[^_]*"),
                                           conf);
 
     SSVDPrototypeTest.assertOrthonormality(new DenseMatrix(u), false, s_epsilon);
     double[][] v =
-      SSVDSolver.loadDistributedRowMatrix(fs,
+      SSVDHelper.loadDistributedRowMatrix(fs,
                                           new Path(svdOutPath, "V/[^_]*"),
                                           conf);
 
     SSVDPrototypeTest.assertOrthonormality(new DenseMatrix(v), false, s_epsilon);
   }
 
-  static void dumpSv(double[] s) {
+  static void dumpSv(Vector s) {
     System.out.printf("svs: ");
-    for (double value : s) {
-      System.out.printf("%f  ", value);
+    for (Vector.Element el : s) {
+      System.out.printf("%f  ", el.get());
     }
     System.out.println();
 

@@ -53,7 +53,7 @@ public class SSVDPrototype {
 
   public SSVDPrototype(long seed, int kp, int r) {
     this.kp = kp;
-    omega = new Omega(seed, kp / 2, kp - kp / 2);
+    omega = new Omega(seed, kp);
     yRow = new double[kp];
     // m_yRowV = new DenseVector(m_yRow,true);
     this.r = r;
@@ -64,9 +64,11 @@ public class SSVDPrototype {
 
     omega.computeYRow(aRow, yRow);
 
-    yLookahead.add(yRow.clone()); // bad for GC but it's just a prototype,
-                                      // hey. in real thing we'll rotate usage
-                                      // of y buff
+    /*
+     * bad for GC but it's just a prototype, hey. in real thing we'll rotate
+     * usage of y buff
+     */
+    yLookahead.add(yRow.clone());
 
     while (yLookahead.size() > kp) {
 
@@ -114,21 +116,21 @@ public class SSVDPrototype {
     // simulate reducers -- produce qHats
     for (int i = 0; i < rBlocks.size(); i++) {
       qtBlocks.set(i,
-                   GivensThinSolver.computeQtHat(qtBlocks.get(i), i,
+                   GivensThinSolver.computeQtHat(qtBlocks.get(i),
+                                                 i,
                                                  new CopyConstructorIterator<UpperTriangular>(rBlocks.listIterator())));
     }
     cnt = 0;
     blckCnt = 0;
   }
 
-  void secondPass(Vector aRow, PartialRowEmitter btEmitter)
-    throws IOException {
+  void secondPass(Vector aRow, PartialRowEmitter btEmitter) throws IOException {
     int n = aRow.size();
     double[][] qtHat = qtBlocks.get(blckCnt);
 
     int r = qtHat[0].length;
     int qRowBlckIndex = r - cnt - 1; // <-- reverse order since we fed A in
-                                       // reverse
+                                     // reverse
     double[] qRow = new double[kp];
     for (int i = 0; i < kp; i++) {
       qRow[i] = qtHat[i][qRowBlckIndex];
@@ -145,7 +147,6 @@ public class SSVDPrototype {
     }
 
   }
-
 
   public static void testThinQr(int dims, int kp) throws IOException {
 
@@ -252,7 +253,8 @@ public class SSVDPrototype {
 
   }
 
-  public static void testBlockQrWithSSVD(int dims, int kp, int r, long rndSeed) throws IOException {
+  public static void testBlockQrWithSSVD(int dims, int kp, int r, long rndSeed)
+    throws IOException {
 
     DenseMatrix mx = new DenseMatrix(dims << 2, dims);
 

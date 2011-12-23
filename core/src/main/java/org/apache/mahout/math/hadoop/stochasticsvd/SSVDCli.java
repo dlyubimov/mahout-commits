@@ -17,22 +17,16 @@
 package org.apache.mahout.math.hadoop.stochasticsvd;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Map;
 
-import com.google.common.io.Closeables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.SequenceFile;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.mahout.common.AbstractJob;
 import org.apache.mahout.common.commandline.DefaultOptionCreator;
-import org.apache.mahout.math.DenseVector;
-import org.apache.mahout.math.VectorWritable;
+import org.apache.mahout.math.Vector;
 
 /**
  * Mahout CLI adapter for SSVDSolver
@@ -134,24 +128,8 @@ public class SSVDCli extends AbstractJob {
 
     fs.mkdirs(getOutputPath());
 
-    SequenceFile.Writer sigmaW = null;
-
-    try {
-      sigmaW =
-        SequenceFile.createWriter(fs,
-                                  conf,
-                                  getOutputPath("sigma"),
-                                  NullWritable.class,
-                                  VectorWritable.class);
-      Writable sValues =
-        new VectorWritable(new DenseVector(Arrays.copyOf(solver.getSingularValues(),
-                                                         k),
-                                           true));
-      sigmaW.append(NullWritable.get(), sValues);
-
-    } finally {
-      Closeables.closeQuietly(sigmaW);
-    }
+    Vector svalues= solver.getSingularValues().viewPart(0, k);
+    SSVDHelper.saveVector(svalues, getOutputPath("sigma"), conf);
 
     if (computeU) {
       FileStatus[] uFiles = fs.globStatus(new Path(solver.getUPath()));
@@ -168,7 +146,6 @@ public class SSVDCli extends AbstractJob {
           fs.rename(vf.getPath(), getOutputPath());
         }
       }
-
     }
     return 0;
   }
