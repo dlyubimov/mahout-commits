@@ -86,7 +86,10 @@ public class SSVDHelper {
     try {
       w.append(new IntWritable(), vw);
     } finally {
-      // this is a writer, no quiet close please.
+      /*
+       * this is a writer, no quiet close please. we must bail out on incomplete
+       * close.
+       */
       w.close();
     }
   }

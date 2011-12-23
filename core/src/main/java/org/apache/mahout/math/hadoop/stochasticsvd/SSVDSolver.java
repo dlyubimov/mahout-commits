@@ -335,7 +335,7 @@ public class SSVDSolver {
       Path svPath = new Path(outputPath, "Sigma");
       Path uPath = new Path(outputPath, "U");
       Path vPath = new Path(outputPath, "V");
-      
+
       Path bqPath, sqPath;
 
       if (overwrite) {
@@ -344,10 +344,10 @@ public class SSVDSolver {
 
       Random rnd = RandomUtils.getRandom();
       long seed = rnd.nextLong();
-      
+
       /*
-       * if we work with pca offset, we need to precompute 
-       * s_bq0 aka s_omega for jobs to use.
+       * if we work with pca offset, we need to precompute s_bq0 aka s_omega for
+       * jobs to use.
        */
 
       QJob.run(conf,
@@ -414,12 +414,19 @@ public class SSVDSolver {
       }
 
       UpperTriangular bbt =
-        SSVDHelper.loadAndSumUpperTriangularMatrices(fs, new Path(btPath, BtJob.OUTPUT_BBT
-            + "-*"), conf);
+        SSVDHelper.loadAndSumUpperTriangularMatrices(fs,
+                                                     new Path(btPath,
+                                                              BtJob.OUTPUT_BBT
+                                                                  + "-*"),
+                                                     conf);
 
       // convert bbt to something our eigensolver could understand
       assert bbt.columnSize() == k + p;
 
+      /*
+       * we currently use a 3rd party in-core eigensolver. So we need just a
+       * dense array representation for it.
+       */
       double[][] bbtSquare = new double[k + p][];
       for (int i = 0; i < k + p; i++) {
         bbtSquare[i] = new double[k + p];
@@ -433,16 +440,19 @@ public class SSVDSolver {
 
       EigenSolverWrapper eigenWrapper = new EigenSolverWrapper(bbtSquare);
       Matrix uHat = new DenseMatrix(eigenWrapper.getUHat());
-      svalues=new DenseVector(eigenWrapper.getEigenValues());
-      
+      svalues = new DenseVector(eigenWrapper.getEigenValues());
+
       svalues.assign(Functions.SQRT);
 
       // save/redistribute UHat
       fs.mkdirs(uHatPath);
-      DistributedRowMatrixWriter.write(uHatPath = new Path(uHatPath, "uhat.seq"),conf,uHat);
+      DistributedRowMatrixWriter.write(uHatPath =
+        new Path(uHatPath, "uhat.seq"), conf, uHat);
 
       // save sigma.
-      SSVDHelper.saveVector(svalues, svPath = new Path(svPath, "svalues.seq"), conf);
+      SSVDHelper.saveVector(svalues,
+                            svPath = new Path(svPath, "svalues.seq"),
+                            conf);
 
       UJob ujob = null;
       if (computeU) {
@@ -491,6 +501,5 @@ public class SSVDSolver {
     }
 
   }
-
 
 }
