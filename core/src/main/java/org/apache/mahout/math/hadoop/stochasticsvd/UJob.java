@@ -52,7 +52,7 @@ public class UJob {
 
   private Job job;
 
-  public void start(Configuration conf, Path inputPathQ, Path inputUHatPath,
+  public void run(Configuration conf, Path inputPathQ, Path inputUHatPath,
       Path sigmaPath, Path outputPath, int k, int numReduceTasks,
       Class<? extends Writable> labelClass, boolean uHalfSigma)
     throws ClassNotFoundException, InterruptedException, IOException {

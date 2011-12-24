@@ -491,7 +491,7 @@ public class SSVDSolver {
       UJob ujob = null;
       if (computeU) {
         ujob = new UJob();
-        ujob.start(conf,
+        ujob.run(conf,
                    new Path(btPath, BtJob.OUTPUT_Q + "-*"),
                    uHatPath,
                    svPath,
@@ -506,7 +506,7 @@ public class SSVDSolver {
       VJob vjob = null;
       if (computeV) {
         vjob = new VJob();
-        vjob.start(conf,
+        vjob.run(conf,
                    new Path(btPath, BtJob.OUTPUT_BT + "-*"),
                    pcaMeanPath,
                    sqPath,
