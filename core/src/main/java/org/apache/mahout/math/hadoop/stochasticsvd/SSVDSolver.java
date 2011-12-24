@@ -508,6 +508,8 @@ public class SSVDSolver {
         vjob = new VJob();
         vjob.start(conf,
                    new Path(btPath, BtJob.OUTPUT_BT + "-*"),
+                   pcaMeanPath,
+                   sqPath,
                    uHatPath,
                    svPath,
                    vPath,
