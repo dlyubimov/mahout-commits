@@ -71,7 +71,7 @@ public class VJob {
       throws IOException, InterruptedException {
       Vector bCol = value.get();
       /*
-       * MAHOUT-817: PCA correction for B'
+       * MAHOUT-817: PCA correction for B': b_{col=i} -= s_q * xi_{i}
        */
       if (xi != null) {
         double xii = xi.getQuick(key.get());
@@ -82,7 +82,7 @@ public class VJob {
       for (int i = 0; i < k; i++) {
         vRow.setQuick(i, bCol.dot(uHat.viewColumn(i)) / sValues.getQuick(i));
       }
-      context.write(key, vRowWritable); // U inherits original A row labels.
+      context.write(key, vRowWritable);
     }
 
     @Override
