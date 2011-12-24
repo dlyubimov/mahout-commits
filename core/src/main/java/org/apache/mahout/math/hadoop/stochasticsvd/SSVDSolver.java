@@ -336,14 +336,29 @@ public class SSVDSolver {
       Path uPath = new Path(outputPath, "U");
       Path vPath = new Path(outputPath, "V");
 
-      Path bqPath, sqPath;
+      Path pcaBasePath = new Path(outputPath, "pca");
+      Path sbPath = null;
+      Path sqPath = null;
+
+      if (pcaMeanPath != null)
+        fs.mkdirs(pcaBasePath);
+      Random rnd = RandomUtils.getRandom();
+      long seed = rnd.nextLong();
+
+      if (pcaMeanPath != null) {
+        // combute s_b0 if pca offset present
+        Vector xi = SSVDHelper.loadVector(pcaMeanPath, conf);
+        Omega omega = new Omega(seed, k + p);
+        Vector s_b0 = omega.mutlithreadedTRightMultiply(xi);
+
+        SSVDHelper.saveVector(s_b0,
+                              sbPath = new Path(pcaBasePath, "s_b0.seq"),
+                              conf);
+      }
 
       if (overwrite) {
         fs.delete(outputPath, true);
       }
-
-      Random rnd = RandomUtils.getRandom();
-      long seed = rnd.nextLong();
 
       /*
        * if we work with pca offset, we need to precompute s_bq0 aka s_omega for
