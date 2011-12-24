@@ -346,14 +346,20 @@ public class SSVDSolver {
       long seed = rnd.nextLong();
 
       if (pcaMeanPath != null) {
-        // combute s_b0 if pca offset present
-        Vector xi = SSVDHelper.loadVector(pcaMeanPath, conf);
+        /*
+         * combute s_b0 if pca offset present.
+         * 
+         * Just in case, we treat xi path as a possible reduce or otherwise
+         * multiple task output that we assume we need to sum up partial
+         * components. If it is just one file, it will work too.
+         */
+
+        Vector xi = SSVDHelper.loadAndSumUpVectors(pcaMeanPath, conf);
         Omega omega = new Omega(seed, k + p);
         Vector s_b0 = omega.mutlithreadedTRightMultiply(xi);
 
-        SSVDHelper.saveVector(s_b0,
-                              sbPath = new Path(pcaBasePath, "s_b0.seq"),
-                              conf);
+        SSVDHelper.saveVector(s_b0, sbPath =
+          new Path(pcaBasePath, "somega.seq"), conf);
       }
 
       if (overwrite) {
@@ -367,6 +373,7 @@ public class SSVDSolver {
 
       QJob.run(conf,
                inputPath,
+               sbPath,
                qPath,
                ablockRows,
                minSplitSize,
@@ -382,10 +389,16 @@ public class SSVDSolver {
        * bit too many (I would be happy i that were ever the case though).
        */
 
+      sbPath = new Path(pcaBasePath, "sb0");
+      sqPath = new Path(pcaBasePath, "sq0");
+
       BtJob.run(conf,
                 inputPath,
                 qPath,
+                pcaMeanPath,
                 btPath,
+                sqPath,
+                sbPath,
                 minSplitSize,
                 k,
                 p,
@@ -403,6 +416,9 @@ public class SSVDSolver {
         ABtDenseOutJob.run(conf,
                            inputPath,
                            btPathGlob,
+                           pcaMeanPath,
+                           sqPath,
+                           sbPath,
                            qPath,
                            ablockRows,
                            minSplitSize,
@@ -413,11 +429,16 @@ public class SSVDSolver {
                            broadcast);
 
         btPath = new Path(outputPath, String.format("Bt-job-%d", i + 1));
+        sbPath = new Path(pcaBasePath, String.format("sb%d", i + 1));
+        sqPath = new Path(pcaBasePath, String.format("sq%d", i + 1));
 
         BtJob.run(conf,
                   inputPath,
                   qPath,
+                  pcaMeanPath,
                   btPath,
+                  sqPath,
+                  sbPath,
                   minSplitSize,
                   k,
                   p,
@@ -429,11 +450,9 @@ public class SSVDSolver {
       }
 
       UpperTriangular bbt =
-        SSVDHelper.loadAndSumUpperTriangularMatrices(fs,
-                                                     new Path(btPath,
+        SSVDHelper.loadAndSumUpperTriangularMatrices(new Path(btPath,
                                                               BtJob.OUTPUT_BBT
-                                                                  + "-*"),
-                                                     conf);
+                                                                  + "-*"), conf);
 
       // convert bbt to something our eigensolver could understand
       assert bbt.columnSize() == k + p;

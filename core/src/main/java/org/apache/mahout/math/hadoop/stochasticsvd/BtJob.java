@@ -81,6 +81,7 @@ public final class BtJob {
   public static final String OUTPUT_BT = "part";
   public static final String OUTPUT_BBT = "bbt";
   public static final String PROP_QJOB_PATH = "ssvd.QJob.path";
+  public static final String PROP_SB_PATH = "ssvdpca.sb.path";
   public static final String PROP_OUPTUT_BBT_PRODUCTS =
     "ssvd.BtJob.outputBBtProducts";
   public static final String PROP_OUTER_PROD_BLOCK_HEIGHT =
@@ -407,7 +408,10 @@ public final class BtJob {
   public static void run(Configuration conf,
                          Path[] inputPathA,
                          Path inputPathQJob,
+                         Path xiPath,
                          Path outputPath,
+                         Path outputSqPath,
+                         Path outputSbPath,
                          int minSplitSize,
                          int k,
                          int p,

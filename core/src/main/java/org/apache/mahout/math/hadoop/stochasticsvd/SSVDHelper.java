@@ -213,9 +213,22 @@ public class SSVDHelper {
    * @throws IOException
    */
   public static UpperTriangular
-      loadAndSumUpperTriangularMatrices(FileSystem fs,
-                                        Path glob,
-                                        Configuration conf) throws IOException {
+      loadAndSumUpperTriangularMatrices(Path glob, Configuration conf)
+        throws IOException {
+    Vector v = loadAndSumUpVectors(glob, conf);
+    return v == null ? null : new UpperTriangular(v);
+  }
+
+  /**
+   * returns sum of all vectors in different files specified by glob
+   * 
+   * @param glob
+   * @param conf
+   * @return
+   * @throws IOException
+   */
+  public static Vector loadAndSumUpVectors(Path glob, Configuration conf)
+    throws IOException {
 
     SequenceFileDirValueIterator<VectorWritable> iter =
       new SequenceFileDirValueIterator<VectorWritable>(glob,
@@ -233,40 +246,12 @@ public class SSVDHelper {
         else
           v.assign(iter.next().get(), Functions.PLUS);
       }
+      return v;
 
     } finally {
       Closeables.closeQuietly(iter);
     }
 
-    FileStatus[] files = fs.globStatus(glob);
-    if (files == null) {
-      return null;
-    }
-
-    /*
-     * assume it is partitioned output, so we need to read them up in order of
-     * partitions.
-     */
-    Arrays.sort(files, PARTITION_COMPARATOR);
-
-    DenseVector result = null;
-    for (FileStatus fstat : files) {
-      for (VectorWritable value : new SequenceFileValueIterable<VectorWritable>(fstat.getPath(),
-                                                                                true,
-                                                                                conf)) {
-        Vector v = value.get();
-        if (result == null) {
-          result = new DenseVector(v);
-        } else {
-          result.addAll(v);
-        }
-      }
-    }
-
-    if (result == null) {
-      throw new IOException("Unexpected underrun in upper triangular matrix files");
-    }
-    return new UpperTriangular(result);
   }
 
   /**
