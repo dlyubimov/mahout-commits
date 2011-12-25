@@ -397,8 +397,6 @@ public class SSVDSolver {
                 qPath,
                 pcaMeanPath,
                 btPath,
-                sqPath,
-                sbPath,
                 minSplitSize,
                 k,
                 p,
@@ -408,6 +406,9 @@ public class SSVDSolver {
                 labelType,
                 q <= 0);
 
+      sbPath = new Path(btPath, BtJob.OUTPUT_SB + "-*");
+      sqPath = new Path(btPath, BtJob.OUTPUT_SQ + "-*");
+      
       // power iterations
       for (int i = 0; i < q; i++) {
 
@@ -429,16 +430,12 @@ public class SSVDSolver {
                            broadcast);
 
         btPath = new Path(outputPath, String.format("Bt-job-%d", i + 1));
-        sbPath = new Path(pcaBasePath, String.format("sb%d", i + 1));
-        sqPath = new Path(pcaBasePath, String.format("sq%d", i + 1));
 
         BtJob.run(conf,
                   inputPath,
                   qPath,
                   pcaMeanPath,
                   btPath,
-                  sqPath,
-                  sbPath,
                   minSplitSize,
                   k,
                   p,
@@ -447,6 +444,8 @@ public class SSVDSolver {
                   broadcast,
                   labelType,
                   i == q - 1);
+        sbPath = new Path(btPath, BtJob.OUTPUT_SB + "-*");
+        sqPath = new Path(btPath, BtJob.OUTPUT_SQ + "-*");
       }
 
       UpperTriangular bbt =
@@ -492,14 +491,14 @@ public class SSVDSolver {
       if (computeU) {
         ujob = new UJob();
         ujob.run(conf,
-                   new Path(btPath, BtJob.OUTPUT_Q + "-*"),
-                   uHatPath,
-                   svPath,
-                   uPath,
-                   k,
-                   reduceTasks,
-                   labelType,
-                   cUHalfSigma);
+                 new Path(btPath, BtJob.OUTPUT_Q + "-*"),
+                 uHatPath,
+                 svPath,
+                 uPath,
+                 k,
+                 reduceTasks,
+                 labelType,
+                 cUHalfSigma);
         // actually this is map-only job anyway
       }
 
@@ -507,15 +506,15 @@ public class SSVDSolver {
       if (computeV) {
         vjob = new VJob();
         vjob.run(conf,
-                   new Path(btPath, BtJob.OUTPUT_BT + "-*"),
-                   pcaMeanPath,
-                   sqPath,
-                   uHatPath,
-                   svPath,
-                   vPath,
-                   k,
-                   reduceTasks,
-                   cVHalfSigma);
+                 new Path(btPath, BtJob.OUTPUT_BT + "-*"),
+                 pcaMeanPath,
+                 sqPath,
+                 uHatPath,
+                 svPath,
+                 vPath,
+                 k,
+                 reduceTasks,
+                 cVHalfSigma);
       }
 
       if (ujob != null) {
