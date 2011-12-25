@@ -18,7 +18,9 @@ import org.apache.mahout.common.iterator.sequencefile.PathFilters;
 import org.apache.mahout.common.iterator.sequencefile.PathType;
 import org.apache.mahout.common.iterator.sequencefile.SequenceFileDirValueIterator;
 import org.apache.mahout.common.iterator.sequencefile.SequenceFileValueIterable;
+import org.apache.mahout.math.DenseMatrix;
 import org.apache.mahout.math.DenseVector;
+import org.apache.mahout.math.Matrix;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 import org.apache.mahout.math.function.Functions;
@@ -293,6 +295,27 @@ public class SSVDHelper {
     } finally {
       iter.close();
     }
+  }
+
+  /**
+   * extracts row-wise raw data from a Mahout matrix for 3rd party solvers.
+   * Unfortunately values member is 100% encapsulated in {@link DenseMatrix} at
+   * this point, so we have to resort to abstract element-wise copying.
+   * 
+   * @param m
+   * @return
+   */
+  public static double[][] extractRawData(Matrix m) {
+    int rows = m.numRows();
+    int cols = m.numCols();
+    double[][] result = new double[rows][];
+    for (int i = 0; i < rows; i++) {
+      result[i] = new double[cols];
+      for (int j = 0; j < cols; j++) {
+        result[i][j] = m.getQuick(i, j);
+      }
+    }
+    return result;
   }
 
 }

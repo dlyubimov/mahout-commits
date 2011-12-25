@@ -340,6 +340,8 @@ public class SSVDSolver {
       Path sbPath = null;
       Path sqPath = null;
 
+      double xisquaredlen = 0;
+
       if (pcaMeanPath != null)
         fs.mkdirs(pcaBasePath);
       Random rnd = RandomUtils.getRandom();
@@ -355,6 +357,7 @@ public class SSVDSolver {
          */
 
         Vector xi = SSVDHelper.loadAndSumUpVectors(pcaMeanPath, conf);
+        xisquaredlen = xi.dot(xi);
         Omega omega = new Omega(seed, k + p);
         Vector s_b0 = omega.mutlithreadedTRightMultiply(xi);
 
@@ -408,7 +411,7 @@ public class SSVDSolver {
 
       sbPath = new Path(btPath, BtJob.OUTPUT_SB + "-*");
       sqPath = new Path(btPath, BtJob.OUTPUT_SQ + "-*");
-      
+
       // power iterations
       for (int i = 0; i < q; i++) {
 
@@ -448,30 +451,45 @@ public class SSVDSolver {
         sqPath = new Path(btPath, BtJob.OUTPUT_SQ + "-*");
       }
 
-      UpperTriangular bbt =
+      UpperTriangular bbtTriangular =
         SSVDHelper.loadAndSumUpperTriangularMatrices(new Path(btPath,
                                                               BtJob.OUTPUT_BBT
                                                                   + "-*"), conf);
 
       // convert bbt to something our eigensolver could understand
-      assert bbt.columnSize() == k + p;
+      assert bbtTriangular.columnSize() == k + p;
 
       /*
        * we currently use a 3rd party in-core eigensolver. So we need just a
        * dense array representation for it.
        */
-      double[][] bbtSquare = new double[k + p][];
-      for (int i = 0; i < k + p; i++) {
-        bbtSquare[i] = new double[k + p];
-      }
+      DenseMatrix bbtSquare = new DenseMatrix(k+p,k+p);
 
       for (int i = 0; i < k + p; i++) {
         for (int j = i; j < k + p; j++) {
-          bbtSquare[i][j] = bbtSquare[j][i] = bbt.getQuick(i, j);
+          double val = bbtTriangular.getQuick(i, j);
+          bbtSquare.setQuick(i, j, val);
+          bbtSquare.setQuick(j, i, val);
         }
       }
+      
+      // MAHOUT-817
+      if ( pcaMeanPath != null ) {
+        Vector sq = SSVDHelper.loadAndSumUpVectors(sqPath, conf);
+        Vector sb = SSVDHelper.loadAndSumUpVectors(sbPath, conf);
+        Matrix mC = sq.cross(sb);
+        
+        bbtSquare.assign(mC,Functions.MINUS);
+        bbtSquare.assign(mC.transpose(),Functions.MINUS);
+        mC = null;
+        
+        Matrix outerSq = sq.cross(sq);
+        outerSq.assign(Functions.mult(xisquaredlen));
+        bbtSquare.assign(outerSq,Functions.PLUS);
+        
+      }
 
-      EigenSolverWrapper eigenWrapper = new EigenSolverWrapper(bbtSquare);
+      EigenSolverWrapper eigenWrapper = new EigenSolverWrapper(SSVDHelper.extractRawData(bbtSquare));
       Matrix uHat = new DenseMatrix(eigenWrapper.getUHat());
       svalues = new DenseVector(eigenWrapper.getEigenValues());
 
@@ -536,5 +554,4 @@ public class SSVDSolver {
     }
 
   }
-
 }
