@@ -272,9 +272,10 @@ public class ABtDenseOutJob {
                  * way but perhaps less wasteful on cpu.
                  */
                 for (int s = 0; s < kp; s++) {
+                  // code defensively against shortened xi
+                  double xii = xi.size() > btIndex ? xi.get(btIndex) : 0.0;
                   yiCols[s][j - aRowBegin] +=
-                    aEl.get()
-                        * (btVec.getQuick(s) - xi.get(btIndex) * sq.get(s));
+                    aEl.get() * (btVec.getQuick(s) - xii * sq.get(s));
                 }
               } else {
                 /*

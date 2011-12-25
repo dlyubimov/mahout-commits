@@ -27,6 +27,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.mahout.common.AbstractJob;
 import org.apache.mahout.common.commandline.DefaultOptionCreator;
 import org.apache.mahout.math.Vector;
+import org.apache.mahout.math.hadoop.MatrixColumnMeansJob;
 
 /**
  * Mahout CLI adapter for SSVDSolver
@@ -74,6 +75,13 @@ public class SSVDCli extends AbstractJob {
               "br",
               "whether use distributed cache to broadcast matrices wherever possible",
               String.valueOf(true));
+    addOption("pca",
+              "pca",
+              "run in pca mode: compute column-wise mean and subtract from input",
+              String.valueOf(false));
+    addOption("pcaOffset",
+              "xi",
+              "path(glob) of external pca mean (optional, dont compute, use external mean");
     addOption(DefaultOptionCreator.overwriteOption().create());
 
     Map<String, String> pargs = parseArguments(args);
@@ -94,6 +102,10 @@ public class SSVDCli extends AbstractJob {
     boolean cVHalfSigma = Boolean.parseBoolean(pargs.get("--vHalfSigma"));
     int reduceTasks = Integer.parseInt(pargs.get("--reduceTasks"));
     boolean broadcast = Boolean.parseBoolean(pargs.get("--broadcast"));
+    String xiPathStr = pargs.get("--pcaOffset");
+    Path xiPath = xiPathStr == null ? null : new Path(xiPathStr);
+    boolean pca = Boolean.parseBoolean(pargs.get("--pca")) || xiPath != null;
+
     boolean overwrite =
       pargs.containsKey(keyFor(DefaultOptionCreator.OVERWRITE_OPTION));
 
@@ -102,14 +114,17 @@ public class SSVDCli extends AbstractJob {
       throw new IOException("No Hadoop configuration present");
     }
 
+    Path[] inputPaths = new Path[] { getInputPath() };
+
+    // MAHOUT-817
+    if (pca && xiPath == null) {
+      xiPath = new Path(getTempPath(), "xi");
+      MatrixColumnMeansJob.run(conf, inputPaths[0], getTempPath());
+    }
+
     SSVDSolver solver =
-      new SSVDSolver(conf,
-                     new Path[] { getInputPath() },
-                     getTempPath(),
-                     r,
-                     k,
-                     p,
-                     reduceTasks);
+      new SSVDSolver(conf, inputPaths, getTempPath(), r, k, p, reduceTasks);
+    
     solver.setMinSplitSize(minSplitSize);
     solver.setComputeU(computeU);
     solver.setComputeV(computeV);
@@ -120,6 +135,7 @@ public class SSVDCli extends AbstractJob {
     solver.setQ(q);
     solver.setBroadcast(broadcast);
     solver.setOverwrite(overwrite);
+    solver.setPcaMeanPath(xiPath);
 
     solver.run();
 
@@ -128,7 +144,7 @@ public class SSVDCli extends AbstractJob {
 
     fs.mkdirs(getOutputPath());
 
-    Vector svalues= solver.getSingularValues().viewPart(0, k);
+    Vector svalues = solver.getSingularValues().viewPart(0, k);
     SSVDHelper.saveVector(svalues, getOutputPath("sigma"), conf);
 
     if (computeU) {

@@ -435,8 +435,11 @@ public final class BtJob {
 
         // MAHOUT-817
         if (xi != null) {
+          // code defensively against shortened xi
+          int btIndex = btKey.get();
+          double xii = xi.size() > btIndex ? xi.getQuick(btIndex) : 0.0;
           // compute s_b
-          pmult.setMultiplicator(xi.getQuick(btKey.get()));
+          pmult.setMultiplicator(xii);
           if (sbAccum == null)
             sbAccum = new DenseVector(btRow.size());
           sbAccum.assign(btRow, pmult);

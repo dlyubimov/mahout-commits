@@ -74,7 +74,12 @@ public class VJob {
        * MAHOUT-817: PCA correction for B': b_{col=i} -= s_q * xi_{i}
        */
       if (xi != null) {
-        double xii = xi.getQuick(key.get());
+        /*
+         * code defensively against shortened xi which may be externally
+         * supplied
+         */
+        int btIndex = key.get();
+        double xii = xi.size() > btIndex ? xi.getQuick(btIndex) : 0.0;
         plusMult.setMultiplicator(-xii);
         bCol.assign(sq, plusMult);
       }
