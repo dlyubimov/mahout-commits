@@ -284,7 +284,7 @@ public final class BtJob {
            * hack: we will output sq partial sums with index -1 for summation.
            */
           SparseRowBlockWritable sbrw = new SparseRowBlockWritable(1);
-          sbrw.getRows()[0] = sqAccum;
+          sbrw.plusRow(0, sqAccum);
           LongWritable lw = new LongWritable(-1);
           context.write(lw, sbrw);
         }
@@ -370,14 +370,16 @@ public final class BtJob {
         Validate.isTrue(p >= 0, "invalid p parameter");
         mBBt = new UpperTriangular(k + p);
 
-        outputs = new MultipleOutputs(new JobConf(conf));
-        closeables.addFirst(new IOUtils.MultipleOutputsCloseableAdapter(outputs));
-
       }
 
       String xiPathStr = conf.get(PROP_XI_PATH);
       if (xiPathStr != null) {
         xi = SSVDHelper.loadAndSumUpVectors(new Path(xiPathStr), conf);
+      }
+
+      if (outputBBt || xi != null) {
+        outputs = new MultipleOutputs(new JobConf(conf));
+        closeables.addFirst(new IOUtils.MultipleOutputsCloseableAdapter(outputs));
       }
 
     }

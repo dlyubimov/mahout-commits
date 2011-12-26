@@ -41,10 +41,12 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
 
   private static final double s_epsilon = 1.0E-10d;
 
-  // I actually never saw errors more than 3% worst case for this test,
-  // but since it's non-deterministic test, it still may occasionally produce
-  // bad results with a non-zero probability, so i put this pct% for error
-  // margin high enough so it (almost) never fails.
+  /*
+   * I actually never saw errors more than 3% worst case for this particular
+   * test, but since it's non-deterministic test, it still may occasionally
+   * produce bad results with a non-zero probability, so i put this pct% for
+   * error margin high enough so it (almost) never fails.
+   */
   private static final double s_precisionPct = 10;
 
   @Test
