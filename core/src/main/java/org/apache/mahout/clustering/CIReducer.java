@@ -1,5 +1,4 @@
-package org.apache.mahout.math.hadoop.stats;
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -16,22 +15,31 @@ package org.apache.mahout.math.hadoop.stats;
  * limitations under the License.
  */
 
-import org.apache.hadoop.io.DoubleWritable;
+package org.apache.mahout.clustering;
+
+import java.io.IOException;
+import java.util.Iterator;
+
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Reducer;
 
-import java.io.IOException;
-
-public class StandardDeviationCalculatorReducer extends
-        Reducer<IntWritable, DoubleWritable, IntWritable, DoubleWritable> {
+public class CIReducer extends Reducer<IntWritable,Cluster,IntWritable,Cluster> {
 
   @Override
-  protected void reduce(IntWritable key, Iterable<DoubleWritable> values,
-                        Context context) throws IOException, InterruptedException {
-    double sum = 0.0;
-    for (DoubleWritable value : values) {
-      sum += value.get();
+  protected void reduce(IntWritable key, Iterable<Cluster> values,
+      Context context) throws IOException, InterruptedException {
+    Iterator<Cluster> iter =values.iterator();
+    Cluster first = null;
+    while(iter.hasNext()){
+      Cluster cl = iter.next();
+      if (first == null){
+        first = cl;
+      } else {
+        first.observe(cl);
+      }
     }
-    context.write(key, new DoubleWritable(sum));
+    first.computeParameters();
+    context.write(key, first);
   }
+  
 }

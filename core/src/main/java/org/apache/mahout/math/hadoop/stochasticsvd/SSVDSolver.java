@@ -323,7 +323,7 @@ public class SSVDSolver {
    */
   public void run() throws IOException {
 
-    Deque<Closeable> closeables = Lists.<Closeable> newLinkedList();
+    Deque<Closeable> closeables = Lists.newLinkedList();
     try {
       Class<? extends Writable> labelType =
         SSVDHelper.sniffInputLabelType(inputPath, conf);
