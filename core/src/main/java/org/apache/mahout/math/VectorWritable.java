@@ -37,6 +37,7 @@ public final class VectorWritable extends Configured implements Writable {
 
   private Vector vector;
   private boolean writesLaxPrecision;
+  private boolean inheritReadPrecisionForWrites;
 
   public VectorWritable() {
   }
@@ -75,6 +76,22 @@ public final class VectorWritable extends Configured implements Writable {
     this.writesLaxPrecision = writesLaxPrecision;
   }
 
+  public boolean isInheritReadPrecisionForWrites() {
+    return inheritReadPrecisionForWrites;
+  }
+
+  /**
+   * By default, this Writable envelope doesn't inherit lax precision of last
+   * read operation for subsequent write operations. If that behavior is
+   * desired, one can use this method to inherid precision of last read
+   * operation for subsequent writes.
+   * 
+   */
+  public void
+      setInheritReadPrecisionForWrites(boolean inheritReadPrecisionForWrites) {
+    this.inheritReadPrecisionForWrites = inheritReadPrecisionForWrites;
+  }
+
   @Override
   public void write(DataOutput out) throws IOException {
     writeVector(out, this.vector, this.writesLaxPrecision);
@@ -88,7 +105,10 @@ public final class VectorWritable extends Configured implements Writable {
     boolean sequential = (flags & FLAG_SEQUENTIAL) != 0;
     boolean named = (flags & FLAG_NAMED) != 0;
     boolean laxPrecision = (flags & FLAG_LAX_PRECISION) != 0;
-    setWritesLaxPrecision(laxPrecision);
+    
+    if (inheritReadPrecisionForWrites) {
+      writesLaxPrecision = laxPrecision;
+    }
 
     int size = Varint.readUnsignedVarInt(in);
     Vector v;
