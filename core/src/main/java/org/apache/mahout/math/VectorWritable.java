@@ -88,6 +88,7 @@ public final class VectorWritable extends Configured implements Writable {
     boolean sequential = (flags & FLAG_SEQUENTIAL) != 0;
     boolean named = (flags & FLAG_NAMED) != 0;
     boolean laxPrecision = (flags & FLAG_LAX_PRECISION) != 0;
+    setWritesLaxPrecision(laxPrecision);
 
     int size = Varint.readUnsignedVarInt(in);
     Vector v;
