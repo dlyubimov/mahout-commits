@@ -103,7 +103,7 @@ public abstract class AbstractJob extends Configured implements Tool {
 
   /** internal list of options that have been added */
   private final List<Option> options;
-  protected Group group;
+  private Group group;
 
   protected AbstractJob() {
     options = new LinkedList<Option>();
@@ -193,6 +193,10 @@ public abstract class AbstractJob extends Configured implements Tool {
   protected Option addOption(Option option) {
     options.add(option);
     return option;
+  }
+
+  protected Group getGroup() {
+    return group;
   }
 
   /** Add the default input directory option, '-i' which takes a directory
@@ -343,6 +347,20 @@ public abstract class AbstractJob extends Configured implements Tool {
    */
   public String getOption(String optionName) {
     return argMap.get(keyFor(optionName));
+  }
+
+  /**
+   * Get the option, else the default
+   * @param optionName The name of the option to look up, without the --
+   * @param defaultVal The default value.
+   * @return The requested option, else the default value if it doesn't exist
+   */
+  public String getOption(String optionName, String defaultVal){
+    String res = getOption(optionName);
+    if (res == null) {
+      res = defaultVal;
+    }
+    return res;
   }
 
   /**

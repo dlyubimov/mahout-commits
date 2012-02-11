@@ -79,8 +79,30 @@ public final class PFPGrowthTest extends MahoutTestCase {
     
   }
 
+  /**
+   * Test Parallel FPGrowth on small example data using top-level
+   * runPFPGrowth() method
+   */ 
   @Test
   public void testStartParallelFPGrowth() throws Exception {
+    Configuration conf = new Configuration();
+    PFPGrowth.runPFPGrowth(params);
+
+    List<Pair<String,TopKStringPatterns>> frequentPatterns = PFPGrowth.readFrequentPattern(params);
+
+    assertEquals("[(A,([A],5), ([D, A],4), ([B, A],4), ([A, E],4)), "
+                 + "(B,([B],6), ([B, D],4), ([B, A],4), ([B, D, A],3)), " 
+                 + "(C,([B, C],3)), "
+                 + "(D,([D],6), ([D, A],4), ([B, D],4), ([D, A, E],3)), "
+                 + "(E,([A, E],4), ([D, A, E],3), ([B, A, E],3))]", frequentPatterns.toString());
+  }
+
+  /**
+   * Test Parallel FPGrowth on small example data using top-level
+   * runPFPGrowth() method
+   */ 
+  @Test
+  public void testStartParallelFPGrowthInSteps() throws Exception {
     Configuration conf = new Configuration();
     log.info("Starting Parallel Counting Test: {}", params.get(PFPGrowth.MAX_HEAPSIZE));
     PFPGrowth.startParallelCounting(params, conf);
@@ -89,12 +111,15 @@ public final class PFPGrowthTest extends MahoutTestCase {
     log.info("{}", fList);
     assertEquals("[(B,6), (D,6), (A,5), (E,4), (C,3)]", fList.toString());
  
-    log.info("Starting Grouping Test: {}", params.get(PFPGrowth.MAX_HEAPSIZE));
-    PFPGrowth.startGroupingItems(params, conf);
- 
+    PFPGrowth.saveFList(fList, params, conf);
+    int numGroups = params.getInt(PFPGrowth.NUM_GROUPS, 
+                                  PFPGrowth.NUM_GROUPS_DEFAULT);
+    int maxPerGroup = fList.size() / numGroups;
+    if (fList.size() % numGroups != 0) 
+      maxPerGroup++;
+    params.set(PFPGrowth.MAX_PER_GROUP, Integer.toString(maxPerGroup));
+
     log.info("Starting Parallel FPGrowth Test: {}", params.get(PFPGrowth.MAX_HEAPSIZE));
-    PFPGrowth.startGroupingItems(params, conf);
-    PFPGrowth.startTransactionSorting(params, conf);
     PFPGrowth.startParallelFPGrowth(params, conf);
     log.info("Starting Pattern Aggregation Test: {}", params.get(PFPGrowth.MAX_HEAPSIZE));
     PFPGrowth.startAggregating(params, conf);

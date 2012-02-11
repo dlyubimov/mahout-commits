@@ -67,7 +67,7 @@ public final class VectorMatrixMultiplicationJob {
 
     // set up the serialization of the diagonal vector
     Configuration conf = new Configuration();
-    FileSystem fs = FileSystem.get(conf);
+    FileSystem fs = FileSystem.get(markovPath.toUri(), conf);
     markovPath = fs.makeQualified(markovPath);
     outputPath = fs.makeQualified(outputPath);
     Path vectorOutputPath = new Path(outputPath.getParent(), "vector");
@@ -87,7 +87,10 @@ public final class VectorMatrixMultiplicationJob {
 
     job.setJarByClass(VectorMatrixMultiplicationJob.class);
 
-    job.waitForCompletion(true);
+    boolean succeeded = job.waitForCompletion(true);
+    if (!succeeded) {
+      throw new IllegalStateException("Job failed!");
+    }
 
     // build the resulting DRM from the results
     return new DistributedRowMatrix(outputPath, tmpPath,

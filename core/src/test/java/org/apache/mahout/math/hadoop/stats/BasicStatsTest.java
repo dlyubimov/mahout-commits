@@ -24,10 +24,10 @@ import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.mahout.common.MahoutTestCase;
+import org.apache.mahout.common.RandomUtils;
 import org.apache.mahout.math.jet.random.Normal;
 import org.junit.Before;
 import org.junit.Test;
-import org.uncommons.maths.random.MersenneTwisterRNG;
 
 import java.util.Random;
 
@@ -79,7 +79,7 @@ public final class BasicStatsTest extends MahoutTestCase {
   }
   
   private void produceTestData(Path input) throws Exception {
-	FileSystem fs = FileSystem.get(conf);
+	  FileSystem fs = FileSystem.get(input.toUri(), conf);
     SequenceFile.Writer writer = new SequenceFile.Writer(fs, conf, input, IntWritable.class, DoubleWritable.class);
     //Random random = new MersenneTwisterRNG();
     /*Normal normal = new Normal(5, 3, random);
@@ -105,10 +105,10 @@ public final class BasicStatsTest extends MahoutTestCase {
   public void testStdDev2() throws Exception {
     Path input = getTestTempFilePath("stdDev/counts.file");
     Path output = getTestTempFilePath("stdDev/output.file");
-    FileSystem fs = FileSystem.get(conf);
+    FileSystem fs = FileSystem.get(input.toUri(), conf);
     SequenceFile.Writer writer = new SequenceFile.Writer(fs, conf, input, IntWritable.class,
             DoubleWritable.class);
-    Random random = new MersenneTwisterRNG();
+    Random random = RandomUtils.getRandom();
     Normal normal = new Normal(5, 3, random);
     for (int i = 0; i < 1000000; i++) {
       writer.append(new IntWritable(i), new DoubleWritable((long) normal.nextInt()));
