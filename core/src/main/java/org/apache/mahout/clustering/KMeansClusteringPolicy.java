@@ -16,6 +16,10 @@
  */
 package org.apache.mahout.clustering;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 import org.apache.mahout.math.SequentialAccessSparseVector;
 import org.apache.mahout.math.Vector;
 
@@ -25,6 +29,17 @@ import org.apache.mahout.math.Vector;
  * 
  */
 public class KMeansClusteringPolicy implements ClusteringPolicy {
+  
+  public KMeansClusteringPolicy() {
+    super();
+  }
+
+  public KMeansClusteringPolicy(double convergenceDelta) {
+    super();
+    this.convergenceDelta = convergenceDelta;
+  }
+
+  private double convergenceDelta;
   
   /* (non-Javadoc)
    * @see org.apache.mahout.clustering.ClusteringPolicy#select(org.apache.mahout.math.Vector)
@@ -43,6 +58,22 @@ public class KMeansClusteringPolicy implements ClusteringPolicy {
   @Override
   public void update(ClusterClassifier posterior) {
     // nothing to do here
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.io.Writable#write(java.io.DataOutput)
+   */
+  @Override
+  public void write(DataOutput out) throws IOException {
+    out.writeDouble(convergenceDelta);
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.io.Writable#readFields(java.io.DataInput)
+   */
+  @Override
+  public void readFields(DataInput in) throws IOException {
+    this.convergenceDelta = in.readDouble();
   }
   
 }

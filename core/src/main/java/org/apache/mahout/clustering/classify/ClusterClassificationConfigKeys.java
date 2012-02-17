@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -15,31 +15,17 @@
  * limitations under the License.
  */
 
-package org.apache.mahout.clustering;
+package org.apache.mahout.clustering.classify;
 
-import java.io.IOException;
-import java.util.Iterator;
+/**
+ * Constants used in Cluster Classification. 
+ */
+public class ClusterClassificationConfigKeys {
 
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.mapreduce.Reducer;
-
-public class CIReducer extends Reducer<IntWritable,ClusterWritable,IntWritable,ClusterWritable> {
+  public static final String CLUSTERS_IN = "clusters_in";
   
-  @Override
-  protected void reduce(IntWritable key, Iterable<ClusterWritable> values, Context context) throws IOException,
-      InterruptedException {
-    Iterator<ClusterWritable> iter = values.iterator();
-    ClusterWritable first = null;
-    while (iter.hasNext()) {
-      ClusterWritable cw = iter.next();
-      if (first == null) {
-        first = cw;
-      } else {
-        first.getValue().observe(cw.getValue());
-      }
-    }
-    first.getValue().computeParameters();
-    context.write(key, first);
-  }
+  public static final String OUTLIER_REMOVAL_THRESHOLD = "pdf_threshold";
   
 }
+
+
