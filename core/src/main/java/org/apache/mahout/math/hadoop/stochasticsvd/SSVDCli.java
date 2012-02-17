@@ -103,9 +103,9 @@ public class SSVDCli extends AbstractJob {
     boolean cVHalfSigma = Boolean.parseBoolean(getOption("vHalfSigma"));
     int reduceTasks = Integer.parseInt(getOption("reduceTasks"));
     boolean broadcast = Boolean.parseBoolean(getOption("broadcast"));
-    String xiPathStr = pargs.get("--pcaOffset");
+    String xiPathStr = getOption("pcaOffset");
     Path xiPath = xiPathStr == null ? null : new Path(xiPathStr);
-    boolean pca = Boolean.parseBoolean(pargs.get("--pca")) || xiPath != null;
+    boolean pca = Boolean.parseBoolean(getOption("pca")) || xiPath != null;
 
     boolean overwrite =
       pargs.containsKey(keyFor(DefaultOptionCreator.OVERWRITE_OPTION));
