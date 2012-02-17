@@ -50,7 +50,7 @@ public class Omega {
 
   /**
    * Get omega element at (x,y) uniformly distributed within [-1...1)
-   * 
+   *
    * @param row
    *          omega row
    * @param column

@@ -124,7 +124,7 @@ public class SSVDCli extends AbstractJob {
 
     SSVDSolver solver =
       new SSVDSolver(conf, inputPaths, getTempPath(), r, k, p, reduceTasks);
-    
+
     solver.setMinSplitSize(minSplitSize);
     solver.setComputeU(computeU);
     solver.setComputeV(computeV);

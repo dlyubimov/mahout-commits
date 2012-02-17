@@ -180,7 +180,7 @@ public class LocalSSVDSolverSparseSequentialTest extends MahoutTestCase {
       SSVDHelper.loadDistributedRowMatrix(fs, new Path(svdOutPath, "Bt-job/"
           + BtJob.OUTPUT_Q + "-*"), conf);
 
-    SSVDPrototypeTest.assertOrthonormality(new DenseMatrix(mQ),
+    SSVDCommonTest.assertOrthonormality(new DenseMatrix(mQ),
                                            false,
                                            s_epsilon);
 

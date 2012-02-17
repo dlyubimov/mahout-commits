@@ -177,7 +177,7 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
       SSVDHelper.loadDistributedRowMatrix(fs, new Path(svdOutPath, "Bt-job/"
           + BtJob.OUTPUT_Q + "-*"), conf);
 
-    SSVDPrototypeTest.assertOrthonormality(new DenseMatrix(mQ),
+    SSVDCommonTest.assertOrthonormality(new DenseMatrix(mQ),
                                            false,
                                            s_epsilon);
 
@@ -186,13 +186,13 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
                                           new Path(svdOutPath, "U/[^_]*"),
                                           conf);
 
-    SSVDPrototypeTest.assertOrthonormality(new DenseMatrix(u), false, s_epsilon);
+    SSVDCommonTest.assertOrthonormality(new DenseMatrix(u), false, s_epsilon);
     double[][] v =
       SSVDHelper.loadDistributedRowMatrix(fs,
                                           new Path(svdOutPath, "V/[^_]*"),
                                           conf);
 
-    SSVDPrototypeTest.assertOrthonormality(new DenseMatrix(v), false, s_epsilon);
+    SSVDCommonTest.assertOrthonormality(new DenseMatrix(v), false, s_epsilon);
   }
 
   static void dumpSv(Vector s) {

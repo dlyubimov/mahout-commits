@@ -198,7 +198,7 @@ public final class BtJob {
       /*
        * read all r files _in order of task ids_, i.e. partitions (aka group
        * nums).
-       * 
+       *
        * Note: if broadcast option is used, this comes from distributed cache
        * files rather than hdfs path.
        */

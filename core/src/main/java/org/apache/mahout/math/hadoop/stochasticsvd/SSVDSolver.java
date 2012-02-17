@@ -474,19 +474,19 @@ public class SSVDSolver {
       }
       
       // MAHOUT-817
-      if ( pcaMeanPath != null ) {
+      if (pcaMeanPath != null) {
         Vector sq = SSVDHelper.loadAndSumUpVectors(sqPath, conf);
         Vector sb = SSVDHelper.loadAndSumUpVectors(sbPath, conf);
         Matrix mC = sq.cross(sb);
-        
-        bbtSquare.assign(mC,Functions.MINUS);
-        bbtSquare.assign(mC.transpose(),Functions.MINUS);
+
+        bbtSquare.assign(mC, Functions.MINUS);
+        bbtSquare.assign(mC.transpose(), Functions.MINUS);
         mC = null;
-        
+
         Matrix outerSq = sq.cross(sq);
         outerSq.assign(Functions.mult(xisquaredlen));
-        bbtSquare.assign(outerSq,Functions.PLUS);
-        
+        bbtSquare.assign(outerSq, Functions.PLUS);
+
       }
 
       EigenSolverWrapper eigenWrapper = new EigenSolverWrapper(SSVDHelper.extractRawData(bbtSquare));

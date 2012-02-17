@@ -1,3 +1,20 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.mahout.math.hadoop.stochasticsvd;
 
 import java.io.IOException;
@@ -30,9 +47,7 @@ import com.google.common.io.Closeables;
 
 /**
  * set of small file manipulation helpers.
- * 
- * @author dmitriy
- * 
+ *
  */
 
 public class SSVDHelper {
@@ -67,7 +82,7 @@ public class SSVDHelper {
 
   /**
    * save single vector into hdfs file.
-   * 
+   *
    * @param v
    *          vector to save
    * @param vectorFilePath
@@ -158,7 +173,7 @@ public class SSVDHelper {
   /**
    * helper capabiltiy to load distributed row matrices into dense matrix (to
    * support tests mainly).
-   * 
+   *
    * @param fs
    *          filesystem
    * @param glob
@@ -207,7 +222,7 @@ public class SSVDHelper {
 
   /**
    * Load multiplel upper triangular matrices and sum them up.
-   * 
+   *
    * @param fs
    * @param glob
    * @param conf
@@ -223,7 +238,7 @@ public class SSVDHelper {
 
   /**
    * returns sum of all vectors in different files specified by glob
-   * 
+   *
    * @param glob
    * @param conf
    * @return
@@ -259,7 +274,7 @@ public class SSVDHelper {
   /**
    * Load only one upper triangular matrix and issue error if mroe than one is
    * found.
-   * 
+   *
    * @param fs
    * @param glob
    * @param conf
@@ -301,7 +316,7 @@ public class SSVDHelper {
    * extracts row-wise raw data from a Mahout matrix for 3rd party solvers.
    * Unfortunately values member is 100% encapsulated in {@link DenseMatrix} at
    * this point, so we have to resort to abstract element-wise copying.
-   * 
+   *
    * @param m
    * @return
    */

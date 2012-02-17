@@ -18,7 +18,6 @@
 package org.apache.mahout.math.hadoop;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -55,10 +54,10 @@ public class MatrixColumnMeansJob {
                            Path outputVectorTmpPath) throws IOException {
     return run(conf, inputPath, outputVectorTmpPath);
   }
-  
+
   /**
    * Job for calculating column-wise mean of a DistributedRowMatrix
-   * 
+   *
    * @param initialConf
    * @param inputPath
    *          path to DistributedRowMatrix input
