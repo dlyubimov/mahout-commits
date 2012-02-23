@@ -619,11 +619,11 @@ reference "eq:fold-in-u"
 \end_layout
 
 \begin_layout Standard
-Transformation of any new data point observation of
+Transformation of any new data point observation of an 
 \begin_inset Formula $n$
 \end_inset
 
--vector
+-vector 
 \begin_inset Formula $\tilde{\mathbf{a}}$
 \end_inset
 
@@ -735,7 +735,16 @@ MAHOUT-817 introduces two additional pca options:
 --pcaOffset
 \family default
  that allow to request to treat incoming data as a PCA input.
- See 
+ SVD rank opton 
+\family typewriter
+-k
+\family default
+ will correspond to the reduced dimensionality of PCA space.
+
+\family typewriter
+ 
+\family default
+See 
 \begin_inset ERT
 status open
 
