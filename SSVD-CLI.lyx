@@ -79,7 +79,7 @@ Command Line Interface,
 
 Stochastic SVD
 \begin_inset Foot
-status collapsed
+status open
 
 \begin_layout Plain Layout
 Dmitriy Lyubimov, dlyubimov at apache dot org
@@ -268,10 +268,10 @@ new
 
  can be obtained as 
 \begin_inset Formula 
-\begin{eqnarray*}
-\mathbf{\tilde{u}} & = & \boldsymbol{\Sigma}^{-1}\mathbf{V}^{\top}\tilde{\mathbf{c}}_{r},\\
+\begin{eqnarray}
+\mathbf{\tilde{u}} & = & \boldsymbol{\Sigma}^{-1}\mathbf{V}^{\top}\tilde{\mathbf{c}}_{r},\label{eq:fold-in-u}\\
 \tilde{\mathbf{v}} & = & \boldsymbol{\Sigma}^{-1}\mathbf{U}^{\top}\tilde{\mathbf{c}}_{c}.
-\end{eqnarray*}
+\end{eqnarray}
 
 \end_inset
 
@@ -292,10 +292,10 @@ reference "eq:baked-sigma"
 
  would look like
 \begin_inset Formula 
-\begin{eqnarray*}
-\mathbf{\tilde{u}}_{\sigma} & = & \mathbf{V}_{\sigma}^{\top}\tilde{\mathbf{c}}_{r},\\
+\begin{eqnarray}
+\mathbf{\tilde{u}}_{\sigma} & = & \mathbf{V}_{\sigma}^{\top}\tilde{\mathbf{c}}_{r},\label{eq:fold-in-u-sigma}\\
 \tilde{\mathbf{v}}_{\sigma} & = & \mathbf{U}_{\sigma}^{\top}\tilde{\mathbf{c}}_{c}.
-\end{eqnarray*}
+\end{eqnarray}
 
 \end_inset
 
@@ -462,17 +462,325 @@ Output of
 \end_layout
 
 \begin_layout Section
-Usage
+PCA options in SSVD
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:PCA-options-in"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Some of interesting applications of SVD is dimensionality reduction and
+ Principal Component Analysis.
+ As of MAHOUT-817, SSVD method is equipped with options helping to produce
+ both PCA and dimensionality reduction transformations.
+\end_layout
+
+\begin_layout Paragraph
+Outline: mean of rows.
+\end_layout
+
+\begin_layout Standard
+We approach general PCA and dimensionality reduction problem with respect
+ two input expressed as Mahout's distributed row matrix format.
+ We also assume data points are row vectors in such a matrix.
+ We denote such 
+\begin_inset Formula $m\times n$
+\end_inset
+
+ input matrix as 
+\begin_inset Formula $\mathbf{A}^{\left(pca\right)}$
+\end_inset
+
+: 
+\begin_inset Formula 
+\[
+\mathbf{A}^{\left(pca\right)}=\left(\begin{matrix}\mathbf{a}_{1}\\
+\mathbf{a}_{2}\\
+\vdots\\
+\mathbf{a}_{m}
+\end{matrix}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Mean of rows is n-vector
 \begin_inset Foot
 status collapsed
 
 \begin_layout Plain Layout
-As of Mahout 0.6 trunk.
+In many cases in literature one would find PCA mean vector denoted as 
+\begin_inset Formula $\boldsymbol{\mu}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\end_inset
+
+ 
+\begin_inset Formula 
+\begin{eqnarray*}
+\mathbf{\boldsymbol{\xi}} & = & \left(\begin{matrix}\xi_{1}\\
+\xi_{2}\\
+\vdots\\
+\xi_{n}
+\end{matrix}\right)\\
+ & = & \frac{1}{m}\sum_{i}^{m}\mathbf{a}_{i}.
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We denote 
+\begin_inset Formula $m\times n$
+\end_inset
+
+ mean matrix as 
+\begin_inset Formula 
+\[
+\boldsymbol{\Xi}=\left(\begin{matrix}\mathbf{\boldsymbol{\xi}}\\
+\mathbf{\boldsymbol{\xi}}\\
+\vdots\\
+\mathbf{\boldsymbol{\xi}}
+\end{matrix}\right)\in\mathbb{R}^{m\times n}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Traditional approach under these settings is to find a mean of all rows
+ and subtract it from all data points (row vectors) of the input
+\begin_inset Formula 
+\[
+\mathbf{A}=\mathbf{A}^{\left(pca\right)}-\boldsymbol{\Xi}
+\]
+
+\end_inset
+
+ and then run reduced 
+\begin_inset Formula $k$
+\end_inset
+
+-rank SVD: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{A}=\mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^{\top}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+At this point rows of 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+ correspond to original data points (rows of 
+\begin_inset Formula $\mathbf{A}^{\left(pca\right)}$
+\end_inset
+
+) converted to PCA space (and we are done with PCA part at this point).
+\end_layout
+
+\begin_layout Paragraph
+Transformations to/from for new observation data points.
+\end_layout
+
+\begin_layout Standard
+Dimentionality reduction transformations are directly following from SVD
+ fold-in operation 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:fold-in-u"
+
+\end_inset
+
+ described above.
+\end_layout
+
+\begin_layout Standard
+Transformation of any new data point observation of
+\begin_inset Formula $n$
+\end_inset
+
+-vector
+\begin_inset Formula $\tilde{\mathbf{a}}$
+\end_inset
+
+ 
+\emph on
+into
+\emph default
+ reduced dimentionality PCA space 
+\begin_inset Formula $k$
+\end_inset
+
+-vector 
+\begin_inset Formula $\mathbf{u}$
+\end_inset
+
+ will look like 
+\begin_inset Formula 
+\begin{equation}
+\mathbf{\tilde{u}}=\boldsymbol{\Sigma^{-1}}\mathbf{V}^{\top}\left(\tilde{\mathbf{a}}-\boldsymbol{\xi}\right)\label{eq:toPca}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+(this operation is essentially an SVD fold-in operation corrected for the
+ mean subtraction).
+\end_layout
+
+\begin_layout Standard
+Inverse transformation (from reduced PCA space into original space) looks
+ like 
+\begin_inset Formula 
+\begin{equation}
+\tilde{\mathbf{a}}=\boldsymbol{\xi}+\mathbf{V}\boldsymbol{\Sigma}\tilde{\mathbf{u}}.\label{eq:frompca}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+MAHOUT-817 goals: why brute force approach is hard in context of big data
+ computations.
+\end_layout
+
+\begin_layout Standard
+In context of massive computations, input 
+\begin_inset Formula $\mathbf{A}^{\left(pca\right)}$
+\end_inset
+
+ is often rather sparse.
+ Sparse matrices are packed and their subsequent operations within Mahout
+ framework are optimized to account for degenerate nature of zero elements
+ computation.
+ Sometimes such reduction of need for flops and space may approach several
+ orders of magnitude.
+ However, mean subtraction step would turn such sparse inputs into a dense
+ matrix 
+\begin_inset Formula $\left(\mathbf{A}^{\left(pca\right)}-\boldsymbol{\Xi}\right)$
+\end_inset
+
+.
+ Such intermediate input will take a lot of space and subsequent SVD will
+ require a lot of flops.
+ Fortunately, this can be addressed in context of SSVD method in a way that
+ will be (almost) cost-equivalent to a regular SSVD computation on original
+ sparse input 
+\begin_inset Formula $\mathbf{A}^{\left(pca\right)}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+MAHOUT-817 addresses two goals:
+\end_layout
+
+\begin_layout Itemize
+Provide column-wise mean computation step in the whole pipeline (or use
+ outside mean vector if already available)
+\end_layout
+
+\begin_layout Itemize
+Lift the dense matrix data concerns per above.
+\end_layout
+
+\begin_layout Standard
+The sparser the original input is, the more efficiency gain is to be had
+ by using SSVD PCA options compared to brute-force approach.
+ 
+\end_layout
+
+\begin_layout Standard
+If original input is 100% dense, SSVD PCA options will have roughly the
+ same cost as brute-force approach.
+\end_layout
+
+\begin_layout Standard
+MAHOUT-817 introduces two additional pca options: 
+\family typewriter
+--pca
+\family default
+ and 
+\family typewriter
+--pcaOffset
+\family default
+ that allow to request to treat incoming data as a PCA input.
+ See 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+S
+\end_layout
+
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:Usage"
+
+\end_inset
+
+ for details.
+\end_layout
+
+\begin_layout Section
+Usage
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Usage"
+
+\end_inset
+
+
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+As of Mahout 0.7 trunk.
  
 \begin_inset Newline newline
 \end_inset
 
 12/13/2011 adjusted for MAHOUT-922 changes.
+\begin_inset Newline newline
+\end_inset
+
+02/22/2012 MAHOUT-817.
 \end_layout
 
 \end_inset
@@ -918,6 +1226,80 @@ reference "fn:(TODO:-re-verify)"
 \emph default
 Recommended value for this option ~ 95% or ~190% of available reducer capacity
  to allow for opportunistic executions.
+\end_layout
+
+\begin_layout Labeling
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
+--pca 
+\family default
+\size default
+run in pca mode: treat input file as 
+\begin_inset Formula $\mathbf{A}^{\left(pca\right)}$
+\end_inset
+
+, compute column-wise mean 
+\begin_inset Formula $\boldsymbol{\xi}$
+\end_inset
+
+ over the input and use it to compute PCA space.
+ (see 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+S
+\end_layout
+
+\end_inset
+
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:PCA-options-in"
+
+\end_inset
+
+)
+\end_layout
+
+\begin_layout Labeling
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
+--pcaOffset
+\begin_inset space ~
+\end_inset
+
+<
+\begin_inset Formula $\boldsymbol{\xi}$
+\end_inset
+
+-path>
+\family default
+ 
+\size default
+(optional, default: none).
+ Path(glob) of external pca mean (optional, dont compute, use external mean).
+ The glob parameter must point to a sequence file containing single 
+\family typewriter
+VectorWritable
+\family default
+ row as the 
+\begin_inset Formula $\boldsymbol{\xi}$
+\end_inset
+
+ mean.
+ This option can be used if column-wise mean is already available from another
+ pipeline, or if one wants to use custom centering offset for the data.
+ This will save one MR pass over input since the mean will not have to be
+ computed.
 \end_layout
 
 \begin_layout Paragraph
