@@ -636,7 +636,7 @@ into
 \end_inset
 
 -vector 
-\begin_inset Formula $\mathbf{u}$
+\begin_inset Formula $\tilde{\mathbf{u}}$
 \end_inset
 
  will look like 
@@ -653,6 +653,38 @@ into
 \begin_layout Standard
 (this operation is essentially an SVD fold-in operation corrected for the
  mean subtraction).
+ Note that, again, if input vectors tend to be quite sparse, then 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:toPca"
+
+\end_inset
+
+ could be decomposed as 
+\begin_inset Formula 
+\[
+\tilde{\mathbf{u}}=\boldsymbol{\Sigma^{-1}}\mathbf{V}^{\top}\tilde{\mathbf{a}}-\boldsymbol{\Sigma^{-1}}\mathbf{V}^{\top}\boldsymbol{\xi},
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+and online conversion can be sped up by precomputing term 
+\begin_inset Formula $\boldsymbol{\Sigma^{-1}}\mathbf{V}^{\top}\boldsymbol{\xi}$
+\end_inset
+
+ which ends up to be a small dense 
+\begin_inset Formula $k$
+\end_inset
+
+-vector, and big matrix 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ could be row-indexed for fast online matrix-vector multiplication.
 \end_layout
 
 \begin_layout Standard
