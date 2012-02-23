@@ -1277,7 +1277,7 @@ Recommended value for this option ~ 95% or ~190% of available reducer capacity
 --pca 
 \family default
 \size default
-run in pca mode: treat input file as 
+run in pca mode: treat the input as 
 \begin_inset Formula $\mathbf{A}^{\left(pca\right)}$
 \end_inset
 
