@@ -81,14 +81,263 @@ PCA options for SSVD
 \begin_inset Newline newline
 \end_inset
 
-working notes 
+working notes
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Dmitriy Lyubimov, dlyubimov@apache.org
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
-Mean of rows 
+Approach
 \end_layout
 
 \begin_layout Subsection
+Outline: mean of rows
+\end_layout
+
+\begin_layout Standard
+We approach general PCA and dimensionality reduction problem with respect
+ two input expressed as Mahout's distributed row matrix format.
+ We also assume data points are row vectors in such a matrix.
+ We denote such 
+\begin_inset Formula $m\times n$
+\end_inset
+
+ input matrix as 
+\begin_inset Formula $\tilde{\mathbf{A}}$
+\end_inset
+
+
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Here and on I use tilde notation to denote something that hasn't yet been
+ adjusted for the effects of mean subtraction.
+\end_layout
+
+\end_inset
+
+: 
+\begin_inset Formula 
+\[
+\tilde{\mathbf{A}}=\left(\begin{matrix}\mathbf{a}_{1}\\
+\mathbf{a}_{2}\\
+\vdots\\
+\mathbf{a}_{m}
+\end{matrix}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Mean of rows is n-vector 
+\begin_inset Formula 
+\begin{eqnarray*}
+\mathbf{\boldsymbol{\xi}} & = & \left(\begin{matrix}\xi_{1}\\
+\xi_{2}\\
+\vdots\\
+\xi_{n}
+\end{matrix}\right)\\
+ & = & \frac{1}{m}\sum_{i}^{m}\mathbf{a}_{i}.
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We denote 
+\begin_inset Formula $m\times n$
+\end_inset
+
+ mean matrix as 
+\begin_inset Formula 
+\[
+\boldsymbol{\Xi}=\left(\begin{matrix}\mathbf{\boldsymbol{\xi}}\\
+\mathbf{\boldsymbol{\xi}}\\
+\vdots\\
+\mathbf{\boldsymbol{\xi}}
+\end{matrix}\right)\in\mathbb{R}^{m\times n}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Traditional approach under these settings is to find a mean of all rows
+ and subtract it from all data points (row vectors) of the input
+\begin_inset Formula 
+\[
+\mathbf{A}=\tilde{\mathbf{A}}-\boldsymbol{\Xi}
+\]
+
+\end_inset
+
+ and then run reduced 
+\begin_inset Formula $k$
+\end_inset
+
+-rank SVD: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{A}=\mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^{\top}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+At this point rows of 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+ correspond to original data points (rows of 
+\begin_inset Formula $\tilde{\mathbf{A}}$
+\end_inset
+
+) converted to PCA space (and we are done).
+\end_layout
+
+\begin_layout Subsection
+Transformations to/from for new observation data points
+\end_layout
+
+\begin_layout Standard
+Transformation of any new data point observation of
+\begin_inset Formula $n$
+\end_inset
+
+-vector
+\begin_inset Formula $\tilde{\mathbf{a}}$
+\end_inset
+
+ 
+\emph on
+into
+\emph default
+ reduced dimentionality PCA space 
+\begin_inset Formula $k$
+\end_inset
+
+-vector 
+\begin_inset Formula $\mathbf{u}$
+\end_inset
+
+ will look like 
+\begin_inset Formula 
+\begin{equation}
+\mathbf{\tilde{u}}=\boldsymbol{\Sigma^{-1}}\mathbf{V}^{\top}\left(\tilde{\mathbf{a}}-\boldsymbol{\xi}\right)\label{eq:toPca}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+(this operation is essentially an SVD fold-in operation corrected for the
+ mean subtraction).
+\end_layout
+
+\begin_layout Standard
+Inverse transformation (from reduced PCA space into original space) looks
+ like 
+\begin_inset Formula 
+\begin{equation}
+\tilde{\mathbf{a}}=\boldsymbol{\xi}+\mathbf{V}\boldsymbol{\Sigma}\tilde{\mathbf{u}}.\label{eq:frompca}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+MAHOUT-817 goals: why brute force approach is hard in context of big data
+ computations
+\end_layout
+
+\begin_layout Standard
+In context of massive computations, input 
+\begin_inset Formula $\tilde{\mathbf{A}}$
+\end_inset
+
+ is often rather sparse.
+ Sparse matrices are packed and their subsequent operations within Mahout
+ framework are optimized to account for degenerate nature of zero elements
+ computation.
+ Sometimes such reduction of need for flops and space may approach several
+ orders of magnitude.
+ However, mean subtraction step would turn such sparse inputs into a dense
+ matrix 
+\begin_inset Formula $\left(\tilde{\mathbf{A}}-\boldsymbol{\Xi}\right)$
+\end_inset
+
+.
+ Such intermediate input will take a lot of space and subsequent SVD will
+ require a lot of flops.
+ Fortunately, this can be addressed in context of SSVD method in a way that
+ will be (almost) cost-equivalent to a regular SSVD computation on original
+ sparse input 
+\begin_inset Formula $\tilde{\mathbf{A}}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+MAHOUT-817 addresses two goals:
+\end_layout
+
+\begin_layout Itemize
+Provide column-wise mean computation step in the whole pipeline (or use
+ outside mean vector if already available)
+\end_layout
+
+\begin_layout Itemize
+Lift the dense matrix data concerns per above.
+\end_layout
+
+\begin_layout Standard
+The sparser the original input is, the more efficiency gain is to be had
+ by using SSVD PCA options compared to brute-force approach.
+ 
+\end_layout
+
+\begin_layout Standard
+If original input is 100% dense, SSVD PCA options will have roughly the
+ same cost as brute-force approach.
+\end_layout
+
+\begin_layout Section
 Recap of SSVD flow.
 \end_layout
 
@@ -274,59 +523,11 @@ If needed, compute
 
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Section
 \begin_inset Formula $\mathbf{B}_{0}$
 \end_inset
 
  pipeline mods
-\end_layout
-
-\begin_layout Standard
-This option considers that data points are rows in the 
-\begin_inset Formula $m\times n$
-\end_inset
-
- input matrix
-\begin_inset Foot
-status collapsed
-
-\begin_layout Plain Layout
-Here and on I use tilde notation to denote something that hasn't yet been
- adjusted for the effects of mean subtraction.
-\end_layout
-
-\end_inset
-
- 
-\begin_inset Formula 
-\[
-\tilde{\mathbf{A}}=\left(\begin{matrix}\mathbf{a}_{1}\\
-\mathbf{a}_{2}\\
-\vdots\\
-\mathbf{a}_{m}
-\end{matrix}\right)
-\]
-
-\end_inset
-
- 
-\end_layout
-
-\begin_layout Standard
-Mean of rows is n-vector 
-\begin_inset Formula 
-\begin{eqnarray*}
-\mathbf{\boldsymbol{\xi}} & = & \left(\begin{matrix}\xi_{1}\\
-\xi_{2}\\
-\vdots\\
-\xi_{n}
-\end{matrix}\right)\\
- & = & \frac{1}{m}\sum_{i}^{m}\mathbf{a}_{i}.
-\end{eqnarray*}
-
-\end_inset
-
-
 \end_layout
 
 \begin_layout Standard
@@ -341,31 +542,11 @@ Let
  with the mean subtracted.
 \begin_inset Formula 
 \[
-\mathbf{A}=\left(\begin{matrix}\mathbf{a_{1}}-\mathbf{\boldsymbol{\xi}}\\
+\mathbf{A}=\tilde{\mathbf{A}}-\boldsymbol{\Xi}=\left(\begin{matrix}\mathbf{a_{1}}-\mathbf{\boldsymbol{\xi}}\\
 \mathbf{a_{2}}-\mathbf{\boldsymbol{\xi}}\\
 \vdots\\
 \mathbf{a}_{m}-\mathbf{\boldsymbol{\xi}}
 \end{matrix}\right).
-\]
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-We denote 
-\begin_inset Formula $m\times n$
-\end_inset
-
- mean matrix 
-\begin_inset Formula 
-\[
-\boldsymbol{\Xi}=\left(\begin{matrix}\mathbf{\boldsymbol{\xi}}\\
-\mathbf{\boldsymbol{\xi}}\\
-\vdots\\
-\mathbf{\boldsymbol{\xi}}
-\end{matrix}\right)
 \]
 
 \end_inset
@@ -919,7 +1100,7 @@ reference "eq:B-corr"
 .
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Section
 Power Iterations (aka 
 \begin_inset Formula $\mathbf{B}_{i}$
 \end_inset
@@ -968,7 +1149,7 @@ We also assume outer loop
  for all the following steps.
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subsection
 Fixing 
 \begin_inset Formula $\mathbf{B}_{i-1}$
 \end_inset
@@ -1017,7 +1198,7 @@ reference "eq:B-corr"
  vector known from previous iteration.
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subsection
 Fixing 
 \begin_inset Formula $\mathbf{Y}_{i}$
 \end_inset
@@ -1113,7 +1294,7 @@ reference "eq:fix-Y"
 .
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subsection
 Fixing 
 \begin_inset Formula $\mathbf{B}_{i}$
 \end_inset
@@ -1175,7 +1356,7 @@ reference "eq:fix-BBt"
  to fix columns of B the same way as was discussed there.
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Section
 Fixing 
 \begin_inset Formula $\mathbf{BB}^{\top}$
 \end_inset
@@ -1210,6 +1391,14 @@ steps and on run exactly as defined in
 
 .
  
+\end_layout
+
+\begin_layout Section
+R simulatcode
+\end_layout
+
+\begin_layout Standard
+See Mahout-817.
 \end_layout
 
 \end_body
