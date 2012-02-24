@@ -137,10 +137,10 @@ Here and on I use tilde notation to denote something that hasn't yet been
 : 
 \begin_inset Formula 
 \[
-\tilde{\mathbf{A}}=\left(\begin{matrix}\mathbf{a}_{1}\\
-\mathbf{a}_{2}\\
+\tilde{\mathbf{A}}=\left(\begin{matrix}\mathbf{a}_{1}^{\top}\\
+\mathbf{a}_{2}^{\top}\\
 \vdots\\
-\mathbf{a}_{m}
+\mathbf{a}_{m}^{\top}
 \end{matrix}\right)
 \]
 
@@ -174,10 +174,10 @@ We denote
  mean matrix as 
 \begin_inset Formula 
 \[
-\boldsymbol{\Xi}=\left(\begin{matrix}\mathbf{\boldsymbol{\xi}}\\
-\mathbf{\boldsymbol{\xi}}\\
+\boldsymbol{\Xi}=\left(\begin{matrix}\mathbf{\boldsymbol{\xi}}^{\top}\\
+\mathbf{\boldsymbol{\xi}}^{\top}\\
 \vdots\\
-\mathbf{\boldsymbol{\xi}}
+\mathbf{\boldsymbol{\xi}}^{\top}
 \end{matrix}\right)\in\mathbb{R}^{m\times n}
 \]
 

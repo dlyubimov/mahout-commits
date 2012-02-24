@@ -99,7 +99,7 @@ Stochasitc SVD method in Mahout produces reduced rank Singular Value Decompositi
 on output in its strict mathematical definition:
 \begin_inset Formula 
 \[
-\mathbf{A}=\mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^{\top},
+\mathbf{A}\approx\mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^{\top},
 \]
 
 \end_inset
@@ -160,7 +160,7 @@ On top of it, there's an option to present decomposition output in a form
  of 
 \begin_inset Formula 
 \begin{equation}
-\mathbf{A}=\mathbf{U}_{\sigma}V_{\sigma}^{\top},\label{eq:baked-sigma}
+\mathbf{A}\approx\mathbf{U}_{\sigma}V_{\sigma}^{\top},\label{eq:baked-sigma}
 \end{equation}
 
 \end_inset
@@ -498,10 +498,10 @@ We approach general PCA and dimensionality reduction problem with respect
 : 
 \begin_inset Formula 
 \[
-\mathbf{A}^{\left(pca\right)}=\left(\begin{matrix}\mathbf{a}_{1}\\
-\mathbf{a}_{2}\\
+\mathbf{A}^{\left(pca\right)}=\left(\begin{matrix}\mathbf{a}_{1}^{\top}\\
+\mathbf{a}_{2}^{\top}\\
 \vdots\\
-\mathbf{a}_{m}
+\mathbf{a}_{m}^{\top}
 \end{matrix}\right)
 \]
 
@@ -511,9 +511,9 @@ We approach general PCA and dimensionality reduction problem with respect
 \end_layout
 
 \begin_layout Standard
-Mean of rows is n-vector
+Column mean is n-vector
 \begin_inset Foot
-status collapsed
+status open
 
 \begin_layout Plain Layout
 In many cases in literature one would find PCA mean vector denoted as 
@@ -550,10 +550,10 @@ We denote
  mean matrix as 
 \begin_inset Formula 
 \[
-\boldsymbol{\Xi}=\left(\begin{matrix}\mathbf{\boldsymbol{\xi}}\\
-\mathbf{\boldsymbol{\xi}}\\
+\boldsymbol{\Xi}=\left(\begin{matrix}\mathbf{\boldsymbol{\xi}}^{\top}\\
+\mathbf{\boldsymbol{\xi}}^{\top}\\
 \vdots\\
-\mathbf{\boldsymbol{\xi}}
+\mathbf{\boldsymbol{\xi}}^{\top}
 \end{matrix}\right)\in\mathbb{R}^{m\times n}
 \]
 
@@ -582,7 +582,7 @@ Traditional approach under these settings is to find a mean of all rows
 \begin_layout Standard
 \begin_inset Formula 
 \[
-\mathbf{A}=\mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^{\top}.
+\mathbf{A}\approx\mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^{\top}.
 \]
 
 \end_inset
@@ -607,7 +607,7 @@ Transformations to/from for new observation data points.
 \end_layout
 
 \begin_layout Standard
-Dimentionality reduction transformations are directly following from SVD
+Dimensionality reduction transformations are directly following from SVD
  fold-in operation 
 \begin_inset CommandInset ref
 LatexCommand eqref
@@ -624,14 +624,14 @@ Transformation of any new data point observation of an
 \end_inset
 
 -vector 
-\begin_inset Formula $\tilde{\mathbf{a}}$
+\begin_inset Formula $\tilde{\mathbf{c}_{r}}$
 \end_inset
 
  
 \emph on
 into
 \emph default
- reduced dimentionality PCA space 
+ reduced dimensionality PCA space 
 \begin_inset Formula $k$
 \end_inset
 
@@ -642,7 +642,7 @@ into
  will look like 
 \begin_inset Formula 
 \begin{equation}
-\mathbf{\tilde{u}}=\boldsymbol{\Sigma^{-1}}\mathbf{V}^{\top}\left(\tilde{\mathbf{a}}-\boldsymbol{\xi}\right)\label{eq:toPca}
+\mathbf{\tilde{u}}=\boldsymbol{\Sigma^{-1}}\mathbf{V}^{\top}\left(\tilde{\mathbf{c}}_{r}-\boldsymbol{\xi}\right)\label{eq:toPca}
 \end{equation}
 
 \end_inset
@@ -663,7 +663,7 @@ reference "eq:toPca"
  could be decomposed as 
 \begin_inset Formula 
 \[
-\tilde{\mathbf{u}}=\boldsymbol{\Sigma^{-1}}\mathbf{V}^{\top}\tilde{\mathbf{a}}-\boldsymbol{\Sigma^{-1}}\mathbf{V}^{\top}\boldsymbol{\xi},
+\tilde{\mathbf{u}}=\boldsymbol{\Sigma^{-1}}\mathbf{V}^{\top}\tilde{\mathbf{c}}_{r}-\boldsymbol{\Sigma^{-1}}\mathbf{V}^{\top}\boldsymbol{\xi},
 \]
 
 \end_inset
@@ -692,7 +692,7 @@ Inverse transformation (from reduced PCA space into original space) looks
  like 
 \begin_inset Formula 
 \begin{equation}
-\tilde{\mathbf{a}}=\boldsymbol{\xi}+\mathbf{V}\boldsymbol{\Sigma}\tilde{\mathbf{u}}.\label{eq:frompca}
+\tilde{\mathbf{c}}_{r}=\boldsymbol{\xi}+\mathbf{V}\boldsymbol{\Sigma}\tilde{\mathbf{u}}.\label{eq:frompca}
 \end{equation}
 
 \end_inset
@@ -766,7 +766,7 @@ MAHOUT-817 introduces two additional pca options:
 \family typewriter
 --pcaOffset
 \family default
- that allow to request to treat incoming data as a PCA input.
+ that request to treat incoming data as a PCA input.
  SVD rank opton 
 \family typewriter
 -k
@@ -1281,11 +1281,16 @@ run in pca mode: treat the input as
 \begin_inset Formula $\mathbf{A}^{\left(pca\right)}$
 \end_inset
 
-, compute column-wise mean 
+ and also compute column-wise mean 
 \begin_inset Formula $\boldsymbol{\xi}$
 \end_inset
 
- over the input and use it to compute PCA space.
+ over the input and use it to compute PCA space (unless external column
+ mean is already provided by 
+\family typewriter
+--pcaOffset
+\family default
+).
  (see 
 \begin_inset ERT
 status open
@@ -1327,7 +1332,7 @@ reference "sec:PCA-options-in"
  
 \size default
 (optional, default: none).
- Path(glob) of external pca mean (optional, dont compute, use external mean).
+ Path(glob) of external column mean.
  The glob parameter must point to a sequence file containing single 
 \family typewriter
 VectorWritable
@@ -1336,9 +1341,30 @@ VectorWritable
 \begin_inset Formula $\boldsymbol{\xi}$
 \end_inset
 
- mean.
- This option can be used if column-wise mean is already available from another
- pipeline, or if one wants to use custom centering offset for the data.
+ mean (see 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+S
+\end_layout
+
+\end_inset
+
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:PCA-options-in"
+
+\end_inset
+
+).
+ This option can be used if column-wise mean is already efficiently obtained
+ as byproduct from another pipeline, or if one wants to use custom centering
+ offset for the data.
  This will save one MR pass over input since the mean will not have to be
  computed.
 \end_layout
@@ -1434,6 +1460,14 @@ SSVDSolver
  This class would have getter and setter methods for each option available
  via command line.
  See javadoc for details.
+\end_layout
+
+\begin_layout Section
+Mixed environments: R+Mahout
+\end_layout
+
+\begin_layout Standard
+wip, todo, check back later.
 \end_layout
 
 \end_body
