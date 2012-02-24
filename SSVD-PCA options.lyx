@@ -206,7 +206,7 @@ Traditional approach under these settings is to find a mean of all rows
 \begin_layout Standard
 \begin_inset Formula 
 \[
-\mathbf{A}=\mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^{\top}.
+\mathbf{A}\simeq\mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^{\top}.
 \]
 
 \end_inset
@@ -542,10 +542,10 @@ Let
  with the mean subtracted.
 \begin_inset Formula 
 \[
-\mathbf{A}=\tilde{\mathbf{A}}-\boldsymbol{\Xi}=\left(\begin{matrix}\mathbf{a_{1}}-\mathbf{\boldsymbol{\xi}}\\
-\mathbf{a_{2}}-\mathbf{\boldsymbol{\xi}}\\
+\mathbf{A}=\tilde{\mathbf{A}}-\boldsymbol{\Xi}=\left(\begin{matrix}\left(\mathbf{a_{1}}-\mathbf{\boldsymbol{\xi}}\right)^{\top}\\
+\left(\mathbf{a_{2}}-\mathbf{\boldsymbol{\xi}}\right)^{\top}\\
 \vdots\\
-\mathbf{a}_{m}-\mathbf{\boldsymbol{\xi}}
+\left(\mathbf{a}_{m}-\mathbf{\boldsymbol{\xi}}\right)^{\top}
 \end{matrix}\right).
 \]
 
@@ -1394,7 +1394,7 @@ steps and on run exactly as defined in
 \end_layout
 
 \begin_layout Section
-R simulatcode
+R simulation code
 \end_layout
 
 \begin_layout Standard
