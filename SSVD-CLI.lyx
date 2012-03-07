@@ -90,8 +90,25 @@ Dmitriy Lyubimov, dlyubimov at apache dot org
 
 \end_layout
 
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
-Overview.
+Background information
+\end_layout
+
+\begin_layout Subsection
+Stochastic SVD (SSVD)
 \end_layout
 
 \begin_layout Standard
@@ -160,7 +177,7 @@ On top of it, there's an option to present decomposition output in a form
  of 
 \begin_inset Formula 
 \begin{equation}
-\mathbf{A}\approx\mathbf{U}_{\sigma}V_{\sigma}^{\top},\label{eq:baked-sigma}
+\mathbf{A}\approx\mathbf{U}_{\sigma}\mathbf{V}_{\sigma}^{\top},\label{eq:baked-sigma}
 \end{equation}
 
 \end_inset
@@ -338,130 +355,7 @@ Common applications for SVD include Latent Semantic Analysis (LSA), Principal
  Component Analysis (PCA), dimensionality reduction and others.
 \end_layout
 
-\begin_layout Section
-File formats
-\end_layout
-
-\begin_layout Standard
-Input 
-\begin_inset Formula $\mathbf{A}$
-\end_inset
-
-, as well as outputs 
-\begin_inset Formula $\mathbf{U}\left(\mathbf{U}_{\sigma}\right),\,\mathbf{V}\left(\mathbf{V}_{\sigma}\right)$
-\end_inset
-
-, are in Mahout's Distributed Row Matrix format, i.e.
- set of sequence files where value is of 
-\family typewriter
-VectorWritable
-\family default
- type.
- As far as keys are concerned, rows of 
-\begin_inset Formula $\mathbf{A}$
-\end_inset
-
- may be keyed (identified) by any 
-\family typewriter
-Writable 
-\family default
-(for as long as it is instantiable thru a default constructor).
- That, among other thnigs, means that this method can be applied directly
- on the output of 
-\family typewriter
-seq2sparse 
-\family default
-where keys are of 
-\family typewriter
-Text
-\family default
- type
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "fn:(TODO:-re-verify)"
-
-\end_inset
-
-(TODO: re-verify)
-\end_layout
-
-\end_inset
-
-.
- 
-\end_layout
-
-\begin_layout Standard
-Definition of output 
-\begin_inset Formula $\mathbf{U}\,\,\left(\mathbf{U}_{\sigma}\right)$
-\end_inset
-
- is identical to definition of the input matrix 
-\begin_inset Formula $\mathbf{A}$
-\end_inset
-
-, and the keys of corresponding rows in 
-\begin_inset Formula $\mathbf{A}$
-\end_inset
-
- are copied to corresponding rows of output 
-\begin_inset Formula $\mathbf{U}\,\,\left(\mathbf{U}_{\sigma}\right)$
-\end_inset
-
-.
- 
-\end_layout
-
-\begin_layout Standard
-Definition of output 
-\begin_inset Formula $\mathbf{V}\,\,\left(\mathbf{V}_{\sigma}\right)$
-\end_inset
-
- is always sequence file(s) of 
-\family typewriter
-(IntWritable,
-\begin_inset Newline newline
-\end_inset
-
-
-\family default
- 
-\family typewriter
-VectorWritable)
-\family default
- where key corresponds to a column index of the input 
-\begin_inset Formula $\mathbf{A}$
-\end_inset
-
-.
- 
-\end_layout
-
-\begin_layout Standard
-Output of 
-\begin_inset Formula $\boldsymbol{\Sigma}$
-\end_inset
-
- is encoded by a single output file with a single vector value 
-\family typewriter
-(VectorWritable)
-\family default
- with main diagonal entries of 
-\begin_inset Formula $\boldsymbol{\Sigma}$
-\end_inset
-
- aka singular values 
-\begin_inset Formula $\left(\begin{matrix}\sigma_{1} & \cdots & \sigma_{k}\end{matrix}\right)$
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Section
+\begin_layout Subsection
 PCA options in SSVD
 \begin_inset CommandInset label
 LatexCommand label
@@ -480,13 +374,25 @@ Some of interesting applications of SVD is dimensionality reduction and
 \end_layout
 
 \begin_layout Paragraph
-Outline: mean of rows.
+Outline: data points are row vectors.
 \end_layout
 
 \begin_layout Standard
 We approach general PCA and dimensionality reduction problem with respect
- two input expressed as Mahout's distributed row matrix format.
- We also assume data points are row vectors in such a matrix.
+ to input expressed in Mahout's distributed row matrix format.
+ We also assume data points are row vectors in such matrix
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Note that in wikipedia article input data points are considered to be column
+ vectors, so our input is transpose w.r.t.
+ to case outlined in the wikipedia PCA article.
+\end_layout
+
+\end_inset
+
+.
  We denote such 
 \begin_inset Formula $m\times n$
 \end_inset
@@ -563,7 +469,11 @@ We denote
 \end_layout
 
 \begin_layout Standard
-Traditional approach under these settings is to find a mean of all rows
+Traditional approach under these settings starts with finding a column mean
+ 
+\begin_inset Formula $\boldsymbol{\xi}$
+\end_inset
+
  and subtract it from all data points (row vectors) of the input
 \begin_inset Formula 
 \[
@@ -572,7 +482,7 @@ Traditional approach under these settings is to find a mean of all rows
 
 \end_inset
 
- and then run reduced 
+ and then proceeds with finding a reduced 
 \begin_inset Formula $k$
 \end_inset
 
@@ -599,7 +509,115 @@ At this point rows of
 \begin_inset Formula $\mathbf{A}^{\left(pca\right)}$
 \end_inset
 
-) converted to PCA space (and we are done with PCA part at this point).
+) converted to PCA space and 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ represents approximate eigenvectors of the covariance matrix of our input
+ (and we are done with PCA part at this point).
+ Note that since our datapoints in this case are row vectors in the input
+ (and not column vectors), covariance matrix is 
+\begin_inset Formula $\mathbf{C}=\frac{1}{m}\mathbf{A}^{\top}\mathbf{A}$
+\end_inset
+
+.
+ 
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Some courses (see Andrew Ng's ML online lectures) also mention a metric
+ aka 
+\begin_inset Quotes eld
+\end_inset
+
+percent of variance retained
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\begin_inset Formula $\sum_{i=1}^{k}\sigma_{i}/\sum_{i=1}^{n}\sigma_{i}\cdot100\%$
+\end_inset
+
+ that seems to suggest that it would be a metric to compare 
+\begin_inset Quotes eld
+\end_inset
+
+goodness
+\begin_inset Quotes erd
+\end_inset
+
+ of choice for 
+\begin_inset Formula $k$
+\end_inset
+
+ .
+ We of course cannot know all of the singular values of the full SVD in
+ context of SSVD, although we can estimate that 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula 
+\[
+\frac{\sum_{i=1}^{k}\sigma_{i}}{\sum_{i=1}^{n}\sigma_{i}}\geq\frac{\sum_{i=1}^{k}\sigma_{i}}{\left(n-k\right)\sigma_{k}+\sum_{i=1}^{k}\sigma_{i}},
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+i.e.
+ we can make a statement in a sense that 
+\begin_inset Quotes eld
+\end_inset
+
+we have 
+\emph on
+at least 
+\emph default
+that much variance retained
+\begin_inset Quotes erd
+\end_inset
+
+ instead.
+ Whether this estimate is useful or not in practice, is not clear to me
+ as I have no error estimate (and, more importantly, no error estimate 
+\emph on
+with
+\emph default
+ stochastic error baked in) between expression on left and right of the
+ inequality at the moment.
+ But at least it puts some metric threshold on how big 
+\begin_inset Formula $k$
+\end_inset
+
+ we may need and identify some cases where smaller values of k will suffice
+ given particular input and minimum variance retained prerequisite thus
+ reducing need for flops.
+ Another possible way to estimate it is perhaps to try and fit existing
+ singular values into asymptotically decaying curve in order to produce
+ a better guess for 
+\begin_inset Formula $\sum_{i=k+1}^{n}\sigma_{i}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Paragraph
@@ -800,7 +818,130 @@ reference "sec:Usage"
 \end_layout
 
 \begin_layout Section
-Usage
+Input/output file formats and layout
+\end_layout
+
+\begin_layout Standard
+Input 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+, as well as outputs 
+\begin_inset Formula $\mathbf{U}\left(\mathbf{U}_{\sigma}\right),\,\mathbf{V}\left(\mathbf{V}_{\sigma}\right)$
+\end_inset
+
+, are in Mahout's Distributed Row Matrix format, i.e.
+ set of sequence files where value is of 
+\family typewriter
+VectorWritable
+\family default
+ type.
+ As far as keys are concerned, rows of 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ may be keyed (identified) by any 
+\family typewriter
+Writable 
+\family default
+(for as long as it is instantiable thru a default constructor).
+ That, among other thnigs, means that this method can be applied directly
+ on the output of 
+\family typewriter
+seq2sparse 
+\family default
+where keys are of 
+\family typewriter
+Text
+\family default
+ type
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fn:(TODO:-re-verify)"
+
+\end_inset
+
+(TODO: re-verify)
+\end_layout
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Definition of output 
+\begin_inset Formula $\mathbf{U}\,\,\left(\mathbf{U}_{\sigma}\right)$
+\end_inset
+
+ is identical to definition of the input matrix 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+, and the keys of corresponding rows in 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ are copied to corresponding rows of output 
+\begin_inset Formula $\mathbf{U}\,\,\left(\mathbf{U}_{\sigma}\right)$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Definition of output 
+\begin_inset Formula $\mathbf{V}\,\,\left(\mathbf{V}_{\sigma}\right)$
+\end_inset
+
+ is always sequence file(s) of 
+\family typewriter
+(IntWritable,
+\begin_inset Newline newline
+\end_inset
+
+
+\family default
+ 
+\family typewriter
+VectorWritable)
+\family default
+ where key corresponds to a column index of the input 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Output of 
+\begin_inset Formula $\boldsymbol{\Sigma}$
+\end_inset
+
+ is encoded by a single output file with a single vector value 
+\family typewriter
+(VectorWritable)
+\family default
+ with main diagonal entries of 
+\begin_inset Formula $\boldsymbol{\Sigma}$
+\end_inset
+
+ aka singular values 
+\begin_inset Formula $\left(\begin{matrix}\sigma_{1} & \cdots & \sigma_{k}\end{matrix}\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+CLI usage
 \begin_inset CommandInset label
 LatexCommand label
 name "sec:Usage"
