@@ -108,7 +108,32 @@ Background information
 \end_layout
 
 \begin_layout Subsection
-Stochastic SVD (SSVD)
+Stochastic
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+See 
+\begin_inset Quotes eld
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand nameref
+reference "par:A-note-about-stochasticity"
+
+\end_inset
+
+
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ SVD (SSVD)
 \end_layout
 
 \begin_layout Standard
@@ -355,6 +380,172 @@ Common applications for SVD include Latent Semantic Analysis (LSA), Principal
  Component Analysis (PCA), dimensionality reduction and others.
 \end_layout
 
+\begin_layout Paragraph
+A note about stochasticity and result precision.
+\begin_inset CommandInset label
+LatexCommand label
+name "par:A-note-about-stochasticity"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\size footnotesize
+The 
+\begin_inset Quotes eld
+\end_inset
+
+stochastic
+\begin_inset Quotes erd
+\end_inset
+
+ term in this case has somewhat different implications from a common expectation
+ we came to have by seeing this epithet next to a computational method name.
+ Unlike some other stochastic approaches (such as stochastic gradient descent)
+ this method is not affected by effect of using random numbers quite directly.
+ Randomicity and probability is only used in the first phase to find a suitable
+ reduced subspace of original space.
+ But once the subspace is selected, the problem is projected into that space
+ anlytically and then the whole problem is solved (and rotated out of the
+ solution subspace) 100% analytically, so there's no requirement per se
+ for such initial subspace to be found with a super great accuracy but only
+ with some acceptable probability of an acceptable error w.r.t degenerate
+ projection cases.
+ From here on, all obtained errors in the final solution are entirely due
+ to the fact that some 
+\begin_inset Quotes eld
+\end_inset
+
+important
+\begin_inset Quotes erd
+\end_inset
+
+ data points were actually projected onto subspace in a degenerate way resulting
+ in high relative rounding errors due to limits posed by machine precision.
+ There's also a subsequent non-stochastic step known as 
+\begin_inset Quotes eld
+\end_inset
+
+power iterations
+\begin_inset Quotes erd
+\end_inset
+
+ to improve initial probabilistic guess on such subspace and of what 
+\begin_inset Quotes eld
+\end_inset
+
+data points
+\begin_inset Quotes erd
+\end_inset
+
+ are really important to project in non-degenerate way which, as the real-life
+ experimental data has shown, all but eliminates any further practical precision
+ concerns even in comparison to the Lanczos approach in Mahout
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+
+\size footnotesize
+TODO: get permission and add reference to Nathan Halko's work w.r.t.
+ precision comparisons
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+
+\size footnotesize
+Because of the said, I came to think to myself of this approach as 
+\begin_inset Quotes eld
+\end_inset
+
+semi-stochastic
+\begin_inset Quotes erd
+\end_inset
+
+ (and 
+\begin_inset Quotes eld
+\end_inset
+
+semi-analytical
+\begin_inset Quotes erd
+\end_inset
+
+) to emphasize the fact that all final errors are actually rounding errors
+ (and their probabilistic estimate also depends on machine precision available
+ perhaps more prominently than in most other stochastic approaches).
+ In other words, stochasticity affects 
+\emph on
+stability 
+\emph default
+of the ad-hoc solution only.
+ Strictly speaking, if we could reduce machine precision error to 0, the
+ method would have always been giving optimal solution regardless of effects
+ of stochasticity (due to the fact that strictly speaking a probability
+ of multiplication of a non-zero vector by a random vector being exactly
+ 0 (or exactly anything, for this matter) is also 0).
+ This is generally not true with most other stochastic methods in a sense
+ that reducing machine precision to 0 per se will not result in error estimate
+ also being 0 if compared to the optimal solution.
+\end_layout
+
+\begin_layout Standard
+
+\size footnotesize
+With respect to all the said, the case that needs to be specifically warned
+ about is the case where the data has variances in a 
+\emph on
+great deal 
+\emph default
+of principal orthogonal directions 
+\emph on
+with no statistically signficant differences 
+\emph default
+in between them, i.e., the input data has 
+\emph on
+no interesting spectrum decay
+\emph default
+.
+ A matrix where each entry is generated from a random distribution with
+ 0 mean, would be an example of such input data.
+ Figuring principal data variances for such randomly generated and at the
+ same time 
+\begin_inset Quotes eld
+\end_inset
+
+big
+\begin_inset Quotes erd
+\end_inset
+
+ data are hard (in part due to effects of law of large numbers) and may
+ result in sufficiently problematic rounding errors in the final solution
+ compared to optimal solution (if we could obtain it at that scale).
+ But the cases dominated by a random noise with no statistically significant
+ signal are hopefully not the data we actually are forced to face with in
+ practice.
+ But even quite small signal buried in a sea of 
+\begin_inset Quotes eld
+\end_inset
+
+big data
+\begin_inset Quotes erd
+\end_inset
+
+ noise could probably eventually be dug out given enough computational effort
+ with spent, with this method (by cranking up the 
+\family typewriter
+--q
+\family default
+ setting) but will likely also eventually reach a point of diminishing return.
+\end_layout
+
 \begin_layout Subsection
 PCA options in SSVD
 \begin_inset CommandInset label
@@ -523,7 +714,7 @@ At this point rows of
 .
  
 \begin_inset Foot
-status open
+status collapsed
 
 \begin_layout Plain Layout
 Some courses (see Andrew Ng's ML online lectures) also mention a metric
