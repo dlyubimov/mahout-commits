@@ -39,7 +39,7 @@ import org.junit.Test;
  * configured.
  * 
  */
-public class LocalSSVDSolverDenseTest extends MahoutTestCase {
+public class LocalSSVDAhmedSolverDenseTest extends MahoutTestCase {
 
   private static final double s_epsilon = 1.0E-10d;
 
@@ -93,18 +93,21 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
     // With 100mln the precision turns out to be only better (LLN law i guess)
     // With oversampling of 100, i don't get any error at all.
     int n = 100;
-    int m = 2000;
+    int m = 100;
 
     Vector singularValues = new DenseVector(Math.min(m, n));
     singularValues.setQuick(0, singularValues.size());
     for (int i = 1; i < singularValues.size(); i++)
       singularValues.setQuick(i, singularValues.get(i - 1) - 0.5);
 
-    SSVDTestsHelper.generateDenseInput(aLocPath,
-                                       FileSystem.getLocal(conf),
-                                       singularValues,
-                                       m,
-                                       n);
+    FileSystem lfs = FileSystem.getLocal(conf);
+    SSVDTestsHelper.readAdjacencyListCSV(new Path("AAhmed.csv"), lfs, aLocPath, lfs, m, n);
+    
+//    SSVDTestsHelper.generateDenseInput(aLocPath,
+//                                       FileSystem.getLocal(conf),
+//                                       singularValues,
+//                                       m,
+//                                       n);
 
     FileSystem fs = FileSystem.get(aLocPath.toUri(), conf);
 
@@ -118,8 +121,8 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
     System.out.println("Input prepared, starting solver...");
 
     int ablockRows = 867;
-    int k = 10;
-    int p = 10;
+    int k = 30;
+    int p = 2;
     SSVDSolver ssvd =
       new SSVDSolver(conf,
                      new Path[] { aPath },
@@ -170,10 +173,10 @@ public class LocalSSVDSolverDenseTest extends MahoutTestCase {
     // assert first k against those
     // used to generate surrogate input
 
-    for (int i = 0; i < k; i++) {
-      assertTrue(Math.abs((singularValues.getQuick(i) - stochasticSValues.getQuick(i))
-          / singularValues.getQuick(i)) <= s_precisionPct / 100);
-    }
+//    for (int i = 0; i < k; i++) {
+//      assertTrue(Math.abs((singularValues.getQuick(i) - stochasticSValues.getQuick(i))
+//          / singularValues.getQuick(i)) <= s_precisionPct / 100);
+//    }
 
     double[][] mQ =
       SSVDHelper.loadDistributedRowMatrix(fs, new Path(svdOutPath, "Bt-job/"
