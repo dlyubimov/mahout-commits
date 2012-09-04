@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Random;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -58,7 +59,11 @@ public class LocalSSVDAhmedSolverDenseTest extends MahoutTestCase {
 
   @Test
   public void testSSVDSolverPowerIterations1() throws IOException {
-    runSSVDSolver(1);
+    for ( int i = 0; i< 50; i++) {
+      runSSVDSolver(1);
+      System.out.printf("Done test %d.\n",i+1);
+    }
+    
   }
 
   /*
@@ -78,7 +83,9 @@ public class LocalSSVDAhmedSolverDenseTest extends MahoutTestCase {
     // conf.set("mapred.job.tracker","localhost:11011");
     // conf.set("fs.default.name","hdfs://localhost:11010/");
 
-    File tmpDir = getTestTempDir("svdtmp");
+    Random rnd = new Random();
+    
+    File tmpDir = getTestTempDir(String.format("svdtmp-%d",rnd.nextInt()));
     conf.set("hadoop.tmp.dir", tmpDir.getAbsolutePath());
 
     Path aLocPath = new Path(getTestTempDirPath("svdtmp/A"), "A.seq");
@@ -122,7 +129,7 @@ public class LocalSSVDAhmedSolverDenseTest extends MahoutTestCase {
 
     int ablockRows = 867;
     int k = 30;
-    int p = 2;
+    int p = 15;
     SSVDSolver ssvd =
       new SSVDSolver(conf,
                      new Path[] { aPath },

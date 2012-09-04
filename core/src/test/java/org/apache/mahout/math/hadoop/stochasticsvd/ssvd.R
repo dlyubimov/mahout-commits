@@ -1,6 +1,7 @@
 
 # standard SSVD
-ssvd.svd <- function(x, k, p=25, qiter=0 ) { 
+ssvd.svd <- function(x, k, p=25, qiter=0, sampler=c("unif","norm") ) { 
+	
 
 a <- as.matrix(x)
 m <- nrow(a)
@@ -8,7 +9,11 @@ n <- ncol(a)
 p <- min( min(m,n)-k,p)
 r <- k+p
 
-omega <- matrix ( rnorm(r*n), nrow=n, ncol=r)
+if ( sampler[1]=="unif" )
+	omega <- matrix( runif(r*n,-1,1), nrow=n, ncol=r)
+else 
+	omega <- matrix ( rnorm(r*n), nrow=n, ncol=r)
+	
 
 y <- a %*% omega
 

@@ -27,7 +27,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
 import org.apache.mahout.common.IOUtils;
-import org.apache.mahout.common.RandomUtils;
 import org.apache.mahout.math.DenseMatrix;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.DistributedRowMatrixWriter;
@@ -341,7 +340,10 @@ public class SSVDSolver {
       if (pcaMeanPath != null) {
         fs.mkdirs(pcaBasePath);
       }
-      Random rnd = RandomUtils.getRandom();
+      Random rnd = new Random();
+      /*
+       * RandomUtils.getRandom();
+       */
       long seed = rnd.nextLong();
 
       Path sbPath = null;
@@ -391,8 +393,8 @@ public class SSVDSolver {
        * bit too many (I would be happy i that were ever the case though).
        */
 
-      //sbPath = new Path(pcaBasePath, "sb0");
-      //sqPath = new Path(pcaBasePath, "sq0");
+      // sbPath = new Path(pcaBasePath, "sb0");
+      // sqPath = new Path(pcaBasePath, "sq0");
 
       BtJob.run(conf,
                 inputPath,
@@ -462,7 +464,7 @@ public class SSVDSolver {
        * we currently use a 3rd party in-core eigensolver. So we need just a
        * dense array representation for it.
        */
-      DenseMatrix bbtSquare = new DenseMatrix(k+p,k+p);
+      DenseMatrix bbtSquare = new DenseMatrix(k + p, k + p);
 
       for (int i = 0; i < k + p; i++) {
         for (int j = i; j < k + p; j++) {
@@ -471,7 +473,7 @@ public class SSVDSolver {
           bbtSquare.setQuick(j, i, val);
         }
       }
-      
+
       // MAHOUT-817
       if (pcaMeanPath != null) {
         Vector sq = SSVDHelper.loadAndSumUpVectors(sqPath, conf);
@@ -487,7 +489,8 @@ public class SSVDSolver {
 
       }
 
-      EigenSolverWrapper eigenWrapper = new EigenSolverWrapper(SSVDHelper.extractRawData(bbtSquare));
+      EigenSolverWrapper eigenWrapper =
+        new EigenSolverWrapper(SSVDHelper.extractRawData(bbtSquare));
       Matrix uHat = new DenseMatrix(eigenWrapper.getUHat());
       svalues = new DenseVector(eigenWrapper.getEigenValues());
 
