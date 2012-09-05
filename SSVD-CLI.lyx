@@ -682,9 +682,9 @@ Traditional approach under these settings starts with finding a column mean
 
 \begin_layout Standard
 \begin_inset Formula 
-\[
-\mathbf{A}\approx\mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^{\top}.
-\]
+\begin{equation}
+\mathbf{A}\approx\mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^{\top}.\label{eq:red-rank-pca-svd}
+\end{equation}
 
 \end_inset
 
@@ -696,11 +696,40 @@ At this point rows of
 \begin_inset Formula $\mathbf{U}$
 \end_inset
 
- correspond to original data points (rows of 
+ (or, strictly speaking, 
+\begin_inset Formula $\mathbf{U}\boldsymbol{\Sigma}$
+\end_inset
+
+) correspond to original data points (rows of 
 \begin_inset Formula $\mathbf{A}^{\left(pca\right)}$
 \end_inset
 
-) converted to PCA space and 
+) converted to approximate PCA space
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Exact PCA space requires 
+\begin_inset Formula $\mathbf{AV}$
+\end_inset
+
+ product but perhaps can be assumed as 
+\begin_inset Formula $\mathbf{AV}\approx\mathbf{U}\boldsymbol{\Sigma}$
+\end_inset
+
+ because of 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:red-rank-pca-svd"
+
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+
+ and 
 \begin_inset Formula $\mathbf{V}$
 \end_inset
 
