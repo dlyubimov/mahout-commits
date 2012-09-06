@@ -394,113 +394,8 @@ name "par:A-note-about-stochasticity"
 \begin_layout Standard
 
 \size footnotesize
-The 
-\begin_inset Quotes eld
-\end_inset
-
-stochastic
-\begin_inset Quotes erd
-\end_inset
-
- term in this case has somewhat different implications from a common expectation
- we came to have by seeing this epithet next to a computational method name.
- Unlike some other stochastic approaches (such as stochastic gradient descent)
- this method is not affected by effect of using random numbers quite directly.
- Randomicity and probability is only used in the first phase to find a suitable
- reduced subspace of original space.
- But once the subspace is selected, the problem is projected into that space
- anlytically and then the whole problem is solved (and rotated out of the
- solution subspace) 100% analytically, so there's no requirement per se
- for such initial subspace to be found with a super great accuracy but only
- with some acceptable probability of an acceptable error w.r.t degenerate
- projection cases.
- From here on, all obtained errors in the final solution are entirely due
- to the fact that some 
-\begin_inset Quotes eld
-\end_inset
-
-important
-\begin_inset Quotes erd
-\end_inset
-
- data points were actually projected onto subspace in a degenerate way resulting
- in high relative rounding errors due to limits posed by machine precision.
- There's also a subsequent non-stochastic step known as 
-\begin_inset Quotes eld
-\end_inset
-
-power iterations
-\begin_inset Quotes erd
-\end_inset
-
- to improve initial probabilistic guess on such subspace and of what 
-\begin_inset Quotes eld
-\end_inset
-
-data points
-\begin_inset Quotes erd
-\end_inset
-
- are really important to project in non-degenerate way which, as the real-life
- experimental data has shown, all but eliminates any further practical precision
- concerns even in comparison to the Lanczos approach in Mahout
-\begin_inset Foot
-status collapsed
-
-\begin_layout Plain Layout
-
-\size footnotesize
-TODO: get permission and add reference to Nathan Halko's work w.r.t.
- precision comparisons
-\end_layout
-
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-
-\size footnotesize
-Because of the said, I came to think to myself of this approach as 
-\begin_inset Quotes eld
-\end_inset
-
-semi-stochastic
-\begin_inset Quotes erd
-\end_inset
-
- (and 
-\begin_inset Quotes eld
-\end_inset
-
-semi-analytical
-\begin_inset Quotes erd
-\end_inset
-
-) to emphasize the fact that all final errors are actually rounding errors
- (and their probabilistic estimate also depends on machine precision available
- perhaps more prominently than in most other stochastic approaches).
- In other words, stochasticity affects 
-\emph on
-stability 
-\emph default
-of the ad-hoc solution only.
- Strictly speaking, if we could reduce machine precision error to 0, the
- method would have always been giving optimal solution regardless of effects
- of stochasticity (due to the fact that strictly speaking a probability
- of multiplication of a non-zero vector by a random vector being exactly
- 0 (or exactly anything, for this matter) is also 0).
- This is generally not true with most other stochastic methods in a sense
- that reducing machine precision to 0 per se will not result in error estimate
- also being 0 if compared to the optimal solution.
-\end_layout
-
-\begin_layout Standard
-
-\size footnotesize
-With respect to all the said, the case that needs to be specifically warned
- about is the case where the data has variances in a 
+The case that needs to be specifically warned about is the case where the
+ data has variances in a 
 \emph on
 great deal 
 \emph default
@@ -524,9 +419,9 @@ big
 \begin_inset Quotes erd
 \end_inset
 
- data are hard (in part due to effects of law of large numbers) and may
- result in sufficiently problematic rounding errors in the final solution
- compared to optimal solution (if we could obtain it at that scale).
+ data are hard and may result in sufficiently problematic errors in the
+ final solution compared to optimal solution (if we could obtain it at that
+ scale).
  But the cases dominated by a random noise with no statistically significant
  signal are hopefully not the data we actually are forced to face with in
  practice.
@@ -544,6 +439,25 @@ big data
 --q
 \family default
  setting) but will likely also eventually reach a point of diminishing return.
+ The said is equally true for any n-th singular vector where spectrum decay
+ sufficiently flattens out.
+\end_layout
+
+\begin_layout Standard
+
+\size footnotesize
+Another sufficiently not very interesting case are small matrices.
+ Optimal solution will be produced with 
+\begin_inset Formula $k+p=\mbox{rank}(\mathbf{A})$
+\end_inset
+
+ though, and stochastic errors will start appearing with 
+\begin_inset Formula $k+p<\mbox{rank}\left(\mathbf{A}\right)$
+\end_inset
+
+.
+ But why solve small matrices stochastically if we can solve them exactly
+ and in the front end?
 \end_layout
 
 \begin_layout Subsection
@@ -706,14 +620,14 @@ At this point rows of
 
 ) converted to approximate PCA space
 \begin_inset Foot
-status collapsed
+status open
 
 \begin_layout Plain Layout
 Exact PCA space requires 
 \begin_inset Formula $\mathbf{AV}$
 \end_inset
 
- product but perhaps can be assumed as 
+ product but can be assumed as 
 \begin_inset Formula $\mathbf{AV}\approx\mathbf{U}\boldsymbol{\Sigma}$
 \end_inset
 
@@ -743,7 +657,7 @@ reference "eq:red-rank-pca-svd"
 .
  
 \begin_inset Foot
-status collapsed
+status open
 
 \begin_layout Plain Layout
 Some courses (see Andrew Ng's ML online lectures) also mention a metric
@@ -833,6 +747,19 @@ with
 
 .
  
+\end_layout
+
+\begin_layout Plain Layout
+Finally, at the risk of complete disregard for reality we can do even rougher
+ estimate as 
+\begin_inset Formula 
+\[
+\mbox{variance retained}=\frac{\sum_{i=1}^{k}\sigma_{i}}{\sum_{i=1}^{n}\sigma_{i}}\approx\frac{\sum_{i=1}^{k}\sigma_{i}}{0.5\left(n-k\right)\sigma_{k}+\sum_{i=1}^{k}\sigma_{i}}.
+\]
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -1307,6 +1234,36 @@ k+p=500 is probably more than reasonable
 
 \family typewriter
 \size footnotesize
+-t,
+\begin_inset space ~
+\end_inset
+
+--reduceTasks
+\begin_inset space ~
+\end_inset
+
+<int-value>
+\family default
+\size default
+ (required).
+ The number of reducers to use.
+ Recommended value for this option ~ 95% or ~190% of available reducer capacity
+ to allow for opportunistic executions.
+ However, this value would also depend on the task size: at some point increasin
+g this value too much further may reach a point of diminishing returns or
+ cause deficient blocking issue in reducers of 
+\family typewriter
+ABtJob
+\family default
+ if chunks of works are too small.
+ This is a super important parameter, hence it is now required.
+\end_layout
+
+\begin_layout Labeling
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
 -r,
 \begin_inset space ~
 \end_inset
@@ -1584,50 +1541,6 @@ Since in this version projection block formation happens in mappers, for
 
 .
  
-\end_layout
-
-\begin_layout Labeling
-\labelwidthstring 00.00.0000
-
-\family typewriter
-\size footnotesize
---reduceTasks
-\begin_inset space ~
-\end_inset
-
-<int-value>
-\family default
-\size default
- optional.
- The number of reducers to use (where applicable): depends on the size of
- the hadoop cluster.
- At this point it could also be overwritten by a standard hadoop property
- using -D option
-\begin_inset script superscript
-
-\begin_layout Plain Layout
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fn:(TODO:-re-verify)"
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-.
-
-\series bold
-\emph on
- Probably always needs to be specified as by default Hadoop would set it
- to 1, which is certainly far below the cluster capacity.
- 
-\series default
-\emph default
-Recommended value for this option ~ 95% or ~190% of available reducer capacity
- to allow for opportunistic executions.
 \end_layout
 
 \begin_layout Labeling
