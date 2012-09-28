@@ -131,7 +131,7 @@ public class UJob {
         uRowWritable.set(new NamedVector(uRow, ((NamedVector) qRow).getName()));
       } else
         uRowWritable.set(uRow);
-      
+
       context.write(key, uRowWritable); // U inherits original A row labels.
     }
 

@@ -205,7 +205,7 @@ public class SSVDSolver {
   public void setcVHalfSigma(boolean cVHat) {
     this.cVHalfSigma = cVHat;
   }
-  
+
   /**
    * 
    * @param cUSigma whether produce U*Sigma output as well (default false)
@@ -261,7 +261,7 @@ public class SSVDSolver {
   public String getVPath() {
     return vPath;
   }
-  
+
   public String getuSigmaPath() {
     return uSigmaPath;
   }
@@ -672,7 +672,7 @@ public class SSVDSolver {
       IOUtils.close(closeables);
     }
   }
-  
+
   static enum OutputScalingEnum {
     NOSCALING, SIGMA, HALFSIGMA
   }
