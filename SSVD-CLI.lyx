@@ -4,7 +4,7 @@
 \begin_header
 \textclass article
 \begin_preamble
-
+\usepackage{fullpage}
 \end_preamble
 \use_default_options true
 \maintain_unincluded_children false
@@ -108,32 +108,7 @@ Background information
 \end_layout
 
 \begin_layout Subsection
-Stochastic
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-See 
-\begin_inset Quotes eld
-\end_inset
-
-
-\begin_inset CommandInset ref
-LatexCommand nameref
-reference "par:A-note-about-stochasticity"
-
-\end_inset
-
-
-\begin_inset Quotes erd
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
- SVD (SSVD)
+Stochastic SVD (SSVD)
 \end_layout
 
 \begin_layout Standard
@@ -323,7 +298,7 @@ new
 \begin_layout Standard
 Similarly, for the case 
 \begin_inset CommandInset ref
-LatexCommand formatted
+LatexCommand eqref
 reference "eq:baked-sigma"
 
 \end_inset
@@ -487,7 +462,7 @@ We approach general PCA and dimensionality reduction problem with respect
  to input expressed in Mahout's distributed row matrix format.
  We also assume data points are row vectors in such matrix
 \begin_inset Foot
-status collapsed
+status open
 
 \begin_layout Plain Layout
 Note that in wikipedia article input data points are considered to be column
@@ -610,7 +585,7 @@ At this point rows of
 \begin_inset Formula $\mathbf{U}$
 \end_inset
 
- (or, strictly speaking, 
+ (or, more strictly, rows of product 
 \begin_inset Formula $\mathbf{U}\boldsymbol{\Sigma}$
 \end_inset
 
@@ -620,7 +595,7 @@ At this point rows of
 
 ) converted to approximate PCA space
 \begin_inset Foot
-status open
+status collapsed
 
 \begin_layout Plain Layout
 Exact PCA space requires 
@@ -657,7 +632,7 @@ reference "eq:red-rank-pca-svd"
 .
  
 \begin_inset Foot
-status open
+status collapsed
 
 \begin_layout Plain Layout
 Some courses (see Andrew Ng's ML online lectures) also mention a metric
@@ -937,8 +912,15 @@ MAHOUT-817 introduces two additional pca options:
 -k
 \family default
  will correspond to the reduced dimensionality of PCA space.
-
+ MAHOUT-1067 introduces option 
 \family typewriter
+--uSigma.
+
+\family default
+ In most cases where you might be looking to reduce dimensionality while
+ retaining variance, you probably need combination of options 
+\family typewriter
+--pca -U false -V false --uSigma.
  
 \family default
 See 
@@ -975,6 +957,10 @@ Input
 
 , as well as outputs 
 \begin_inset Formula $\mathbf{U}\left(\mathbf{U}_{\sigma}\right),\,\mathbf{V}\left(\mathbf{V}_{\sigma}\right)$
+\end_inset
+
+ or 
+\begin_inset Formula $\mathbf{U}\boldsymbol{\Sigma}$
 \end_inset
 
 , are in Mahout's Distributed Row Matrix format, i.e.
@@ -1038,8 +1024,18 @@ Definition of output
 \begin_inset Formula $\mathbf{U}\,\,\left(\mathbf{U}_{\sigma}\right)$
 \end_inset
 
+ or 
+\begin_inset Formula $\mathbf{U}\boldsymbol{\Sigma}$
+\end_inset
+
 .
- 
+ As of MAHOUT-1067, if row vectors of 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ are Mahout's named vectors, then corresponding output rows of the said
+ outputs are also named vectors with the same names as row vectors of the
+ input.
 \end_layout
 
 \begin_layout Standard
@@ -1097,7 +1093,7 @@ name "sec:Usage"
 
 
 \begin_inset Foot
-status collapsed
+status open
 
 \begin_layout Plain Layout
 As of Mahout 0.7 trunk.
@@ -1110,6 +1106,10 @@ As of Mahout 0.7 trunk.
 \end_inset
 
 02/22/2012 MAHOUT-817.
+\begin_inset Newline newline
+\end_inset
+
+10/07/2012 adjusted for MAHOUT-1067 changes.
 \end_layout
 
 \end_inset
@@ -1468,6 +1468,10 @@ Since in this version projection block formation happens in mappers, for
 
 \family typewriter
 \size footnotesize
+-U,
+\begin_inset space ~
+\end_inset
+
 --computeU
 \begin_inset space ~
 \end_inset
@@ -1484,6 +1488,10 @@ Since in this version projection block formation happens in mappers, for
 
 \family typewriter
 \size footnotesize
+-V,
+\begin_inset space ~
+\end_inset
+
 --computeV
 \begin_inset space ~
 \end_inset
@@ -1511,11 +1519,6 @@ Since in this version projection block formation happens in mappers, for
 \begin_inset Formula $\mathbf{V}_{\sigma}=\mathbf{V}\boldsymbol{\Sigma}^{0.5}$
 \end_inset
 
- instead of 
-\begin_inset Formula $\mathbf{V}$
-\end_inset
-
- (see overview for explanation).
  
 \end_layout
 
@@ -1535,11 +1538,25 @@ Since in this version projection block formation happens in mappers, for
 \begin_inset Formula $\mathbf{U}_{\sigma}=\mathbf{U}\boldsymbol{\Sigma}^{0.5}$
 \end_inset
 
- instead of 
-\begin_inset Formula $\mathbf{U}$
+ 
+\end_layout
+
+\begin_layout Labeling
+\labelwidthstring 00.00.0000
+
+\family typewriter
+\size footnotesize
+-us,
+\begin_inset space ~
 \end_inset
 
-.
+--uSigma<true|false> 
+\family default
+\size default
+(optional, default:false): compute product 
+\begin_inset Formula $\mathbf{U}\boldsymbol{\Sigma}$
+\end_inset
+
  
 \end_layout
 
@@ -1734,6 +1751,159 @@ SSVDSolver
  This class would have getter and setter methods for each option available
  via command line.
  See javadoc for details.
+\end_layout
+
+\begin_layout Section
+FAQ
+\end_layout
+
+\begin_layout Subsection
+Small splits, small problems
+\end_layout
+
+\begin_layout Standard
+
+\size footnotesize
+\begin_inset Quotes eld
+\end_inset
+
+Can someone list all the constrains on the parameters (k,p &aBlockRows)
+ that should be satisfied in order for the Q-job in ssvd to work fine? (...)
+ I am getting the errors: "Givens thin QR: must be true: m>=n" or ""new
+ m can't be less than n".
+\end_layout
+
+\begin_layout Itemize
+Since we are in fact finding 
+\begin_inset Formula $k+p$
+\end_inset
+
+ singlular values and singular vectors, general SVD requires 
+\begin_inset Formula $\mbox{rank}\left(\mathbf{A}\right)\geq k+p$
+\end_inset
+
+.
+ In more pragmatic terms this can be relaxed as follows: if 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ is input of 
+\begin_inset Formula $m\times n$
+\end_inset
+
+ geometry, then input must satisfy 
+\begin_inset Formula 
+\[
+\min\left(m,n\right)\geq k+p.
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+This is also known as 
+\begin_inset Quotes eld
+\end_inset
+
+problem too small
+\begin_inset Quotes erd
+\end_inset
+
+ condition.
+ All user issues fell into that category so far.
+\end_layout
+
+\begin_layout Itemize
+In distributed version, blocking algorithms also require that 
+\emph on
+every split
+\emph default
+ of input 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ contains at least 
+\begin_inset Formula $k+p$
+\end_inset
+
+ vectors.
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+In particular, this also means that in case of multiple files comprising
+ 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+, every input file of a distributed row matrix must contain at least 
+\begin_inset Formula $k+p$
+\end_inset
+
+ row vectors.
+ This is also the case of 
+\begin_inset Quotes eld
+\end_inset
+
+problem too small
+\begin_inset Quotes erd
+\end_inset
+
+ and requires consolidating several small files into a bigger input file
+ so that split constraint holds.
+\end_layout
+
+\begin_layout Itemize
+It may be the case that 
+\emph on
+some 
+\emph default
+splits still have too few rows.
+ However, in practice I never saw that happening, provided all above 
+\begin_inset Quotes eld
+\end_inset
+
+problem too small
+\begin_inset Quotes erd
+\end_inset
+
+ issues are not the case.
+ However, assuming this is an issue, one need to adjust hadoop to use bigger
+ splits (perhaps by trying bigger values for 
+\family typewriter
+-s 
+\family default
+option than default split size).
+ However, increasing splits may increase I/O and if it is a problem, perhaps
+ using hdfs with a bigger split size is a better option to address this.
+ (Again, remember that I still never encountered that case so that is quite
+ unlikely).
+\end_layout
+
+\end_deeper
+\begin_layout Subsection
+Split idempotency of input 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Every time hadoop job attempts to create splits of input 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+, it has to happen idempotently (which is basically a function of 
+\family typewriter
+SequenceFileInputFormat
+\family default
+).
+ This is always the case with hadoop versions as of the time of this writing
+ though.
 \end_layout
 
 \begin_layout Section
