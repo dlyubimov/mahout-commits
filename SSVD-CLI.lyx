@@ -429,16 +429,12 @@ problems too small
 \begin_inset Quotes erd
 \end_inset
 
- (
-see also 
-\lang english
-
+ (see also 
 \begin_inset ERT
 status open
 
 \begin_layout Plain Layout
 
-\size footnotesize
 
 \backslash
 S
@@ -955,7 +951,7 @@ MAHOUT-817 introduces two additional pca options:
  In most cases where you might be looking to reduce dimensionality while
  retaining variance, you probably need combination of options 
 \family typewriter
---pca -U false -V false --uSigma.
+-pca true -U false -V false -us true.
  
 \family default
 See 
