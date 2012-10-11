@@ -952,9 +952,35 @@ MAHOUT-817 introduces two additional pca options:
  retaining variance, you probably need combination of options 
 \family typewriter
 -pca true -U false -V false -us true.
- 
 \family default
-See 
+
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Careful, option parsing in Mahout is tricky: just 
+\begin_inset Quotes eld
+\end_inset
+
+-pca
+\begin_inset Quotes erd
+\end_inset
+
+ is the same as 
+\begin_inset Quotes eld
+\end_inset
+
+-pca false
+\begin_inset Quotes erd
+\end_inset
+
+, i.e.
+ no pca.
+\end_layout
+
+\end_inset
+
+ See 
 \begin_inset ERT
 status open
 
@@ -1604,10 +1630,10 @@ Since in this version projection block formation happens in mappers, for
 
 \family typewriter
 \size footnotesize
---pca 
+-pca<true|false> 
 \family default
 \size default
-run in pca mode: treat the input as 
+(optional, default:false) run in pca mode: treat the input as 
 \begin_inset Formula $\mathbf{A}^{\left(pca\right)}$
 \end_inset
 
