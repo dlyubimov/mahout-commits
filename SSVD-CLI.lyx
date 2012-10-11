@@ -411,7 +411,7 @@ big data
  noise could probably eventually be dug out given enough computational effort
  with spent, with this method (by cranking up the 
 \family typewriter
---q
+-q
 \family default
  setting) but will likely also eventually reach a point of diminishing return.
  The said is equally true for any n-th singular vector where spectrum decay
@@ -421,7 +421,39 @@ big data
 \begin_layout Standard
 
 \size footnotesize
-Another sufficiently not very interesting case are small matrices.
+Another sufficiently not very interesting case are 
+\begin_inset Quotes eld
+\end_inset
+
+problems too small
+\begin_inset Quotes erd
+\end_inset
+
+ (
+see also 
+\lang english
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\size footnotesize
+
+\backslash
+S
+\end_layout
+
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Small-splits,-small"
+
+\end_inset
+
+).
  Optimal solution will be produced with 
 \begin_inset Formula $k+p=\mbox{rank}(\mathbf{A})$
 \end_inset
@@ -431,8 +463,11 @@ Another sufficiently not very interesting case are small matrices.
 \end_inset
 
 .
- But why solve small matrices stochastically if we can solve them exactly
- and in the front end?
+ However errors will hopefully be more acceptable if 
+\begin_inset Formula $k+p\ll\mbox{rank}\left(\mathbf{A}\right)$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Subsection
@@ -1093,7 +1128,7 @@ name "sec:Usage"
 
 
 \begin_inset Foot
-status open
+status collapsed
 
 \begin_layout Plain Layout
 As of Mahout 0.8 trunk.
@@ -1508,6 +1543,10 @@ Since in this version projection block formation happens in mappers, for
 
 \family typewriter
 \size footnotesize
+-vhs,
+\begin_inset space ~
+\end_inset
+
 --vHalfSigma
 \begin_inset space ~
 \end_inset
@@ -1527,6 +1566,10 @@ Since in this version projection block formation happens in mappers, for
 
 \family typewriter
 \size footnotesize
+-uhs,
+\begin_inset space ~
+\end_inset
+
 --uHalfSigma
 \begin_inset space ~
 \end_inset
@@ -1759,6 +1802,13 @@ FAQ
 
 \begin_layout Subsection
 Small splits, small problems
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Small-splits,-small"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -1884,6 +1934,39 @@ option than default split size).
 \end_layout
 
 \end_deeper
+\begin_layout Itemize
+Similar to the reasoning in previous bullet, if 
+\begin_inset Formula $q>0$
+\end_inset
+
+ is used (power iterations), same problem theoretically 
+\emph on
+may
+\emph default
+ appear in reducers of ABtJob 
+\emph on
+if 
+\emph default
+any reducer task receives less than 
+\begin_inset Formula $k+p$
+\end_inset
+
+ rows and unable to form vertical blocks with minimum rank required for
+ the computation.
+ However, since 
+\begin_inset Formula $k+p\sim20..200$
+\end_inset
+
+, it is also a 
+\emph on
+problem-too-small 
+\emph default
+case.
+ In practice, I never saw this actually happening, if it happens, you probably
+ do not need as many reducers as was claimed by -t option, it will not provide
+ any tangible speed benefit on such short data streams.
+\end_layout
+
 \begin_layout Subsection
 Split idempotency of input 
 \begin_inset Formula $\mathbf{A}$
