@@ -1807,6 +1807,10 @@ overwrite output if exists.
 Embedded use
 \end_layout
 
+\begin_layout Subsection
+SVD
+\end_layout
+
 \begin_layout Standard
 It is possible to instantiate and use 
 \family typewriter
@@ -1816,6 +1820,47 @@ SSVDSolver
  This class would have getter and setter methods for each option available
  via command line.
  See javadoc for details.
+\end_layout
+
+\begin_layout Subsection
+PCA
+\end_layout
+
+\begin_layout Standard
+
+\family typewriter
+SSVDSolver
+\family default
+ is focused on SSVD solving primarily though, but if one looks to embed
+ full PCA pipeline, an extra step is needed.
+ One thing 
+\family typewriter
+SSVDSolver
+\family default
+ doesn't know how to do is how to compute columns mean 
+\begin_inset Formula $\boldsymbol{\xi}$
+\end_inset
+
+.
+ Class 
+\family typewriter
+SSVDCli
+\family default
+ (command line wrapper) uses 
+\family typewriter
+MatrixColumnMeansJob
+\family default
+ for that purpose.
+ Hence, full PCA pipeline is a two step pipeline: compute 
+\begin_inset Formula $\boldsymbol{\xi}$
+\end_inset
+
+ + run pca-amended SSVD with it.
+ See the code of command line wrapper 
+\family typewriter
+SSVDCli
+\family default
+ for an example of how to run this 2 step solution.
 \end_layout
 
 \begin_layout Section
