@@ -1,0 +1,3025 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass beamer
+\begin_preamble
+\usetheme{Warsaw}
+% or ...
+
+\setbeamercovered{transparent}
+% or whatever (possibly just delete it)
+
+\usepackage{pgf}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows}
+\usetikzlibrary{snakes}
+
+\usepackage{dot2texi}
+\end_preamble
+\options serif
+\use_default_options false
+\begin_modules
+knitr
+beamer-fragile
+\end_modules
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman lmodern
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 2
+\tocdepth 2
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<<setup, include=FALSE>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+opts_chunk$set(fig.path='figure/beamer-',fig.align='center',fig.show='hold',
+\end_layout
+
+\begin_layout Plain Layout
+
+size='footnotesize',warning=F)
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<<echo=FALSE,results='hide'>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+# some setup
+\end_layout
+
+\begin_layout Plain Layout
+
+options(width=60)  # make the printing fit on the page
+\end_layout
+
+\begin_layout Plain Layout
+
+set.seed(1121)   # make the results repeatable
+\end_layout
+
+\begin_layout Plain Layout
+
+#setwd("/home/dmitriy/workspace-crunchR/scratchpad")
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+This file is a solution template for:
+\end_layout
+
+\begin_layout Itemize
+Talk at a conference/colloquium.
+ 
+\end_layout
+
+\begin_layout Itemize
+Talk length is about 20min.
+ 
+\end_layout
+
+\begin_layout Itemize
+Style is ornate.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+Copyright 2004 by Till Tantau <tantau@users.sourceforge.net>.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+In principle, this file can be redistributed and/or modified under the terms
+ of the GNU Public License, version 2.
+ However, this file is supposed to be a template to be modified for your
+ own needs.
+ For this reason, if you use this file as a template and not specifically
+ distribute it as part of a another package/program, the author grants the
+ extra permission to freely copy and modify this file as you see fit and
+ even to delete this copyright notice.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Title
+Broad Match and Homonym Filtering with Stochastic Singular Value Decomposition
+ (SSVD)
+\begin_inset Argument
+status open
+
+\begin_layout Plain Layout
+Homonym filtering
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+optional, use only with long paper titles
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Author
+Dmitriy Lyubimov
+\begin_inset script superscript
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Institute
+\begin_inset Flex InstituteMark
+status collapsed
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+
+dlyubimov at apache dot org
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Date
+San Francisco, 2012
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Itemize
+Either use conference name or its abbreviation.
+ 
+\end_layout
+
+\begin_layout Itemize
+Not really informative to the audience, more for people (including yourself)
+ who are reading the slides online
+\end_layout
+
+\end_inset
+
+
+\begin_inset Argument
+status open
+
+\begin_layout Plain Layout
+CFP 2012
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+optional, should be abbreviation of conference name
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+If you have a file called "institution-logo-filename.xxx", where xxx is a
+ graphic format that can be processed by latex or pdflatex, resp., then you
+ can add a logo by uncommenting the following:
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+%
+\backslash
+pgfdeclareimage[height=0.5cm]{institution-logo}{institution-logo-filename}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+%
+\backslash
+logo{
+\backslash
+pgfuseimage{institution-logo}}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+The following causes the table of contents to be shown at the beginning
+ of every subsection.
+ Delete this, if you do not want it.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+AtBeginSubsection[]{
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+  
+\backslash
+frame<beamer>{ 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    
+\backslash
+frametitle{Outline}   
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    
+\backslash
+tableofcontents[currentsection,currentsubsection] 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+If you wish to uncover everything in a step-wise fashion, uncomment the
+ following command:
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+%
+\backslash
+beamerdefaultoverlayspecification{<+->}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout BeginFrame
+Outline
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+Structuring a talk is a difficult task and the following structure may not
+ be suitable.
+ Here are some rules that apply for this solution: 
+\end_layout
+
+\begin_layout Itemize
+Exactly two or three sections (other than the summary).
+ 
+\end_layout
+
+\begin_layout Itemize
+At *most* three subsections per section.
+ 
+\end_layout
+
+\begin_layout Itemize
+Talk about 30s to 2min per frame.
+ So there should be between about 15 and 30 frames, all told.
+\end_layout
+
+\begin_layout Itemize
+A conference audience is likely to know very little of what you are going
+ to talk about.
+ So *simplify*! 
+\end_layout
+
+\begin_layout Itemize
+In a 20min talk, getting the main ideas across is hard enough.
+ Leave out details, even if it means being less precise than you think necessary.
+ 
+\end_layout
+
+\begin_layout Itemize
+If you omit details that are vital to the proof/implementation, just say
+ so once.
+ Everybody will be happy with that.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Motivation
+\end_layout
+
+\begin_layout Subsection
+Broad match problems
+\begin_inset Argument
+status open
+
+\begin_layout Plain Layout
+Basic Problem
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout BeginFrame
+Search advertisments
+\end_layout
+
+\begin_layout FrameSubtitle
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+A title should summarize the slide in an understandable fashion for anyone
+ how does not follow everything on the slide itself.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Ad campaign keyword matching types: exact, phrase, broad, negative.
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+broad: 
+\emph on
+java programming classes
+\emph default
+ 
+\end_layout
+
+\begin_layout Itemize
+phrase: 
+\emph on
+[java programming classes]
+\end_layout
+
+\begin_layout Itemize
+exact: 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+java programming classes
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+negative: 
+\emph on
+-coffee
+\end_layout
+
+\end_deeper
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+User query
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+
+\emph on
+Java coffee beans
+\end_layout
+
+\end_deeper
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Matching problem: which keyword - ? Matching quality - ?
+\end_layout
+
+\begin_layout BeginFrame
+Broad match
+\end_layout
+
+\begin_layout FrameSubtitle
+Importance
+\end_layout
+
+\begin_layout Itemize
+Promote coverage
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Even large network struggles with coverage around 15%
+\end_layout
+
+\end_deeper
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Convenient if it 
+\begin_inset Quotes eld
+\end_inset
+
+does the right thing
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+reduces editorial effort of exact and phrase keywords
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+Broad match
+\end_layout
+
+\begin_layout FrameSubtitle
+Naive score
+\end_layout
+
+\begin_layout Itemize
+Positive broad match candidate: all normalized tokens present in the query;
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+initial match quality with Jaccard coefficient (
+\begin_inset Formula $Q$
+\end_inset
+
+ -- query tokenset, 
+\begin_inset Formula $K$
+\end_inset
+
+ -- keyword tokenset): 
+\begin_inset Formula 
+\[
+J_{c}=\frac{\left|Q\cap K\right|}{\left|Q\cup K\right|}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+e.g.:
+\begin_inset Formula 
+\[
+J_{c}\left("java\, class","java\, class"\right)=1.0\,\left(\mbox{great!}\right);
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+J_{c}\left("java\, class","java\, course"\right)=0.33;
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+but:
+\begin_inset Formula 
+\[
+J_{c}\left("java\, coffee","java\, course"\right)=0.33.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+Broad match
+\end_layout
+
+\begin_layout FrameSubtitle
+Synonymy
+\end_layout
+
+\begin_layout Itemize
+We can do better if we recognize synonyms vs.
+ everything else.
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+ML can handle synonymy, but 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Exploration: keyword editorial effort is more precise than massive semantic
+ analysis given same editorial effort
+\end_layout
+
+\begin_deeper
+\begin_layout Pause
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+synonymous keywords (
+\begin_inset Quotes eld
+\end_inset
+
+java class
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+java course
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+java study
+\begin_inset Quotes erd
+\end_inset
+
+ etc.), but omit non-targeting words 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+pause{}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+works ok for a startup and sufficient editorial effort.
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout BeginFrame
+Homonym filtering 
+\end_layout
+
+\begin_layout FrameSubtitle
+why it is a problem?
+\end_layout
+
+\begin_layout Itemize
+Exploration: human actors are worse at filtering all possible homonyms than
+ expanding synonyms 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+pause{}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+more readily name what they want vs.
+ what they don't want?
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+corner case mentality?
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+not readily obvious, so smaller pockets of performance are inevitably going
+ unnoticed
+\end_layout
+
+\end_deeper
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Problem exacerbates as more synonyms introduced: more contexts to be filtered
+ out
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+pause{}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+example: java class, java course, java study, -coffee, -golf, -room
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Bottom line: ML help is needed, minimum editorial efforts (3 engineers,
+ 0 editors!)
+\end_layout
+
+\begin_layout Section
+Latent Semantic Analysis
+\end_layout
+
+\begin_layout Subsection
+Introducing LSA
+\end_layout
+
+\begin_layout BeginFrame
+Latent Semantic Analysis(LSA)
+\end_layout
+
+\begin_layout FrameSubtitle
+pros
+\end_layout
+
+\begin_layout Itemize
+Fairly well established 
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Great subjective precision and recall out of the door
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Used in patent searches for a Prior Art
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Math is easier than pLSA, LDA, LDA-CVB (at least for me)
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Implementation is easy (on a small scale)
+\end_layout
+
+\end_deeper
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Manageable editorial effort 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+less than classification labeling
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+ok as long as not machine-generated
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+Latent Semantic Analysis(LSA)
+\end_layout
+
+\begin_layout FrameSubtitle
+cons
+\end_layout
+
+\begin_layout Itemize
+Hard to do at scale.
+ But:
+\end_layout
+
+\begin_deeper
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Has been hard.
+ Easier now!
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Training is a seldom act.
+ Can rent from a cloud.
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+LSA Math 
+\end_layout
+
+\begin_layout Itemize
+document set 
+\begin_inset Formula $D=\left\{ d_{i}\right\} $
+\end_inset
+
+
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+bag-of-words: term set in a document 
+\begin_inset Formula $d$
+\end_inset
+
+: 
+\begin_inset Formula $T_{d}=\left\{ t_{d,i}\right\} $
+\end_inset
+
+
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+TF (term frequency) for 
+\begin_inset Formula $t,d:\, t\in T_{d}$
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\mbox{tf}\left(d,t\right)=\frac{\mbox{count}\left(t,d\right)}{\max_{w\in T_{d}}\left(\mbox{count}\left(w,d\right)\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+IDF (inverse document frequency)
+\begin_inset Formula 
+\[
+\mbox{idf}\left(t,D\right)=\log\frac{\left|D\right|}{\left|\left\{ d\in D:t\in d\right\} \right|}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+TF-IDF
+\begin_inset Formula 
+\[
+\mbox{tfidf}\left(t,d,D\right)=\mbox{tf}\left(d,t\right)\cdot\mbox{idf}\left(t,D\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout BeginFrame
+LSA Math (contd.)
+\end_layout
+
+\begin_layout Itemize
+Input is 
+\emph on
+sparse
+\emph default
+ 
+\emph on
+num-docs
+\emph default
+
+\begin_inset Formula $\times$
+\end_inset
+
+ 
+\emph on
+num-terms 
+\emph default
+matrix 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ such that 
+\begin_inset Formula 
+\[
+a_{i,j}=\mbox{tfidf}\left(j,i,D\right).
+\]
+
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+pause{}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+(so rows correspond to documents and columns correspond to terms).
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+LSA Math (contd.)
+\end_layout
+
+\begin_layout Itemize
+reduced k-rank SVD
+\begin_inset Formula 
+\[
+\mathbf{A}\approx\mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^{\top},
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+rows of 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+ correspond to documents
+\end_layout
+
+\begin_layout Itemize
+rows of 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ correspond to terms
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+pause{}
+\end_layout
+
+\end_inset
+
+query fold-in to document space of 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+ :
+\begin_inset Formula 
+\[
+\tilde{\mathbf{u}}_{q}=\left(\boldsymbol{\Sigma}^{-1}\mathbf{V}^{\top}\right)\tilde{\mathbf{c}}_{q},
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $\tilde{\mathbf{c}}_{q}$
+\end_inset
+
+ is new observation (query or keyword) 
+\begin_inset Formula 
+\[
+\tilde{\mathbf{c}}_{q}=\left\{ \mbox{idf}\left(t_{i}\right):t_{i}\in Q\mbox{ or }K\right\} 
+\]
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+for simplicity, we assume 
+\begin_inset Formula $\mbox{tf}\left(t_{i}:t_{i}\in Q\mbox{ or }K\right)=1$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+LSA Math (contd.)
+\end_layout
+
+\begin_layout Itemize
+cosine similarity of two queries (or a keyword and a query) 
+\begin_inset Formula 
+\[
+\mbox{sim}\left(\mathbf{u}_{1},\mathbf{u}_{2}\right)=\cos\Theta=\frac{\mathbf{u}_{1}\cdot\mathbf{u}_{2}}{\left|\mathbf{u}_{1}\right|\left|\mathbf{u}_{2}\right|}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+we will use 
+\begin_inset Formula $\mbox{sim}\left(\mathbf{q},\mathbf{k}\right)$
+\end_inset
+
+ of folded keywords and queries and combine heuristically with 
+\begin_inset Formula $J_{c}$
+\end_inset
+
+ 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+pause{}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+final score along the lines of 
+\begin_inset Formula $J_{c}\left(\mathbf{q},\mathbf{k}\right)\cdot\mbox{sim}\left(\mathbf{q},\mathbf{k}\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+throw away candidates below cosine similarity threshold, get N-best of the
+ rest
+\end_layout
+
+\end_deeper
+\begin_layout EndFrame
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex FragileTitle
+status open
+
+\begin_layout Plain Layout
+Homonym filtering diagram
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex FragileFrame
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{center}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{dot2tex}[dot,tikz,options=-s]
+\end_layout
+
+\begin_layout Plain Layout
+
+digraph G {
+\end_layout
+
+\begin_layout Plain Layout
+
+	d2tgraphstyle="scale=0.65,transform shape";
+\end_layout
+
+\begin_layout Plain Layout
+
+    node [shape=rectangle,style="rounded corners",lblstyle="font=
+\backslash
+footnotesize"] ;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    kw [label="Kw:java course",shape=ellipse,style="text width=1cm"];
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+		idf [texlbl="$
+\backslash
+mbox{idf}
+\backslash
+left(t,D
+\backslash
+right)$"];
+\end_layout
+
+\begin_layout Plain Layout
+
+		vsigma [texlbl="$
+\backslash
+boldsymbol{
+\backslash
+Sigma}^{-1}
+\backslash
+mathbf{V}^{
+\backslash
+top}$"];
+\end_layout
+
+\begin_layout Plain Layout
+
+		tr [label="LSA"];
+\end_layout
+
+\begin_layout Plain Layout
+
+		cor [label="Corpus",shape=circle];
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+		cor -> tr -> idf; tr -> vsigma;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+		q [texlbl="Q:java coffee",shape=ellipse,style="text width=1cm"];
+\end_layout
+
+\begin_layout Plain Layout
+
+	    kwf [label="Fold-in"];
+\end_layout
+
+\begin_layout Plain Layout
+
+		qf [label="Fold-in"];
+\end_layout
+
+\begin_layout Plain Layout
+
+		cos [texlbl="$
+\backslash
+mbox{sim}
+\backslash
+left(
+\backslash
+mathbf{u}_{1},
+\backslash
+mathbf{u}_{2}
+\backslash
+right)$"];
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+		vsigma -> kwf; vsigma -> qf; idf -> kwf; idf -> qf;
+\end_layout
+
+\begin_layout Plain Layout
+
+		kwf -> cos;
+\end_layout
+
+\begin_layout Plain Layout
+
+    	q -> qf -> cos;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+	kw -> kwf;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{dot2tex}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{center}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Toy LSA Example in R
+\end_layout
+
+\begin_layout BeginFrame
+Toy LSA example in R 
+\end_layout
+
+\begin_layout ExampleBlock
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\end_inset
+
+text1.txt - java programming course
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout ExampleBlock
+This course is an introduction to software engineering, using the Java™
+ programming language.
+ 
+\end_layout
+
+\begin_layout ExampleBlock
+The class cover concepts useful to 6.005.
+ Students will learn the fundamentals of Java programming.
+ 
+\end_layout
+
+\begin_layout ExampleBlock
+The focus is on developing high quality, working software that solves real
+ problems.
+\end_layout
+
+\begin_layout ExampleBlock
+The course is designed for students with some programming experience, but
+ 
+\end_layout
+
+\begin_layout ExampleBlock
+if you have none and are motivated you will do fine.
+ Students who have taken 6.005 should 
+\end_layout
+
+\begin_layout ExampleBlock
+not take this course.
+ Each class is composed of one hour of lecture and one hour of assisted
+ lab work.
+\end_layout
+
+\begin_layout ExampleBlock
+This course is offered during the Independent Activities ...
+\end_layout
+
+\begin_layout BeginFrame
+LSA example in R (contd.)
+\end_layout
+
+\begin_layout ExampleBlock
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\end_inset
+
+text2.txt - java coffee 
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout ExampleBlock
+Java coffee refers to coffee beans produced in the Indonesian island of
+ Java.
+ In some countries, including the United States, "Java" can refer to coffee.
+ The Indonesian phrase Kopi Jawa refers not only to the origin of the coffee,
+ but is used to distinguish a style of strong, black, very sweet coffee.
+\end_layout
+
+\begin_layout BeginFrame
+LSA example in R (contd.)
+\end_layout
+
+\begin_layout ExampleBlock
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\end_inset
+
+text3.txt - another topic
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+The easiest way is to use your phone as just a phone.
+ There is no shortage of old-fashioned, flip-phone plans that can keep your
+ bill south of $50, provided you don't end up receiving a bunch of unexpected
+ text messages.
+ If you want a phone-only phone, you might want to look away from the major
+ carriers, however, which are now focused on lucrative data-hogging customers.
+ If you wander into a local Verizon store, for example, you are likely to
+ find only one or two basic phone options.
+ Smaller carriers and pre-paid services are the right choice here.
+ Those who want cellphones only for emergencies and pay for only the minutes
+ they use can keep their bills down to $20 or even $10 per month.
+ Ditto for those who just don't want to have their face buried in a smartphone
+ for hours per day.
+\end_layout
+
+\begin_layout EndFrame
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex FragileFrame
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<<results='hide'>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# parse file and return vector of term frequences
+\end_layout
+
+\begin_layout Plain Layout
+
+computeTF <- function (fname) {
+\end_layout
+
+\begin_layout Plain Layout
+
+	f <- file (fname,"r")
+\end_layout
+
+\begin_layout Plain Layout
+
+	on.exit(close(f),T)
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\end_layout
+
+\begin_layout Plain Layout
+
+	# parse into character vector and cleanup
+\end_layout
+
+\begin_layout Plain Layout
+
+	words <- tolower(unlist(strsplit(readLines(f),"[^[:alnum:]]+")))
+\end_layout
+
+\begin_layout Plain Layout
+
+	words <- grep("^[^[:digit:]]+$",words,value=T)
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\end_layout
+
+\begin_layout Plain Layout
+
+	# word count
+\end_layout
+
+\begin_layout Plain Layout
+
+	wc <- tapply(words,words,length)
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\end_layout
+
+\begin_layout Plain Layout
+
+	# term frequency
+\end_layout
+
+\begin_layout Plain Layout
+
+	wc/max(wc)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex FragileFrame
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<<results='hide'>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+# get named list of term frequences and 
+\end_layout
+
+\begin_layout Plain Layout
+
+# convert it into a tf-idf matrix
+\end_layout
+
+\begin_layout Plain Layout
+
+computeTFIDF <- function (tflist ) { 
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\end_layout
+
+\begin_layout Plain Layout
+
+	# compile idf af all terms: terms
+\end_layout
+
+\begin_layout Plain Layout
+
+	terms <- unlist(lapply(tflist,function(x) names(x)))
+\end_layout
+
+\begin_layout Plain Layout
+
+	# doc count 
+\end_layout
+
+\begin_layout Plain Layout
+
+	docCount <- length(tflist)
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\end_layout
+
+\begin_layout Plain Layout
+
+	idf <- sapply(terms, function(term) {
+\end_layout
+
+\begin_layout Plain Layout
+
+				dfreq <- sum(sapply(tflist,
+\end_layout
+
+\begin_layout Plain Layout
+
+					function(x) if( is.na(x[term])) 0 else 1 ))
+\end_layout
+
+\begin_layout Plain Layout
+
+				log(docCount/dfreq)
+\end_layout
+
+\begin_layout Plain Layout
+
+			}
+\end_layout
+
+\begin_layout Plain Layout
+
+	)
+\end_layout
+
+\begin_layout Plain Layout
+
+	names(idf)<-terms
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\end_layout
+
+\begin_layout Plain Layout
+
+	m <- matrix(0,nrow=docCount,ncol=length(terms),
+\end_layout
+
+\begin_layout Plain Layout
+
+			dimnames=list(names(tflist),terms))
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\end_layout
+
+\begin_layout Plain Layout
+
+	sapply(names(tflist),function(dn) {
+\end_layout
+
+\begin_layout Plain Layout
+
+				d <- tflist[[dn]]
+\end_layout
+
+\begin_layout Plain Layout
+
+				m[dn,names(d)] <<- d *idf[names(d)]
+\end_layout
+
+\begin_layout Plain Layout
+
+			}
+\end_layout
+
+\begin_layout Plain Layout
+
+	)
+\end_layout
+
+\begin_layout Plain Layout
+
+	list(idf=idf,m=m)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex FragileFrame
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<<results='hide'>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+foldin <- function (query) { 
+\end_layout
+
+\begin_layout Plain Layout
+
+	# parse query
+\end_layout
+
+\begin_layout Plain Layout
+
+	words <- unlist(tolower(unlist(strsplit(query,"[^[:alnum:]]+"))))
+\end_layout
+
+\begin_layout Plain Layout
+
+	words <- grep("^[^[:digit:]]+$",words,value=T)
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\end_layout
+
+\begin_layout Plain Layout
+
+	words <- levels(as.factor(words[words%in%rownames(vsigma)]))
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\end_layout
+
+\begin_layout Plain Layout
+
+	# for simplicity, we assume term frequency = 1 in queries
+\end_layout
+
+\begin_layout Plain Layout
+
+	termv <- idf[words]
+\end_layout
+
+\begin_layout Plain Layout
+
+	names(termv) <- words
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\end_layout
+
+\begin_layout Plain Layout
+
+	# fold-in of the new observation
+\end_layout
+
+\begin_layout Plain Layout
+
+	t(termv) %*% vsigma[words,,drop=F]
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+cosineSim <- function (vec1,vec2) (sum(vec1*vec2))/sqrt(sum(vec1^2)*sum(vec2^2))
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex FragileFrame
+status open
+
+\begin_layout Plain Layout
+Compute TF-IDF input matrix 
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<<>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+files <- c("text1.txt","text2.txt", "text3.txt")
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#compute all term frequences for all documents
+\end_layout
+
+\begin_layout Plain Layout
+
+a <- lapply(files, function(x) computeTF(x) )
+\end_layout
+
+\begin_layout Plain Layout
+
+names(a) <- files
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#compute tfidf matrix
+\end_layout
+
+\begin_layout Plain Layout
+
+a <- computeTFIDF(a)
+\end_layout
+
+\begin_layout Plain Layout
+
+names(a)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex FragileFrame
+status open
+
+\begin_layout Plain Layout
+TF-IDFs of some terms? (a vertical block of the input)
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<<>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+a$m[,c("java","class","programming","coffee")]
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex FragileFrame
+status open
+
+\begin_layout Plain Layout
+Actually compute SVD, fold-in components and save them
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<<results='hide'>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+# LSA
+\end_layout
+
+\begin_layout Plain Layout
+
+s <- svd(a$m)
+\end_layout
+
+\begin_layout Plain Layout
+
+vsigma<- s$v %*% diag(1/s$d)
+\end_layout
+
+\begin_layout Plain Layout
+
+rownames(vsigma) <- colnames(a$m)
+\end_layout
+
+\begin_layout Plain Layout
+
+u <- s$u
+\end_layout
+
+\begin_layout Plain Layout
+
+rownames(u) <- rownames(a$m)
+\end_layout
+
+\begin_layout Plain Layout
+
+rm(s)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#save idf as well for fold-in 
+\end_layout
+
+\begin_layout Plain Layout
+
+idf <- a$idf
+\end_layout
+
+\begin_layout Plain Layout
+
+rm(a)
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex FragileFrame
+status open
+
+\begin_layout Plain Layout
+fold-in some queries or keywords
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<<>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+jclasses  <- foldin("java class")
+\end_layout
+
+\begin_layout Plain Layout
+
+jclasses 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+jprog <- foldin("java programming")
+\end_layout
+
+\begin_layout Plain Layout
+
+jcourse <- foldin ("java course")
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+jcoffee <- foldin("java coffee")
+\end_layout
+
+\begin_layout Plain Layout
+
+jcoffee
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex FragileFrame
+status open
+
+\begin_layout Plain Layout
+nice synonymy and polisemy at work!
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<<>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+cosineSim(jclasses,jprog)
+\end_layout
+
+\begin_layout Plain Layout
+
+cosineSim(jclasses,jcourse)
+\end_layout
+
+\begin_layout Plain Layout
+
+cosineSim(jclasses,jcoffee)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex FragileFrame
+status open
+
+\begin_layout Plain Layout
+we can even measure relevance to the original documents
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<<>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+cosineSim(u["text1.txt",],jcourse)
+\end_layout
+
+\begin_layout Plain Layout
+
+cosineSim(u["text2.txt",],jcourse)
+\end_layout
+
+\begin_layout Plain Layout
+
+cosineSim(u["text3.txt",],jcourse)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Stochastic SVD in Mahout
+\end_layout
+
+\begin_layout BeginFrame
+Base modified algorithm with power iterations
+\end_layout
+
+\begin_layout FrameSubtitle
+Single-threaded version
+\end_layout
+
+\begin_layout Standard
+Given an 
+\begin_inset Formula $m\times n$
+\end_inset
+
+ matrix 
+\series bold
+A
+\series default
+, a target rank 
+\begin_inset Formula $k\in\mathbb{N}_{1}$
+\end_inset
+
+, an oversampling parameter 
+\begin_inset Formula $p\in\mathbb{N}_{1}$
+\end_inset
+
+, and the number of additional power iterations 
+\begin_inset Formula $q\in\mathbb{N}_{0}$
+\end_inset
+
+, this procedure computes an 
+\begin_inset Formula $m\times\left(k+p\right)$
+\end_inset
+
+ SVD 
+\begin_inset Formula $\mathbf{A=U}\boldsymbol{\Sigma}\mathbf{V}^{\top}$
+\end_inset
+
+(some notations are adjusted):
+\end_layout
+
+\begin_layout Itemize
+Create seed for random 
+\begin_inset Formula $n\times\left(k+p\right)$
+\end_inset
+
+ matrix 
+\begin_inset Formula $\boldsymbol{\Omega}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\mathbf{Y=A\boldsymbol{\Omega}},\,\mathbf{Y}\in\mathbb{R}^{m\times\left(k+p\right)}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Column-orthonormalize 
+\begin_inset Formula $\mathbf{Y}\rightarrow\mathbf{Q}$
+\end_inset
+
+ by computing thin decomposition 
+\begin_inset Formula $\mathbf{Y}=\mathbf{Q}\mathbf{R}$
+\end_inset
+
+.
+ Also, 
+\begin_inset Formula $\mathbf{Q}\in\mathbb{R}^{m\times\left(k+p\right)},\,\mathbf{R}\in\mathbb{R}^{\left(k+p\right)\times\left(k+p\right)}$
+\end_inset
+
+.
+ I denote this as 
+\begin_inset Formula $\mathbf{Q}=\mbox{qr}\left(\mathbf{Y}\right).\mathbf{Q}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\mathbf{B}_{0}=\mathbf{Q}^{\top}\mathbf{A}:\,\,\mathbf{B}\in\mathbb{R}^{\left(k+p\right)\times n}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+If 
+\begin_inset Formula $q>0$
+\end_inset
+
+ repeat: for 
+\begin_inset Formula $i=1..q$
+\end_inset
+
+: 
+\begin_inset Formula $\mathbf{B}_{i}^{\top}=\mathbf{A}^{\top}\mbox{qr}\left(\mathbf{A}\mathbf{B}_{i-1}^{\top}\right).\mathbf{Q}$
+\end_inset
+
+ (power iterations step)
+\end_layout
+
+\begin_layout BeginFrame
+Base modified algorithm with power iterations
+\end_layout
+
+\begin_layout FrameSubtitle
+(contd)
+\end_layout
+
+\begin_layout Itemize
+Compute Eigensolution of a small Hermitian 
+\begin_inset Formula $\mathbf{B}_{q}\mathbf{B}_{q}^{\top}=\mathbf{\hat{U}}\boldsymbol{\Lambda}\mathbf{\hat{U}}^{\top}$
+\end_inset
+
+.
+ 
+\begin_inset Formula $\mathbf{B}_{q}\mathbf{B}_{q}^{\top}\in\mathbb{R}^{\left(k+p\right)\times\left(k+p\right)}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Singular values 
+\begin_inset Formula $\mathbf{\boldsymbol{\Sigma}}=\boldsymbol{\Lambda}^{0.5}$
+\end_inset
+
+, or, in other words, 
+\begin_inset Formula $s_{i}=\sqrt{\sigma_{i}}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+If needed, compute 
+\begin_inset Formula $\mathbf{U}=\mathbf{Q}\hat{\mathbf{U}}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+If needed, compute 
+\begin_inset Formula $\mathbf{V}=\mathbf{B}_{q}^{\top}\hat{\mathbf{U}}\boldsymbol{\Sigma}^{-1}$
+\end_inset
+
+.
+ Another way is 
+\begin_inset Formula $\mathbf{V}=\mathbf{A}^{\top}\mathbf{U}\boldsymbol{\Sigma}^{-1}$
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+pause{}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+and bunch of other options for the output (see doc)
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+Characteristics of single-threaded version
+\end_layout
+
+\begin_layout Itemize
+Needs a good decay
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+White noise precision is poor compared to optimal solution
+\end_layout
+
+\begin_layout Itemize
+Not a tremendous problem with real life problems such as LSA
+\end_layout
+
+\end_deeper
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Easier estimate of error bound
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+expressed in terms of 
+\begin_inset Formula $\frac{\sigma_{k+p}}{\sigma_{1}}$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Presents interesting additional optimization opportunities for massive scale
+ PCA
+\end_layout
+
+\begin_layout BeginFrame
+MR characteristics of parallel version
+\end_layout
+
+\begin_layout Itemize
+Fixed amount of MR jobs : 
+\begin_inset Formula $N=3+2q$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Some of the jobs are map-only
+\end_layout
+
+\end_deeper
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Experiments show really superior performance qualities over distributed
+ Lanczos
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+see experiments staged by Nathan in his dissertation
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+MR characteristics of parallel version
+\end_layout
+
+\begin_layout Itemize
+precision with q=1 is very good, with q=2 visually indistinguishable from
+ that of Lanczos solver
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+pause{}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+options allow to adjust trade-off between speed vs.
+ precision
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+pause{}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+running time is not absolutely linearly scalable to the input size:
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+pause{}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+task time 
+\begin_inset Formula $\propto\sim\left(k+p\right)^{1.5}$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout BeginFrame
+MR characteristics of parallel version
+\end_layout
+
+\begin_layout Itemize
+takes bigger datasets than Lanczos without giving up 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+max experiment known to me on an input of a little under 1Tb
+\end_layout
+
+\end_deeper
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Known bottleneck is matrix multiplication of 
+\begin_inset Formula $\mathbf{AB}^{\top}$
+\end_inset
+
+ step, 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+further remedies could be applicable
+\end_layout
+
+\end_deeper
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+QR of 
+\begin_inset Formula $\mathbf{B}_{0}$
+\end_inset
+
+ pipeline could be replaced with a Cholesky decomposition trick
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Applicable to LSA and PCA, not really applicable to recommenders
+\end_layout
+
+\begin_layout Section
+References
+\end_layout
+
+\begin_layout BeginFrame
+References
+\end_layout
+
+\begin_layout Itemize
+usage information :
+\end_layout
+
+\begin_layout Standard
+https://cwiki.apache.org/confluence/display/MAHOUT/Stochastic+
+\begin_inset Newline newline
+\end_inset
+
+Singular+Value+Decomposition
+\end_layout
+
+\begin_layout Itemize
+N.
+ Halko, et.al.
+ 
+\begin_inset Quotes eld
+\end_inset
+
+Funding structure with randomness...
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Working notes
+\end_layout
+
+\begin_layout Standard
+https://github.com/dlyubimov/mahout-commits/tree/ssvd-docs
+\end_layout
+
+\begin_layout Itemize
+N.
+ Halko's dissertation
+\end_layout
+
+\begin_layout Itemize
+Blog discusses parallelization of some components
+\end_layout
+
+\begin_layout BeginFrame
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+vspace{20pt}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+Thank you!
+\end_layout
+
+\begin_layout EndFrame
+
+\end_layout
+
+\end_body
+\end_document
