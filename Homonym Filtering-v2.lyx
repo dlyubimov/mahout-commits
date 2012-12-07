@@ -887,8 +887,7 @@ java job
 \begin_inset Formula $Q\mapsto0$
 \end_inset
 
-: java 
-coffee
+: java coffee
 \begin_inset Formula $\checkmark$
 \end_inset
 
@@ -955,18 +954,14 @@ concept: java classes
 \end_inset
 
 java classes
-
 \begin_inset Formula $\checkmark$
 \end_inset
 
-
-\lang english
 ;
 \begin_inset Newline newline
 \end_inset
 
 java course
-
 \begin_inset Formula $\checkmark$
 \end_inset
 
@@ -986,7 +981,6 @@ I want to learn java
 \end_inset
 
 : java coffee
-
 \begin_inset Formula $\checkmark$
 \end_inset
 
@@ -1024,12 +1018,12 @@ Resolving synonymy and polisemy
 \end_layout
 
 \begin_layout Itemize
-Hard but possible to define synonymy
+Defining synonymy is hard but possible:
 \end_layout
 
 \begin_deeper
 \begin_layout Itemize
-tons of keywords 
+tons of keywords: 
 \begin_inset Quotes eld
 \end_inset
 
@@ -1053,11 +1047,11 @@ learning java
 \begin_inset Quotes erd
 \end_inset
 
- -coffee
+ -coffee [...]
 \end_layout
 
 \begin_layout Itemize
-building synonym keyword dictionaries is generally ok though
+but building synonym keyword dictionaries works ok though
 \end_layout
 
 \end_deeper
@@ -1078,7 +1072,11 @@ corner case
 \begin_inset Quotes erd
 \end_inset
 
- mentality: pockets of performance go undiagnosed and unnoticed; 
+ mentality: pockets of homonym creep go undiagnosed and unnoticed; 
+\end_layout
+
+\begin_layout Pause
+
 \end_layout
 
 \begin_layout Itemize
@@ -1088,6 +1086,8 @@ adding synonyms improves recall but hurts precision and multiplies homonym
 
 \begin_deeper
 \begin_layout Itemize
+
+\size footnotesize
 e.g.: java classes, java courses, study java, -coffee, -golf, -room, -office
 \end_layout
 
@@ -1098,7 +1098,7 @@ e.g.: java classes, java courses, study java, -coffee, -golf, -room, -office
 \end_layout
 
 \begin_layout Itemize
-Therefore we need Machine learning solution for homonym filtering!
+Therefore we need a Machine Learning solution for homonym filtering!
 \end_layout
 
 \begin_layout Section
@@ -1114,11 +1114,11 @@ Broad match
 \end_layout
 
 \begin_layout FrameSubtitle
-Naive scoring
+classification score: Naive scoring
 \end_layout
 
 \begin_layout Itemize
-initial match quality with Jaccard coefficient (
+initial approach Jaccard coefficient (
 \begin_inset Formula $Q$
 \end_inset
 
@@ -1525,8 +1525,8 @@ cosine similarity of two queries (or a keyword and a query)
 \end_layout
 
 \begin_layout Itemize
-can use final classification score along the lines of 
-\begin_inset Formula $J_{c}\left(\mathbf{q},\mathbf{k}\right)\cdot\mbox{sim}\left(\mathbf{q},\mathbf{k}\right)$
+can use final classification score 
+\begin_inset Formula $\propto J_{c}\left(\mathbf{q},\mathbf{k}\right)\cdot\mbox{sim}\left(\mathbf{q},\mathbf{k}\right)$
 \end_inset
 
 
@@ -2824,11 +2824,7 @@ A
 \begin_inset Formula $q\in\mathbb{N}_{0}$
 \end_inset
 
-, this procedure computes an 
-\begin_inset Formula $m\times\left(k+p\right)$
-\end_inset
-
- SVD 
+, this procedure computes an k-rank reduced SVD 
 \begin_inset Formula $\mathbf{A=U}\boldsymbol{\Sigma}\mathbf{V}^{\top}$
 \end_inset
 
@@ -2976,27 +2972,14 @@ If needed, compute
 \end_inset
 
 .
- Another way is 
-\begin_inset Formula $\mathbf{V}=\mathbf{A}^{\top}\mathbf{U}\boldsymbol{\Sigma}^{-1}$
-\end_inset
-
-
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-
-\backslash
-pause{}
-\end_layout
-
-\end_inset
-
-
+ 
 \end_layout
 
 \begin_deeper
+\begin_layout Pause
+
+\end_layout
+
 \begin_layout Itemize
 and bunch of other options for the output (see doc)
 \end_layout
@@ -3007,11 +2990,11 @@ Characteristics of SSVD
 \end_layout
 
 \begin_layout FrameSubtitle
-Presicion
+Precision
 \end_layout
 
 \begin_layout Itemize
-Needs a good decay
+Needs a good decay of the spectrum
 \end_layout
 
 \begin_deeper
@@ -3088,21 +3071,12 @@ options allow to adjust trade-off between speed vs.
  precision
 \end_layout
 
-\begin_layout Itemize
-running time is not absolutely linearly scalable to the input size:
-\begin_inset ERT
-status open
+\begin_layout Pause
 
-\begin_layout Plain Layout
-
-
-\backslash
-pause{}
 \end_layout
 
-\end_inset
-
-
+\begin_layout Itemize
+running time is not absolutely linearly scalable to the input size:
 \end_layout
 
 \begin_deeper
@@ -3115,13 +3089,17 @@ task time
 \end_layout
 
 \end_deeper
+\begin_layout Pause
+
+\end_layout
+
 \begin_layout Itemize
 Takes on bigger datasets than Lanczos without giving up 
 \end_layout
 
 \begin_deeper
 \begin_layout Itemize
-max experiment known to me on an input of a little under 1Tb
+largest experiment known to me on an input of a little under 1Tb
 \end_layout
 
 \begin_layout Itemize
