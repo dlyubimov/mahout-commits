@@ -520,32 +520,19 @@ If you omit details that are vital to the proof/implementation, just say
 Motivation
 \end_layout
 
-\begin_layout Subsection
-Broad match problems
-\begin_inset Argument
-status open
-
-\begin_layout Plain Layout
-Basic Problem
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
 \begin_layout BeginFrame
-Search advertisments
+Quote
 \end_layout
 
-\begin_layout FrameSubtitle
-\begin_inset Note Note
+\begin_layout Standard
+\begin_inset ERT
 status open
 
 \begin_layout Plain Layout
-A title should summarize the slide in an understandable fashion for anyone
- how does not follow everything on the slide itself.
- 
+
+
+\backslash
+begin{center}
 \end_layout
 
 \end_inset
@@ -553,48 +540,235 @@ A title should summarize the slide in an understandable fashion for anyone
 
 \end_layout
 
-\begin_layout Itemize
-Ad campaign keyword matching types: exact, phrase, broad, negative.
- 
+\begin_layout Standard
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "60col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Block
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{}
 \end_layout
 
-\begin_deeper
-\begin_layout Itemize
-broad: 
+\end_inset
+
+
+\begin_inset Quotes eld
+\end_inset
+
+We’ll never run out of math teachers 
+\begin_inset Newline newline
+\end_inset
+
+because they always 
+\series bold
 \emph on
-java programming classes
+multiply
+\series default
 \emph default
+.
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{center}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Search Ad Network Overview
+\end_layout
+
+\begin_layout BeginFrame
+Search ad network overview
+\end_layout
+
+\begin_layout FrameSubtitle
+What is the search ad network?
+\end_layout
+
+\begin_layout Standard
+Search ad network is an open auction for customer intents:
+\end_layout
+
+\begin_layout Block
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<1->{
+\end_layout
+
+\end_inset
+
+Request for proposal
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+A person comes to an auction and announces intent to a crowd of experts
+ with a short simple request.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+e.g.: 
+\begin_inset Quotes eld
+\end_inset
+
+Blue suede shoes
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\begin_inset Formula $\mapsto Q=\left\{ "blue","suede","shoe"\right\} $
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout Separator
+
+\end_layout
+
+\begin_layout Block
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<2->{
+\end_layout
+
+\end_inset
+
+Some experts' reply:
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Some experts: 
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Quotes eld
+\end_inset
+
+I bet 
+\begin_inset Formula $X$
+\end_inset
+
+ amount that I know what you need.
+ 
+\begin_inset Newline newline
+\end_inset
+
+I am ready to pay it for you to eyeball my proposal.
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+Search ad network overview
+\end_layout
+
+\begin_layout FrameSubtitle
+Automated bidding thru a classifier
+\end_layout
+
+\begin_layout Itemize
+Human experts don't bid directly.
  
 \end_layout
 
-\begin_layout Itemize
-phrase: 
-\emph on
-[java programming classes]
-\end_layout
-
-\begin_layout Itemize
-exact: 
-\emph on
-
-\begin_inset Quotes eld
-\end_inset
-
-java programming classes
-\begin_inset Quotes erd
-\end_inset
-
-
-\end_layout
-
 \begin_layout Pause
 
 \end_layout
 
 \begin_layout Itemize
-negative: 
+They build 
 \emph on
--coffee
+multi-class classifiers 
+\emph default
+to automate the process:
+\begin_inset Formula 
+\[
+Q\mapsto b\in\left\{ b_{1},b_{2},...,b_{n},no\, bid\right\} 
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Training is manual via an editorial effort
 \end_layout
 
 \end_deeper
@@ -603,14 +777,287 @@ negative:
 \end_layout
 
 \begin_layout Itemize
-User query
+Let's simplify: 
+\begin_inset Formula $Q\mapsto b\in\left\{ 0,1\right\} $
+\end_inset
+
+ (no match/match)
+\end_layout
+
+\begin_layout BeginFrame
+Search ad network overview
+\end_layout
+
+\begin_layout FrameSubtitle
+Specify classifier rules: exact terms vs.
+ concept a.k.a Broad Match
+\end_layout
+
+\begin_layout ColumnsTopAligned
+
+\end_layout
+
+\begin_deeper
+\begin_layout Column
+5cm
+\end_layout
+
+\begin_layout ExampleBlock
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<1->{
+\end_layout
+
+\end_inset
+
+Bidding on exact terms
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+kwords: 
+\begin_inset Quotes eld
+\end_inset
+
+java
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+classes
+\begin_inset Quotes erd
+\end_inset
+
+ -coffee
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $Q\mapsto1$
+\end_inset
+
+: java classes
+\begin_inset Formula $\checkmark$
+\end_inset
+
+; 
+\begin_inset Newline newline
+\end_inset
+
+java course
+\begin_inset Formula $\checkmark$
+\end_inset
+
+; 
+\begin_inset Newline newline
+\end_inset
+
+java island
+\begin_inset Formula $\times$
+\end_inset
+
+;
+\begin_inset Newline newline
+\end_inset
+
+java job
+\begin_inset Formula $\times$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $Q\mapsto0$
+\end_inset
+
+: java 
+coffee
+\begin_inset Formula $\checkmark$
+\end_inset
+
+;
+\begin_inset Newline newline
+\end_inset
+
+I want to learn java
+\begin_inset Formula $\times$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Column
+5cm
+\end_layout
+
+\begin_layout ExampleBlock
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<2->{
+\end_layout
+
+\end_inset
+
+Bidding on a concept a.k.a 
+\emph on
+Broad Match
+\emph default
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+concept: java classes
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $Q\mapsto1$
+\end_inset
+
+: java
+\begin_inset Formula $\checkmark|\pm$
+\end_inset
+
+;
+\begin_inset Newline newline
+\end_inset
+
+java classes
+
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\lang english
+;
+\begin_inset Newline newline
+\end_inset
+
+java course
+
+\begin_inset Formula $\checkmark$
+\end_inset
+
+;
+\begin_inset Newline newline
+\end_inset
+
+I want to learn java
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $Q\mapsto0$
+\end_inset
+
+: java coffee
+
+\begin_inset Formula $\checkmark$
+\end_inset
+
+;
+\begin_inset Newline newline
+\end_inset
+
+java job
+\begin_inset Formula $\checkmark$
+\end_inset
+
+;
+\begin_inset Newline newline
+\end_inset
+
+java island
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout EndFrame
+
+\end_layout
+
+\begin_layout BeginFrame
+Problems arising from exact term matching
+\end_layout
+
+\begin_layout FrameSubtitle
+Resolving synonymy and polisemy
+\end_layout
+
+\begin_layout Itemize
+Hard but possible to define synonymy
 \end_layout
 
 \begin_deeper
 \begin_layout Itemize
+tons of keywords 
+\begin_inset Quotes eld
+\end_inset
 
-\emph on
-Java coffee beans
+java classes
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+java course
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+learning java
+\begin_inset Quotes erd
+\end_inset
+
+ -coffee
+\end_layout
+
+\begin_layout Itemize
+building synonym keyword dictionaries is generally ok though
 \end_layout
 
 \end_deeper
@@ -619,7 +1066,47 @@ Java coffee beans
 \end_layout
 
 \begin_layout Itemize
-Matching problem: which keyword - ? Matching quality - ?
+Polysemy is much harder for a human expert to eliminate
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+\begin_inset Quotes eld
+\end_inset
+
+corner case
+\begin_inset Quotes erd
+\end_inset
+
+ mentality: pockets of performance go undiagnosed and unnoticed; 
+\end_layout
+
+\begin_layout Itemize
+adding synonyms improves recall but hurts precision and multiplies homonym
+ contexts
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+e.g.: java classes, java courses, study java, -coffee, -golf, -room, -office
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
+Therefore we need Machine learning solution for homonym filtering!
+\end_layout
+
+\begin_layout Section
+Broad Match
+\end_layout
+
+\begin_layout Subsection
+Building classification score
 \end_layout
 
 \begin_layout BeginFrame
@@ -627,55 +1114,7 @@ Broad match
 \end_layout
 
 \begin_layout FrameSubtitle
-Importance
-\end_layout
-
-\begin_layout Itemize
-Promote coverage
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-Even large network struggles with coverage around 15%
-\end_layout
-
-\end_deeper
-\begin_layout Pause
-
-\end_layout
-
-\begin_layout Itemize
-Convenient if it 
-\begin_inset Quotes eld
-\end_inset
-
-does the right thing
-\begin_inset Quotes erd
-\end_inset
-
-
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-reduces editorial effort of exact and phrase keywords
-\end_layout
-
-\end_deeper
-\begin_layout BeginFrame
-Broad match
-\end_layout
-
-\begin_layout FrameSubtitle
-Naive score
-\end_layout
-
-\begin_layout Itemize
-Positive broad match candidate: all normalized tokens present in the query;
-\end_layout
-
-\begin_layout Pause
-
+Naive scoring
 \end_layout
 
 \begin_layout Itemize
@@ -736,200 +1175,38 @@ J_{c}\left("java\, coffee","java\, course"\right)=0.33.
 \end_layout
 
 \end_deeper
-\begin_layout BeginFrame
-Broad match
-\end_layout
-
-\begin_layout FrameSubtitle
-Synonymy
-\end_layout
-
 \begin_layout Itemize
-We can do better if we recognize synonyms vs.
- everything else.
-\end_layout
-
-\begin_layout Pause
-
-\end_layout
-
-\begin_layout Itemize
-ML can handle synonymy, but 
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-Exploration: keyword editorial effort is more precise than massive semantic
- analysis given same editorial effort
-\end_layout
-
-\begin_deeper
-\begin_layout Pause
-
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-synonymous keywords (
-\begin_inset Quotes eld
-\end_inset
-
-java class
-\begin_inset Quotes erd
-\end_inset
-
-, 
-\begin_inset Quotes eld
-\end_inset
-
-java course
-\begin_inset Quotes erd
-\end_inset
-
-, 
-\begin_inset Quotes eld
-\end_inset
-
-java study
-\begin_inset Quotes erd
-\end_inset
-
- etc.), but omit non-targeting words 
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-
-\backslash
-pause{}
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-works ok for a startup and sufficient editorial effort.
-\end_layout
-
-\end_deeper
-\end_deeper
-\begin_layout BeginFrame
-Homonym filtering 
-\end_layout
-
-\begin_layout FrameSubtitle
-why it is a problem?
-\end_layout
-
-\begin_layout Itemize
-Exploration: human actors are worse at filtering all possible homonyms than
- expanding synonyms 
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-
-\backslash
-pause{}
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-more readily name what they want vs.
- what they don't want?
-\end_layout
-
-\begin_layout Pause
-
-\end_layout
-
-\begin_layout Itemize
-corner case mentality?
-\end_layout
-
-\begin_layout Pause
-
-\end_layout
-
-\begin_layout Itemize
-not readily obvious, so smaller pockets of performance are inevitably going
- unnoticed
-\end_layout
-
-\end_deeper
-\begin_layout Pause
-
-\end_layout
-
-\begin_layout Itemize
-Problem exacerbates as more synonyms introduced: more contexts to be filtered
- out
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-
-\backslash
-pause{}
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-example: java class, java course, java study, -coffee, -golf, -room
-\end_layout
-
-\begin_layout Pause
-
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-Bottom line: ML help is needed, minimum editorial efforts (3 engineers,
- 0 editors!)
-\end_layout
-
-\begin_layout Section
-Latent Semantic Analysis
+Can we do better??
 \end_layout
 
 \begin_layout Subsection
-Introducing LSA
+Introducing LSA as a scoring component
 \end_layout
 
 \begin_layout BeginFrame
-Latent Semantic Analysis(LSA)
+Latent Semantic Analysis(LSA) as a Broad Match scoring component
 \end_layout
 
 \begin_layout FrameSubtitle
-pros
+LSA pros
 \end_layout
 
 \begin_layout Itemize
 Fairly well established 
 \end_layout
 
+\begin_deeper
+\begin_layout Itemize
+used in patent searches for a Prior Art
+\end_layout
+
+\end_deeper
 \begin_layout Pause
 
 \end_layout
 
 \begin_layout Itemize
-Great subjective precision and recall out of the door
+Solves synonymy to some extent and homonym filtering
 \end_layout
 
 \begin_layout Pause
@@ -937,20 +1214,12 @@ Great subjective precision and recall out of the door
 \end_layout
 
 \begin_layout Itemize
-Used in patent searches for a Prior Art
-\end_layout
-
-\begin_layout Pause
-
-\end_layout
-
-\begin_layout Itemize
-Math is easier than pLSA, LDA, LDA-CVB (at least for me)
+Math is easier than pLSA, LDA, LDA-CVB
 \end_layout
 
 \begin_deeper
 \begin_layout Itemize
-Implementation is easy (on a small scale)
+implementation is easy (on a small scale)
 \end_layout
 
 \end_deeper
@@ -964,7 +1233,8 @@ Manageable editorial effort
 
 \begin_deeper
 \begin_layout Itemize
-less than classification labeling
+less tedious than e.g.
+ labeling documents for classification
 \end_layout
 
 \begin_layout Pause
@@ -972,7 +1242,8 @@ less than classification labeling
 \end_layout
 
 \begin_layout Itemize
-ok as long as not machine-generated
+even irrelevant documents are ok as long as they are not a machine-generated
+ ones
 \end_layout
 
 \end_deeper
@@ -981,7 +1252,7 @@ Latent Semantic Analysis(LSA)
 \end_layout
 
 \begin_layout FrameSubtitle
-cons
+LSA cons
 \end_layout
 
 \begin_layout Itemize
@@ -990,13 +1261,8 @@ Hard to do at scale.
 \end_layout
 
 \begin_deeper
-\begin_layout Pause
-
-\end_layout
-
 \begin_layout Itemize
-Has been hard.
- Easier now!
+easier now!
 \end_layout
 
 \begin_layout Pause
@@ -1009,36 +1275,50 @@ Training is a seldom act.
 \end_layout
 
 \end_deeper
+\begin_layout Section
+LSA
+\end_layout
+
+\begin_layout Subsection
+Step-by-step LSA math
+\end_layout
+
 \begin_layout BeginFrame
 LSA Math 
 \end_layout
 
+\begin_layout FrameSubtitle
+let's take a closer look at LSA Math: bag-of-words
+\end_layout
+
 \begin_layout Itemize
-document set 
+Bag-of-words model:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+corpus is a set of documents 
 \begin_inset Formula $D=\left\{ d_{i}\right\} $
 \end_inset
 
-
-\end_layout
-
-\begin_layout Pause
-
+; 
 \end_layout
 
 \begin_layout Itemize
-bag-of-words: term set in a document 
-\begin_inset Formula $d$
-\end_inset
-
-: 
+document is a set of terms:
 \begin_inset Formula $T_{d}=\left\{ t_{d,i}\right\} $
 \end_inset
 
 
 \end_layout
 
-\begin_layout Pause
+\end_deeper
+\begin_layout BeginFrame
+LSA Math 
+\end_layout
 
+\begin_layout FrameSubtitle
+Training Step 1 - Forming input: TF-IDF
 \end_layout
 
 \begin_layout Itemize
@@ -1090,7 +1370,11 @@ TF-IDF
 \end_layout
 
 \begin_layout BeginFrame
-LSA Math (contd.)
+LSA Math 
+\end_layout
+
+\begin_layout FrameSubtitle
+Training: input matrix
 \end_layout
 
 \begin_layout Itemize
@@ -1123,29 +1407,21 @@ a_{i,j}=\mbox{tfidf}\left(j,i,D\right).
 \end_inset
 
 
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-
-\backslash
-pause{}
-\end_layout
-
-\end_inset
-
-
 \end_layout
 
 \begin_deeper
 \begin_layout Itemize
-(so rows correspond to documents and columns correspond to terms).
+rows correspond to documents and columns correspond to terms and values
+ correspond to tf-idf value of such
 \end_layout
 
 \end_deeper
 \begin_layout BeginFrame
-LSA Math (contd.)
+LSA Math 
+\end_layout
+
+\begin_layout FrameSubtitle
+Training: SVD
 \end_layout
 
 \begin_layout Itemize
@@ -1178,19 +1454,41 @@ rows of
 \end_layout
 
 \end_deeper
-\begin_layout Itemize
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-
-\backslash
-pause{}
+\begin_layout BeginFrame
+LSA Math
 \end_layout
+
+\begin_layout FrameSubtitle
+Runtime: folding-in queries (or keywords)
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\tilde{\mathbf{c}}_{q}$
+\end_inset
+
+ is new document observation (query) such that 
+\begin_inset Formula $\forall t_{i}\in T$
+\end_inset
+
+: 
+\begin_inset Formula 
+\[
+\tilde{c}_{q,i}=\begin{cases}
+1, & t_{i}\in Q;\\
+0, & t_{i}\notin Q.
+\end{cases}
+\]
 
 \end_inset
 
+
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Itemize
 query fold-in to document space of 
 \begin_inset Formula $\mathbf{U}$
 \end_inset
@@ -1198,49 +1496,23 @@ query fold-in to document space of
  :
 \begin_inset Formula 
 \[
-\tilde{\mathbf{u}}_{q}=\left(\boldsymbol{\Sigma}^{-1}\mathbf{V}^{\top}\right)\tilde{\mathbf{c}}_{q},
+\tilde{\mathbf{u}}_{q}=\left(\boldsymbol{\Sigma}^{-1}\mathbf{V}^{\top}\right)\cdot\left[\tilde{\mathbf{c}}_{q}\circ\mathbf{idf}\left(\cdot\right)\right],
 \]
 
 \end_inset
 
-where 
-\begin_inset Formula $\tilde{\mathbf{c}}_{q}$
-\end_inset
 
- is new observation (query or keyword) 
-\begin_inset Formula 
-\[
-\tilde{\mathbf{c}}_{q}=\left\{ \mbox{idf}\left(t_{i}\right):t_{i}\in Q\mbox{ or }K\right\} 
-\]
-
-\end_inset
-
- 
 \end_layout
 
-\begin_deeper
 \begin_layout Pause
 
-\end_layout
-
-\begin_layout Itemize
-for simplicity, we assume 
-\begin_inset Formula $\mbox{tf}\left(t_{i}:t_{i}\in Q\mbox{ or }K\right)=1$
-\end_inset
-
-
-\end_layout
-
-\end_deeper
-\begin_layout BeginFrame
-LSA Math (contd.)
 \end_layout
 
 \begin_layout Itemize
 cosine similarity of two queries (or a keyword and a query) 
 \begin_inset Formula 
 \[
-\mbox{sim}\left(\mathbf{u}_{1},\mathbf{u}_{2}\right)=\cos\Theta=\frac{\mathbf{u}_{1}\cdot\mathbf{u}_{2}}{\left|\mathbf{u}_{1}\right|\left|\mathbf{u}_{2}\right|}
+\mbox{sim}\left(\tilde{\mathbf{u}}_{1},\tilde{\mathbf{u}}_{2}\right)=\cos\Theta=\frac{\tilde{\mathbf{u}}_{1}\cdot\tilde{\mathbf{u}}_{2}}{\left|\tilde{\mathbf{u}}_{1}\right|\left|\tilde{\mathbf{u}}_{2}\right|}
 \]
 
 \end_inset
@@ -1253,49 +1525,13 @@ cosine similarity of two queries (or a keyword and a query)
 \end_layout
 
 \begin_layout Itemize
-we will use 
-\begin_inset Formula $\mbox{sim}\left(\mathbf{q},\mathbf{k}\right)$
-\end_inset
-
- of folded keywords and queries and combine heuristically with 
-\begin_inset Formula $J_{c}$
-\end_inset
-
- 
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-
-\backslash
-pause{}
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-final score along the lines of 
+can use final classification score along the lines of 
 \begin_inset Formula $J_{c}\left(\mathbf{q},\mathbf{k}\right)\cdot\mbox{sim}\left(\mathbf{q},\mathbf{k}\right)$
 \end_inset
 
 
 \end_layout
 
-\begin_layout Pause
-
-\end_layout
-
-\begin_layout Itemize
-throw away candidates below cosine similarity threshold, get N-best of the
- rest
-\end_layout
-
-\end_deeper
 \begin_layout EndFrame
 
 \end_layout
@@ -1315,7 +1551,7 @@ Homonym filtering diagram
 
 \begin_layout Standard
 \begin_inset Flex FragileFrame
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \begin_inset ERT
@@ -1350,7 +1586,7 @@ digraph G {
 
 \begin_layout Plain Layout
 
-	d2tgraphstyle="scale=0.65,transform shape";
+	d2tgraphstyle="scale=0.6,transform shape";
 \end_layout
 
 \begin_layout Plain Layout
@@ -2207,7 +2443,7 @@ status open
 
 \begin_layout Plain Layout
 
-a$m[,c("java","class","programming","coffee")]
+a$m[,c("java","class","programming","coffee","the")]
 \end_layout
 
 \begin_layout Plain Layout
@@ -2231,7 +2467,7 @@ a$m[,c("java","class","programming","coffee")]
 
 \begin_layout Standard
 \begin_inset Flex FragileFrame
-status open
+status collapsed
 
 \begin_layout Plain Layout
 Actually compute SVD, fold-in components and save them
@@ -2325,7 +2561,7 @@ rm(a)
 
 \begin_layout Standard
 \begin_inset Flex FragileFrame
-status open
+status collapsed
 
 \begin_layout Plain Layout
 fold-in some queries or keywords
@@ -2407,7 +2643,7 @@ jcoffee
 
 \begin_layout Standard
 \begin_inset Flex FragileFrame
-status open
+status collapsed
 
 \begin_layout Plain Layout
 nice synonymy and polisemy at work!
@@ -2532,7 +2768,31 @@ cosineSim(u["text3.txt",],jcourse)
 \end_layout
 
 \begin_layout Subsection
-Stochastic SVD in Mahout
+Training with Mahout
+\end_layout
+
+\begin_layout BeginFrame
+Training with Mahout
+\end_layout
+
+\begin_layout Itemize
+
+\family typewriter
+seq2sparse
+\family default
+: bigram/trigram analysis to improve assumptions of bag-of-words model
+\end_layout
+
+\begin_layout Itemize
+
+\family typewriter
+ssvd
+\family default
+: stochastic SVD
+\end_layout
+
+\begin_layout Subsection
+Stochastic SVD 
 \end_layout
 
 \begin_layout BeginFrame
@@ -2540,7 +2800,7 @@ Base modified algorithm with power iterations
 \end_layout
 
 \begin_layout FrameSubtitle
-Single-threaded version
+Single-threaded version, step-by-step
 \end_layout
 
 \begin_layout Standard
@@ -2662,7 +2922,7 @@ Base modified algorithm with power iterations
 \end_layout
 
 \begin_layout FrameSubtitle
-(contd)
+Single-threaded version, step-by-step(contd)
 \end_layout
 
 \begin_layout Itemize
@@ -2743,7 +3003,11 @@ and bunch of other options for the output (see doc)
 
 \end_deeper
 \begin_layout BeginFrame
-Characteristics of single-threaded version
+Characteristics of SSVD
+\end_layout
+
+\begin_layout FrameSubtitle
+Presicion
 \end_layout
 
 \begin_layout Itemize
@@ -2783,12 +3047,22 @@ expressed in terms of
 \end_layout
 
 \begin_layout Itemize
-Presents interesting additional optimization opportunities for massive scale
- PCA
+precision with q=1 is very good, 
 \end_layout
 
+\begin_deeper
+\begin_layout Itemize
+with q=2 visually indistinguishable from that of Lanczos solver (at the
+ scale where Lanczos still works)
+\end_layout
+
+\end_deeper
 \begin_layout BeginFrame
-MR characteristics of parallel version
+Characteristics of SSVD (contd.)
+\end_layout
+
+\begin_layout FrameSubtitle
+Performance
 \end_layout
 
 \begin_layout Itemize
@@ -2810,55 +3084,8 @@ Some of the jobs are map-only
 \end_layout
 
 \begin_layout Itemize
-Experiments show really superior performance qualities over distributed
- Lanczos
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-see experiments staged by Nathan in his dissertation
-\end_layout
-
-\end_deeper
-\begin_layout BeginFrame
-MR characteristics of parallel version
-\end_layout
-
-\begin_layout Itemize
-precision with q=1 is very good, with q=2 visually indistinguishable from
- that of Lanczos solver
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-
-\backslash
-pause{}
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
 options allow to adjust trade-off between speed vs.
  precision
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-
-\backslash
-pause{}
-\end_layout
-
-\end_inset
-
-
 \end_layout
 
 \begin_layout Itemize
@@ -2888,13 +3115,8 @@ task time
 \end_layout
 
 \end_deeper
-\end_deeper
-\begin_layout BeginFrame
-MR characteristics of parallel version
-\end_layout
-
 \begin_layout Itemize
-takes bigger datasets than Lanczos without giving up 
+Takes on bigger datasets than Lanczos without giving up 
 \end_layout
 
 \begin_deeper
@@ -2902,9 +3124,17 @@ takes bigger datasets than Lanczos without giving up
 max experiment known to me on an input of a little under 1Tb
 \end_layout
 
-\end_deeper
-\begin_layout Pause
+\begin_layout Itemize
+see experiments staged by Nathan in his dissertation
+\end_layout
 
+\end_deeper
+\begin_layout BeginFrame
+Characteristics of SSVD (contd.)
+\end_layout
+
+\begin_layout FrameSubtitle
+miscellaneous notes
 \end_layout
 
 \begin_layout Itemize
@@ -2921,10 +3151,6 @@ further remedies could be applicable
 \end_layout
 
 \end_deeper
-\begin_layout Pause
-
-\end_layout
-
 \begin_layout Itemize
 QR of 
 \begin_inset Formula $\mathbf{B}_{0}$
@@ -2933,12 +3159,13 @@ QR of
  pipeline could be replaced with a Cholesky decomposition trick
 \end_layout
 
-\begin_layout Pause
-
+\begin_layout Itemize
+Presents interesting additional optimization opportunities for massive scale
+ PCA
 \end_layout
 
 \begin_layout Itemize
-Applicable to LSA and PCA, not really applicable to recommenders
+Applicable to LSA and PCA, not really applicable to recommenders 
 \end_layout
 
 \begin_layout Section
