@@ -1525,11 +1525,15 @@ cosine similarity of two queries (or a keyword and a query)
 \end_layout
 
 \begin_layout Itemize
-can use final classification score 
-\begin_inset Formula $\propto J_{c}\left(\mathbf{q},\mathbf{k}\right)\cdot\mbox{sim}\left(\mathbf{q},\mathbf{k}\right)$
+final classification score takes 
+\begin_inset Formula $J_{c}\left(\mathbf{q},\mathbf{k}\right)$
 \end_inset
 
+ and 
+\begin_inset Formula $\mbox{sim}\left(\mathbf{q},\mathbf{k}\right)$
+\end_inset
 
+ as predictors
 \end_layout
 
 \begin_layout EndFrame
