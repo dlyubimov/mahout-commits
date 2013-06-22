@@ -2,6 +2,7 @@ package mahout.math
 
 import scala.testing.SUnit.TestSuite
 import org.apache.mahout.math.Matrix
+import org.scalatest.FunSuite
 
 /**
  * Created with IntelliJ IDEA.
@@ -10,11 +11,20 @@ import org.apache.mahout.math.Matrix
  * Time: 10:27 PM
  * To change this template use File | Settings | File Templates.
  */
-class MatrixOpsTest extends TestSuite {
+class MatrixOpsTest extends FunSuite {
 
-  def testMul = {
 
-    val a = Matrix((1,2,3),(3,4,5))
+  test ("MulTest") {
+
+
+    val a = Matrix(1 :: 2 :: 3 :: Nil, 3 :: 4 :: 5 :: Nil)
+
+    val b = Matrix(1 :: Nil, 44::Nil, 55::Nil )
+
+    val m = a %*% b
+
+    println (m.toString)
+
 
   }
 

@@ -9,7 +9,7 @@ package object math {
   implicit def matrix2matrixOps(m:Matrix) = new MatrixOps(m)
 
   object Matrix {
-    def apply[R](rows:R*) =  new DenseMatrix(rows.map(_.toArray).toArray)
+    def apply(rows:List[AnyVal]*) =  new DenseMatrix(rows.map(_.map(_.asInstanceOf[Number].doubleValue()).toArray).toArray)
   }
 
 }
