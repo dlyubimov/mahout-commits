@@ -1,6 +1,7 @@
 package mahout.math
 
 import org.apache.mahout.math.{Vector, Matrix}
+import scala.collection.JavaConversions._
 
 /**
  * Created with IntelliJ IDEA.
@@ -9,11 +10,63 @@ import org.apache.mahout.math.{Vector, Matrix}
  * Time: 10:27 PM
  * To change this template use File | Settings | File Templates.
  */
-class MatrixOps(val m:Matrix) {
+class MatrixOps(val m: Matrix) {
 
-  def %*% (that:Matrix) = m.times(that)
-  def %*% (that:Double) = m.times(that)
-  def %*% (that:Vector) = m.times(that)
+  /**
+   * matrix-matrix multiplication
+   * @param that
+   * @return
+   */
+  def %*%(that: Matrix) = m.times(that)
 
+  /**
+   * matrix-scalar multiplication
+   * @param that
+   * @return
+   */
+  def %*%(that: Double) = m.times(that)
+
+  /**
+   * matrix-vector multiplication
+   * @param that
+   * @return
+   */
+  def %*%(that: Vector) = m.times(that)
+
+  def +(that: Matrix) = m.plus(that)
+
+  /**
+   * Hadamard product
+   *
+   * @param that
+   * @return
+   */
+  def *(that: Matrix) = {
+    val m1 = m.like()
+    m.iterateAll().foreach(slice => {
+      val r = slice.index()
+      slice.nonZeroes().foreach(el => {
+        val c = el.index()
+        val v = el.get() * that.get(r, c)
+        m1.setQuick(r, c, v)
+      })
+    })
+    m1
+  }
+
+  /**
+   * in-place Hadamard product
+   * @param that
+   */
+  def *=(that: Matrix): Unit = {
+    m.iterateAll().foreach(slice => {
+      val r = slice.index()
+      slice.nonZeroes().foreach(el => {
+        val c = el.index()
+        val v = el.get() * that.get(r, c)
+        m.setQuick(r, c, v)
+      })
+    })
+  }
 
 }

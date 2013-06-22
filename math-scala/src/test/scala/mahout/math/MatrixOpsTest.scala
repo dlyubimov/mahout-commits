@@ -1,7 +1,5 @@
 package mahout.math
 
-import scala.testing.SUnit.TestSuite
-import org.apache.mahout.math.Matrix
 import org.scalatest.FunSuite
 
 /**
@@ -14,16 +12,16 @@ import org.scalatest.FunSuite
 class MatrixOpsTest extends FunSuite {
 
 
-  test ("MulTest") {
+  test("MulTest") {
 
 
-    val a = Matrix(1 :: 2 :: 3 :: Nil, 3 :: 4 :: 5 :: Nil)
+    val a = Matrix((1, 2, 3), (3, 4, 5))
 
-    val b = Matrix(1 :: Nil, 44::Nil, 55::Nil )
+    val b = Matrix(1, 44, 55)
 
     val m = a %*% b
 
-    println (m.toString)
+    println(m.toString)
 
 
   }
