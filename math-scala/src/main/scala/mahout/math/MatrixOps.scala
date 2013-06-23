@@ -76,6 +76,8 @@ class MatrixOps(val m: Matrix) {
 
   def t = m.transpose()
 
+  def det = m.determinant()
+
   def := (that:Matrix) = m.assign(that)
 
 }
