@@ -8,4 +8,7 @@ import org.apache.mahout.math.Vector
  */
 class VectorOps(val v:Vector) {
 
+  def apply(i:Int) = v.get(i)
+
+  def := (that:Vector) = v.assign(that)
 }

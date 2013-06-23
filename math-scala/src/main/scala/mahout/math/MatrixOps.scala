@@ -12,6 +12,9 @@ import scala.collection.JavaConversions._
  */
 class MatrixOps(val m: Matrix) {
 
+  def rows = m.rowSize()
+  def cols = m.columnSize()
+
   /**
    * matrix-matrix multiplication
    * @param that
@@ -68,5 +71,11 @@ class MatrixOps(val m: Matrix) {
       })
     })
   }
+
+  def apply(row:Int,col:Int) = m.get(row,col)
+
+  def t = m.transpose()
+
+  def := (that:Matrix) = m.assign(that)
 
 }
