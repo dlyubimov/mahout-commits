@@ -31,12 +31,14 @@ import com.google.common.base.Charsets;
  * defines lines.
  * 
  * This class will uncompress files that end in .zip or .gz accordingly, too.
+ *
  */
 public final class FileLineIterable implements Iterable<String> {
 
   private final InputStream is;
   private final Charset encoding;
   private final boolean skipFirstLine;
+  private final String origFilename;
   
   /** Creates a  over a given file, assuming a UTF-8 encoding. */
   public FileLineIterable(File file) throws IOException {
@@ -65,12 +67,21 @@ public final class FileLineIterable implements Iterable<String> {
     this.is = is;
     this.encoding = encoding;
     this.skipFirstLine = skipFirstLine;
+    this.origFilename = "";
   }
+
+  public FileLineIterable(InputStream is, Charset encoding, boolean skipFirstLine, String filename) {    
+    this.is = is;
+    this.encoding = encoding;
+    this.skipFirstLine = skipFirstLine;
+    this.origFilename = filename;
+  }
+  
   
   @Override
   public Iterator<String> iterator() {
     try {
-      return new FileLineIterator(is, encoding, skipFirstLine);
+      return new FileLineIterator(is, encoding, skipFirstLine, this.origFilename);
     } catch (IOException ioe) {
       throw new IllegalStateException(ioe);
     }
