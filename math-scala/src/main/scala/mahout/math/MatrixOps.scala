@@ -12,8 +12,9 @@ import scala.collection.JavaConversions._
  */
 class MatrixOps(val m: Matrix) {
 
-  def rows = m.rowSize()
-  def cols = m.columnSize()
+  def nrow = m.rowSize()
+
+  def ncol = m.columnSize()
 
   /**
    * matrix-matrix multiplication
@@ -72,12 +73,38 @@ class MatrixOps(val m: Matrix) {
     })
   }
 
-  def apply(row:Int,col:Int) = m.get(row,col)
+  def apply(row: Int, col: Int) = m.get(row, col)
+
+  def apply(rowRange: Range, colRange: Range): Matrix = {
+
+    if (rowRange.length == 0 &&
+      colRange.length == 0) return m
+
+    val rr = if (rowRange.length == 0) (0 until m.nrow)
+    else rowRange
+    val cr = if (colRange.length == 0) (0 until m.ncol)
+    else colRange
+
+    return m.viewPart(rr.start, rr.length, cr.start, cr.length)
+
+  }
+
+  def apply(row: Int, colRange: Range): Vector = {
+    val r = m.viewRow(row)
+    if (colRange.length == 0) r else r.viewPart(colRange.start, colRange.length)
+  }
+
+  def apply(rowRange: Range, col: Int): Vector = {
+    val c = m.viewColumn(col)
+    if (rowRange.length == 0) c else c.viewPart(rowRange.start, rowRange.length)
+  }
 
   def t = m.transpose()
 
   def det = m.determinant()
 
-  def := (that:Matrix) = m.assign(that)
+  def sum = m.zSum()
+
+  def :=(that: Matrix) = m.assign(that)
 
 }
