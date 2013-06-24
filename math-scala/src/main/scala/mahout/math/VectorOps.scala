@@ -13,4 +13,5 @@ class VectorOps(val v:Vector) {
   def sum = v.zSum()
 
   def := (that:Vector) = v.assign(that)
+
 }
