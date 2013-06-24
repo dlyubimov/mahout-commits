@@ -33,37 +33,29 @@ package object math {
 
   implicit def matrix2matrixOps(m: Matrix) = new MatrixOps(m)
 
+  implicit def seq2Vector(s: Seq[Double]) = new DenseVector(s.toArray)
+
+  implicit def prod2Vector(s: Product) = new DenseVector(s.productIterator.
+    map(_.asInstanceOf[Number].doubleValue()).toArray)
+
   def diag(v: Vector) = new DiagonalMatrix(v)
 
   def diag(v: Double, size: Int) = new DiagonalMatrix(v, size)
 
+  /**
+   * Create dense matrix out of inline arguments -- rows -- which can be tuples,
+   * iterables of Double, or just single Number (for columnar vectors)
+   * @param rows
+   * @tparam R
+   * @return
+   */
   def dense[R](rows: R*): DenseMatrix = {
     val data = for (r <- rows) yield {
       r match {
         case n: Number => Array(n.doubleValue())
-        case t: Tuple1[_] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple2[_, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple3[_, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple4[_, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple5[_, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple6[_, _, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple7[_, _, _, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple8[_, _, _, _, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple9[_, _, _, _, _, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple10[_, _, _, _, _, _, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple11[_, _, _, _, _, _, _, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple12[_, _, _, _, _, _, _, _, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple13[_, _, _, _, _, _, _, _, _, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple14[_, _, _, _, _, _, _, _, _, _, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple15[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple16[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple17[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple18[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple19[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple20[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple21[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
-        case t: Tuple22[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
+        case t: Product => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
         case t: Array[Double] => t
+        case t: Iterable[Double] => t.toArray
         case t: Array[Array[Double]] => if (rows.size == 1)
           return new DenseMatrix(t)
         else
@@ -81,5 +73,8 @@ package object math {
     val svdObj = new SingularValueDecomposition(m)
     (svdObj.getU, svdObj.getV, new DenseVector(svdObj.getSingularValues))
   }
+
+
+  def ::() = Range(0, 0)
 
 }

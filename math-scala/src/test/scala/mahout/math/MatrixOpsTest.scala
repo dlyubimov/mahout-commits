@@ -39,4 +39,27 @@ class MatrixOpsTest extends FunSuite {
 
   }
 
+  test("ViewsRead") {
+
+    val a = dense((1, 2, 3), (3, 4, 5))
+
+    assert(a(::, 0).sum == 4)
+    assert(a(1, ::).sum == 12)
+
+    assert(a(0 to 1, 1 to 2).sum == 14)
+
+    // assign to slice-vector
+    a(0, 0 to 1) :=(3, 5)
+    assert(a(0, ::).sum == 11)
+
+    println(a.toString)
+
+    // assign to a slice-matrix
+    a(0 to 1, 0 to 1) := dense((1, 1), (2, 2.5))
+    println (a.toString)
+    println (a.sum)
+
+
+  }
+
 }
