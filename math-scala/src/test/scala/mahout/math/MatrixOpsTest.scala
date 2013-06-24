@@ -59,7 +59,14 @@ class MatrixOpsTest extends FunSuite {
     println (a.toString)
     println (a.sum)
 
+  }
 
+  test ("SVD") {
+    val a = dense((1, 2, 3), (3, 4, 5))
+    val (u,v,s)=svd(a)
+    printf("U:\n%s\n",u.toString)
+    printf("V:\n%s\n",v.toString)
+    printf("Sigma:\n%s\n",s.toString)
   }
 
 }
