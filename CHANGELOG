@@ -2,6 +2,14 @@ Mahout Change Log
 
 Release 0.8 - unreleased
 
+  MAHOUT-1271: classify-20newsgroups.sh fails during the seqdirectory step (smarthi)
+  
+  MAHOUT-1269: Cleanup deprecated Lucene 3.x API calls in lucene2seq utility unit tests (smarthi)
+
+  MAHOUT-833: Make conversion to sequence files map-reduce (Josh Patterson, smarthi)
+
+  MAHOUT-1268: Wrong output directory for CVB (Mark Wicks via ssc)
+
   MAHOUT-1264: Performance optimizations in RecommenderJob (ssc)
 
   MAHOUT-1262: Cleanup LDA code (ssc)
