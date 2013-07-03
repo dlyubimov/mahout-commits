@@ -14,4 +14,12 @@ class VectorOps(val v:Vector) {
 
   def := (that:Vector) = v.assign(that)
 
+  def length = v.size()
+
+  def cloned:Vector = {
+    val vnew = v.like()
+    vnew := v
+    vnew
+  }
+
 }

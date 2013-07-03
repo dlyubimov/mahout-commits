@@ -69,4 +69,15 @@ class MatrixOpsTest extends FunSuite {
     printf("Sigma:\n%s\n",s.toString)
   }
 
+  test ("sparse") {
+
+    val a = sparse((1,3)::Nil,
+        (0,2)::(1,2.5)::Nil
+    )
+
+    println(a.toString)
+
+
+  }
+
 }

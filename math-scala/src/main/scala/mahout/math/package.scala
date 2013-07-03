@@ -1,28 +1,7 @@
 package mahout
 
 import org.apache.mahout.math._
-import scala.Tuple9
-import scala.Tuple16
-import scala.Tuple17
-import scala.Tuple18
-import scala.Tuple5
-import scala.Tuple19
-import scala.Tuple6
-import scala.Tuple11
-import scala.Tuple20
-import scala.Tuple7
-import scala.Tuple12
-import scala.Tuple21
-import scala.Tuple8
-import scala.Tuple13
-import scala.Tuple22
-import scala.Tuple14
-import scala.Tuple1
 import scala.Tuple2
-import scala.Tuple15
-import scala.Tuple3
-import scala.Tuple4
-import scala.Tuple10
 
 /**
  * Mahout matrices and vectors' scala syntactic sugar
@@ -37,6 +16,8 @@ package object math {
 
   implicit def prod2Vector(s: Product) = new DenseVector(s.productIterator.
     map(_.asInstanceOf[Number].doubleValue()).toArray)
+
+  implicit def tuple2TravOnce2svec[V <: AnyVal](sdata: List[Tuple2[Int, V]]) = svec(sdata)
 
   def diag(v: Vector) = new DiagonalMatrix(v)
 
@@ -65,6 +46,41 @@ package object math {
       }
     }
     new DenseMatrix(data.toArray)
+  }
+
+  /**
+   * Default initializes are always row-wise.
+   * create a sparse,
+   * e.g.
+   * m = sparse(
+   *    (0,5)::(9,3)::Nil,
+   *    (2,3.5)::(7,8)::Nil
+   * )
+   *
+   * @param rows
+   * @return
+   */
+
+  def sparse(rows: Vector*): SparseRowMatrix = {
+    val nrow = rows.size
+    val ncol = rows.map(_.size()).max
+    val m = new SparseRowMatrix(nrow, ncol)
+    m := rows
+    m
+
+  }
+
+  /**
+   * create a sparse vector out of list of tuple2's
+   * @param sdata
+   * @return
+   */
+  def svec(sdata: TraversableOnce[Tuple2[Int, AnyVal]]) = {
+    val cardinality = sdata.map(_._1).max + 1
+    val initialCapacity = sdata.size
+    val sv = new RandomAccessSparseVector(cardinality, initialCapacity)
+    sdata.foreach(t => sv.setQuick(t._1, t._2.asInstanceOf[Number].doubleValue()))
+    sv
   }
 
   def chol(m: Matrix) = new CholeskyDecomposition(m)
