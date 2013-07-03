@@ -89,14 +89,16 @@ class MatrixOps(val m: Matrix) {
 
   }
 
-  def apply(row: Int, colRange: Range): Vector = {
-    val r = m.viewRow(row)
-    if (colRange.length == 0) r else r.viewPart(colRange.start, colRange.length)
+  def apply(row: Int, colRange: Range ): Vector = {
+    var r = m.viewRow(row)
+    if (colRange.length > 0) r = r.viewPart(colRange.start, colRange.length)
+    r
   }
 
   def apply(rowRange: Range, col: Int): Vector = {
-    val c = m.viewColumn(col)
-    if (rowRange.length == 0) c else c.viewPart(rowRange.start, rowRange.length)
+    var c = m.viewColumn(col)
+    if (rowRange.length > 0) c = c.viewPart(rowRange.start, rowRange.length)
+    c
   }
 
   def t = m.transpose()
@@ -106,5 +108,20 @@ class MatrixOps(val m: Matrix) {
   def sum = m.zSum()
 
   def :=(that: Matrix) = m.assign(that)
+
+  /**
+   * Assigning from a row-wise collection of vectors
+   * @param that
+   */
+  def :=(that: TraversableOnce[Vector]) = {
+    var row = 0
+    that.foreach(v => {
+      m.assignRow(row, v)
+      row += 1
+    })
+  }
+}
+
+object MatrixOps {
 
 }
