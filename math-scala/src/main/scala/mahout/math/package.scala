@@ -2,6 +2,7 @@ package mahout
 
 import org.apache.mahout.math._
 import scala.Tuple2
+import org.apache.mahout.math.solver.EigenDecomposition
 
 /**
  * Mahout matrices and vectors' scala syntactic sugar
@@ -53,8 +54,8 @@ package object math {
    * create a sparse,
    * e.g.
    * m = sparse(
-   *    (0,5)::(9,3)::Nil,
-   *    (2,3.5)::(7,8)::Nil
+   * (0,5)::(9,3)::Nil,
+   * (2,3.5)::(7,8)::Nil
    * )
    *
    * @param rows
@@ -85,11 +86,37 @@ package object math {
 
   def chol(m: Matrix) = new CholeskyDecomposition(m)
 
+  /**
+   * computes SVD
+   * @param m svd input
+   * @return (U,V, singular-values-vector)
+   */
   def svd(m: Matrix) = {
     val svdObj = new SingularValueDecomposition(m)
     (svdObj.getU, svdObj.getV, new DenseVector(svdObj.getSingularValues))
   }
 
+  /**
+   * Computes Eigendecomposition of a symmetric matrix
+   * @param m symmetric input matrix
+   * @return (V, eigen-values-vector)
+   */
+  def eigen(m: Matrix) = {
+    val ed = new EigenDecomposition(m, true)
+    (ed.getV, ed.getRealEigenvalues)
+  }
+
+
+  /**
+   * More general version of eigen decomposition
+   * @param m
+   * @param symmetric
+   * @return (V, eigenvalues-real-vector, eigenvalues-imaginary-vector)
+   */
+  def eigen(m: Matrix, symmetric: Boolean) {
+    val ed = new EigenDecomposition(m, true)
+    (ed.getV, ed.getRealEigenvalues, ed.getImagEigenvalues)
+  }
 
   def ::() = Range(0, 0)
 
