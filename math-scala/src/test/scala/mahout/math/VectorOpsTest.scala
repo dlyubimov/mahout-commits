@@ -1,7 +1,7 @@
 package mahout.math
 
 import org.scalatest.FunSuite
-import org.apache.mahout.math.Vector
+import org.apache.mahout.math.{RandomAccessSparseVector, Vector}
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,6 +19,9 @@ class VectorOpsTest extends FunSuite {
 
     val sparseVec2: Vector = (5 -> 1.0) :: Nil
     println(sparseVec2.toString)
+
+    val sparseVec3: Vector = new RandomAccessSparseVector(100) := (5 -> 1.0) :: Nil
+    println(sparseVec3)
   }
 
 }
