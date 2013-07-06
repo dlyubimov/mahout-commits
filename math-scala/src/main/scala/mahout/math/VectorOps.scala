@@ -10,9 +10,15 @@ class VectorOps(val v: Vector) {
 
   def apply(i: Int) = v.get(i)
 
+  def apply(r: Range) = v.viewPart(r.start, r.length)
+
   def sum = v.zSum()
 
-  def :=(that: Vector) = v.assign(that)
+  def :=(that: Vector): Vector = {
+    if (that.length < v.size())
+      v(0 until that.length) := that
+    v.assign(that)
+  }
 
   def length = v.size()
 
