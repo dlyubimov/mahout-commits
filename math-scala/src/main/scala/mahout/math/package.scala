@@ -13,12 +13,84 @@ package object math {
 
   implicit def matrix2matrixOps(m: Matrix) = new MatrixOps(m)
 
-  implicit def seq2Vector(s: TraversableOnce[Double]) = new DenseVector(s.toArray)
+  implicit def seq2Vector(s: TraversableOnce[AnyVal]) =
+    new DenseVector(s.map(_.asInstanceOf[Number].doubleValue()).toArray)
 
-  implicit def prod2Vector(s: Product) = new DenseVector(s.productIterator.
+  implicit def tuple2TravOnce2svec[V <: AnyVal](sdata: TraversableOnce[(Int, V)]) = svec(sdata)
+
+  implicit def t1vec(s: Tuple1[AnyVal]): Vector = prod2Vec(s)
+
+  implicit def t2vec(s: Tuple2[AnyVal, AnyVal]): Vector = prod2Vec(s)
+
+  implicit def t3vec(s: Tuple3[AnyVal, AnyVal, AnyVal]): Vector = prod2Vec(s)
+
+  implicit def t4vec(s: Tuple4[AnyVal, AnyVal, AnyVal, AnyVal]): Vector = prod2Vec(s)
+
+  implicit def t5vec(s: Tuple5[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal]): Vector = prod2Vec(s)
+
+  implicit def t6vec(s: Tuple6[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal]): Vector = prod2Vec(s)
+
+  implicit def t7vec(s: Tuple7[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal]): Vector = prod2Vec(s)
+
+  implicit def t8vec(s: Tuple8[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal]): Vector = prod2Vec(s)
+
+  implicit def t9vec(s: Tuple9[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal]): Vector =
+    prod2Vec(s)
+
+  implicit def t10vec(s: Tuple10[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
+  : Vector = prod2Vec(s)
+
+  implicit def t11vec(s: Tuple11[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
+    , AnyVal])
+  : Vector = prod2Vec(s)
+
+  implicit def t12vec(s: Tuple12[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
+    , AnyVal, AnyVal])
+  : Vector = prod2Vec(s)
+
+  implicit def t13vec(s: Tuple13[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
+    , AnyVal, AnyVal, AnyVal])
+  : Vector = prod2Vec(s)
+
+  implicit def t14vec(s: Tuple14[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
+    , AnyVal, AnyVal, AnyVal, AnyVal])
+  : Vector = prod2Vec(s)
+
+  implicit def t15vec(s: Tuple15[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
+    , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
+  : Vector = prod2Vec(s)
+
+  implicit def t16vec(s: Tuple16[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
+    , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
+  : Vector = prod2Vec(s)
+
+  implicit def t17vec(s: Tuple17[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
+    , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
+  : Vector = prod2Vec(s)
+
+  implicit def t18vec(s: Tuple18[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
+    , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
+  : Vector = prod2Vec(s)
+
+  implicit def t19vec(s: Tuple19[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
+    , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
+  : Vector = prod2Vec(s)
+
+  implicit def t20vec(s: Tuple20[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
+    , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
+  : Vector = prod2Vec(s)
+
+  implicit def t21vec(s: Tuple21[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
+    , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
+  : Vector = prod2Vec(s)
+
+  implicit def t22vec(s: Tuple22[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
+    , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
+  : Vector = prod2Vec(s)
+
+
+  def prod2Vec(s: Product) = new DenseVector(s.productIterator.
     map(_.asInstanceOf[Number].doubleValue()).toArray)
-
-  implicit def tuple2TravOnce2svec[V <: AnyVal](sdata: List[(Int, V)]) = svec(sdata)
 
   def diag(v: Vector) = new DiagonalMatrix(v)
 
@@ -77,7 +149,7 @@ package object math {
    * @return
    */
   def svec(sdata: TraversableOnce[(Int, AnyVal)]) = {
-    val cardinality = if (sdata.size>0) sdata.map(_._1).max + 1 else 0
+    val cardinality = if (sdata.size > 0) sdata.map(_._1).max + 1 else 0
     val initialCapacity = sdata.size
     val sv = new RandomAccessSparseVector(cardinality, initialCapacity)
     sdata.foreach(t => sv.setQuick(t._1, t._2.asInstanceOf[Number].doubleValue()))
