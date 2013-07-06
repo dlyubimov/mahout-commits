@@ -1,6 +1,7 @@
 package mahout.math
 
 import org.apache.mahout.math.Vector
+import scala.collection.JavaConversions._
 
 /**
  * Syntactic sugar for mahout vectors
@@ -15,9 +16,18 @@ class VectorOps(val v: Vector) {
   def sum = v.zSum()
 
   def :=(that: Vector): Vector = {
-    if (that.length < v.size())
-      v(0 until that.length) := that
-    v.assign(that)
+
+    // assign op in Mahout requires same
+    // cardinality between vectors .
+    // we want to relax it here and require
+    // v to have _at least_ as large cardinality
+    // as "that".
+    if (that.length == v.size())
+      v.assign(that)
+    else {
+      that.nonZeroes().foreach(t=>v.setQuick(t.index,t.get))
+      v
+    }
   }
 
   def length = v.size()
