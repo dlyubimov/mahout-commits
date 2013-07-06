@@ -13,12 +13,12 @@ package object math {
 
   implicit def matrix2matrixOps(m: Matrix) = new MatrixOps(m)
 
-  implicit def seq2Vector(s: Seq[Double]) = new DenseVector(s.toArray)
+  implicit def seq2Vector(s: TraversableOnce[Double]) = new DenseVector(s.toArray)
 
   implicit def prod2Vector(s: Product) = new DenseVector(s.productIterator.
     map(_.asInstanceOf[Number].doubleValue()).toArray)
 
-  implicit def tuple2TravOnce2svec[V <: AnyVal](sdata: List[Tuple2[Int, V]]) = svec(sdata)
+  implicit def tuple2TravOnce2svec[V <: AnyVal](sdata: List[(Int, V)]) = svec(sdata)
 
   def diag(v: Vector) = new DiagonalMatrix(v)
 
@@ -76,8 +76,8 @@ package object math {
    * @param sdata
    * @return
    */
-  def svec(sdata: TraversableOnce[Tuple2[Int, AnyVal]]) = {
-    val cardinality = sdata.map(_._1).max + 1
+  def svec(sdata: TraversableOnce[(Int, AnyVal)]) = {
+    val cardinality = if (sdata.size>0) sdata.map(_._1).max + 1 else 0
     val initialCapacity = sdata.size
     val sv = new RandomAccessSparseVector(cardinality, initialCapacity)
     sdata.foreach(t => sv.setQuick(t._1, t._2.asInstanceOf[Number].doubleValue()))
