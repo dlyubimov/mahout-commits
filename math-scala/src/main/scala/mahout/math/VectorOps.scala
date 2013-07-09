@@ -25,10 +25,13 @@ class VectorOps(val v: Vector) {
     if (that.length == v.size())
       v.assign(that)
     else {
-      that.nonZeroes().foreach(t=>v.setQuick(t.index,t.get))
+      that.nonZeroes().foreach(t => v.setQuick(t.index, t.get))
       v
     }
   }
+
+  def +=(that: Vector) = that.nonZeroes().foreach(el => v.setQuick(el.index(), el.get()+v.getQuick(el.index())))
+
 
   def length = v.size()
 
