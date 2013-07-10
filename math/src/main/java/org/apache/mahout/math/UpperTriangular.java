@@ -53,15 +53,13 @@ public class UpperTriangular extends AbstractMatrix {
   public UpperTriangular(Vector data) {
     this(elementsToMatrixSize(data.size()));
 
-    values = new double[rows * (rows + 1) / 2];
-    rows = data.size();
-    for (int i = 0; i < rows; i++) {
-      values[i] = data.getQuick(i);
+    for (Vector.Element el:data.nonZeroes()) {
+      values[el.index()] = el.get();
     }
   }
 
-  private static int elementsToMatrixSize(int size) {
-    return (int) Math.round((-1 + Math.sqrt(1 + 8 * size)) / 2);
+  private static int elementsToMatrixSize(int dataSize) {
+    return (int) Math.round((-1 + Math.sqrt(1 + 8 * dataSize)) / 2);
   }
 
   // copy-constructor
