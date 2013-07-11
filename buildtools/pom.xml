@@ -24,12 +24,12 @@
     <groupId>org.apache</groupId>
     <artifactId>apache</artifactId>
     <version>9</version>
-    <relativePath/>
+    <relativePath />
   </parent>
 
   <groupId>org.apache.mahout</groupId>
   <artifactId>mahout-buildtools</artifactId>
-  <version>0.8-SNAPSHOT</version>
+  <version>0.9-SNAPSHOT</version>
   <name>Mahout Build Tools</name>
 
   <packaging>jar</packaging>
@@ -117,5 +117,4 @@
       </build>
     </profile>
   </profiles>
-
 </project>
