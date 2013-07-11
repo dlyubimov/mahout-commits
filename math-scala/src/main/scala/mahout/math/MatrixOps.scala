@@ -58,7 +58,7 @@ class MatrixOps(val m: Matrix) {
    * in-place Hadamard product
    * @param that
    */
-  def *=(that: Matrix): Unit = {
+  def *=(that: Matrix): Matrix = {
     m.iterateAll().foreach(slice => {
       val r = slice.index()
       slice.nonZeroes().foreach(el => {
@@ -67,6 +67,7 @@ class MatrixOps(val m: Matrix) {
         m.setQuick(r, c, v)
       })
     })
+    m
   }
 
 
