@@ -2,6 +2,7 @@ package mahout.math
 
 import org.apache.mahout.math.{Vector, Matrix}
 import scala.collection.JavaConversions._
+import org.apache.mahout.math.function.{DoubleFunction, Functions}
 
 /**
  * Created with IntelliJ IDEA.
@@ -37,7 +38,17 @@ class MatrixOps(val m: Matrix) {
    */
   def %*%(that: Vector) = m.times(that)
 
-  def +(that: Matrix) = m.plus(that)
+  def +=(that: Matrix) = m.assign(that, Functions.PLUS)
+
+  def +=(that: Double) = m.assign(new DoubleFunction {
+    def apply(x: Double): Double = x + that
+  })
+
+  def +(that: Matrix) =
+  // m.plus(that)?
+    cloned += that
+
+  def +(that: Double) = cloned += that
 
   /**
    * Hadamard product
@@ -45,24 +56,18 @@ class MatrixOps(val m: Matrix) {
    * @param that
    * @return
    */
-  def *(that: Matrix) = {
-    val m1 = m.like()
-    m.iterateAll().foreach(slice => {
-      val r = slice.index()
-      slice.nonZeroes().foreach(el => {
-        val c = el.index()
-        val v = el.get() * that.get(r, c)
-        m1.setQuick(r, c, v)
-      })
-    })
-    m1
-  }
+
+  def *(that: Matrix) = cloned *= that
+
+  def *(that: Double) = cloned *= that
 
   /**
-   * in-place Hadamard product
+   * in-place Hadamard product. We probably don't want to use assign
+   * to optimize for sparse operations, in case of Hadamard product
+   * it really can be done
    * @param that
    */
-  def *=(that: Matrix): Unit = {
+  def *=(that: Matrix) = {
     m.iterateAll().foreach(slice => {
       val r = slice.index()
       slice.nonZeroes().foreach(el => {
@@ -71,6 +76,19 @@ class MatrixOps(val m: Matrix) {
         m.setQuick(r, c, v)
       })
     })
+    m
+  }
+
+  def *=(that: Double) = {
+    m.iterateAll().foreach(slice => {
+      val r = slice.index()
+      slice.nonZeroes().foreach(el => {
+        val c = el.index()
+        val v = el.get() * that
+        m.setQuick(r, c, v)
+      })
+    })
+    m
   }
 
   def apply(row: Int, col: Int) = m.get(row, col)
@@ -89,7 +107,7 @@ class MatrixOps(val m: Matrix) {
 
   }
 
-  def apply(row: Int, colRange: Range ): Vector = {
+  def apply(row: Int, colRange: Range): Vector = {
     var r = m.viewRow(row)
     if (colRange.length > 0) r = r.viewPart(colRange.start, colRange.length)
     r
@@ -120,6 +138,8 @@ class MatrixOps(val m: Matrix) {
       row += 1
     })
   }
+
+  def cloned = m.like := m
 }
 
 object MatrixOps {

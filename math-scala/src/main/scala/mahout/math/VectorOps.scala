@@ -2,6 +2,7 @@ package mahout.math
 
 import org.apache.mahout.math.Vector
 import scala.collection.JavaConversions._
+import org.apache.mahout.math.function.Functions
 
 /**
  * Syntactic sugar for mahout vectors
@@ -24,21 +25,30 @@ class VectorOps(val v: Vector) {
     // as "that".
     if (that.length == v.size())
       v.assign(that)
-    else {
+    else if (that.length < v.size) {
       that.nonZeroes().foreach(t => v.setQuick(t.index, t.get))
       v
-    }
+    } else throw new IllegalArgumentException("Assigner's cardinality less than assignee's")
   }
 
-  def +=(that: Vector) = that.nonZeroes().foreach(el => v.setQuick(el.index(), el.get()+v.getQuick(el.index())))
+  def +=(that: Vector) = v.assign(that, Functions.PLUS)
 
+  def +=(that: Double) = v.assign(Functions.PLUS, that)
+
+  def *=(that: Vector) = v.assign(that, Functions.MULT)
+
+  def *=(that: Double) = v.assign(Functions.MULT, that)
+
+  def +(that: Vector) = cloned += that
+
+  def +(that: Double) = cloned += that
+
+  def *(that: Vector) = cloned += that
+
+  def *(that: Double) = cloned *= that
 
   def length = v.size()
 
-  def cloned: Vector = {
-    val vnew = v.like()
-    vnew := v
-    vnew
-  }
+  def cloned: Vector = v.like := v
 
 }
