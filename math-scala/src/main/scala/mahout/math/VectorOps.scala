@@ -31,6 +31,12 @@ class VectorOps(val v: Vector) {
     } else throw new IllegalArgumentException("Assigner's cardinality less than assignee's")
   }
 
+  def equiv(that: Vector) =
+    length == that.length &&
+      v.all.view.zip(that.all).forall(t => t._1.get == t._2.get)
+
+  def nequiv(that: Vector) = !equiv(that)
+
   def +=(that: Vector) = v.assign(that, Functions.PLUS)
 
   def +=(that: Double) = v.assign(Functions.PLUS, that)

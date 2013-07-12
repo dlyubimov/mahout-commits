@@ -6,6 +6,14 @@ import org.scalatest.FunSuite
 class MatrixOpsTest extends FunSuite {
 
 
+  test("eqTest") {
+    val a = dense((1, 2, 3), (3, 4, 5))
+    val b = dense((1, 2, 3), (3, 4, 5))
+    val c = dense((1, 4, 3), (3, 4, 5))
+    assert(a equiv b)
+    assert(a nequiv c)
+
+  }
   test("MulTest") {
 
     val a = dense((1, 2, 3), (3, 4, 5))
@@ -50,23 +58,23 @@ class MatrixOpsTest extends FunSuite {
 
     // assign to a slice-matrix
     a(0 to 1, 0 to 1) := dense((1, 1), (2, 2.5))
-    println (a.toString)
-    println (a.sum)
+    println(a.toString)
+    println(a.sum)
 
   }
 
-  test ("SVD") {
+  test("SVD") {
     val a = dense((1, 2, 3), (3, 4, 5))
-    val (u,v,s)=svd(a)
-    printf("U:\n%s\n",u.toString)
-    printf("V:\n%s\n",v.toString)
-    printf("Sigma:\n%s\n",s.toString)
+    val (u, v, s) = svd(a)
+    printf("U:\n%s\n", u.toString)
+    printf("V:\n%s\n", v.toString)
+    printf("Sigma:\n%s\n", s.toString)
   }
 
-  test ("sparse") {
+  test("sparse") {
 
-    val a = sparse((1,3)::Nil,
-        (0,2)::(1,2.5)::Nil
+    val a = sparse((1, 3) :: Nil,
+      (0, 2) ::(1, 2.5) :: Nil
     )
 
     println(a.toString)

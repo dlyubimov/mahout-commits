@@ -140,6 +140,22 @@ class MatrixOps(val m: Matrix) {
   }
 
   def cloned = m.like := m
+
+  /**
+   * Ideally, we would probably want to override equals(). But that is not
+   * possible without modifying AbstractMatrix implementation in Mahout
+   * which would require discussion at Mahout team.
+   * @param that
+   * @return
+   */
+  def equiv(that: Matrix) =
+    that != null &&
+      nrow == that.nrow &&
+      m.view.zip(that).forall(t => {
+        t._1.equiv(t._2)
+      })
+
+  def nequiv(that: Matrix) = !equiv(that)
 }
 
 object MatrixOps {
