@@ -156,6 +156,8 @@ package object math {
     sv
   }
 
+  def dvec(ddata: TraversableOnce[Double]) = new DenseVector(ddata.toArray)
+
   def chol(m: Matrix) = new CholeskyDecomposition(m)
 
   /**

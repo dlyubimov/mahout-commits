@@ -26,10 +26,13 @@ class VectorOps(val v: Vector) {
     if (that.length == v.size())
       v.assign(that)
     else if (that.length < v.size) {
+      v.assign(0.0)
       that.nonZeroes().foreach(t => v.setQuick(t.index, t.get))
       v
     } else throw new IllegalArgumentException("Assigner's cardinality less than assignee's")
   }
+
+  def :=(that: Double): Vector = v.assign(that)
 
   def equiv(that: Vector) =
     length == that.length &&
