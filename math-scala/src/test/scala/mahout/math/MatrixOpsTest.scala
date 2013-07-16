@@ -1,6 +1,7 @@
 package mahout.math
 
 import org.scalatest.FunSuite
+import org.apache.mahout.math.Vector
 
 
 class MatrixOpsTest extends FunSuite {
@@ -64,11 +65,23 @@ class MatrixOpsTest extends FunSuite {
   }
 
   test("SVD") {
+
     val a = dense((1, 2, 3), (3, 4, 5))
+
     val (u, v, s) = svd(a)
+
     printf("U:\n%s\n", u.toString)
     printf("V:\n%s\n", v.toString)
     printf("Sigma:\n%s\n", s.toString)
+
+    val aBar = u %*% diagv(s) %*% v.t
+
+    val amab = a - aBar
+
+    printf("A-USV'=\n%s\n", amab.toString)
+
+    assert(amab.norm < 1e-10)
+
   }
 
   test("sparse") {
@@ -96,15 +109,15 @@ class MatrixOpsTest extends FunSuite {
 
     val b = dense((9, 8, 7)).t
 
-    printf ("b = \n%s\n", b)
+    printf("b = \n%s\n", b)
 
     val ch = chol(a)
 
-    printf ("L = \n%s\n", ch.getL)
+    printf("L = \n%s\n", ch.getL)
 
-    printf ( "(L^-1)b =\n%s\n", ch.solveLeft(b))
+    printf("(L^-1)b =\n%s\n", ch.solveLeft(b))
 
-    val x = ch.solveRight(diag(1,3)) %*% ch.solveLeft(b)
+    val x = ch.solveRight(diag(1, 3)) %*% ch.solveLeft(b)
 
     printf("x = \n%s\n", x.toString)
 

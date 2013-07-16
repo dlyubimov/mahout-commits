@@ -92,9 +92,9 @@ package object math {
   def prod2Vec(s: Product) = new DenseVector(s.productIterator.
     map(_.asInstanceOf[Number].doubleValue()).toArray)
 
-  def diag(v: Vector) = new DiagonalMatrix(v)
+  def diagv(v: Vector): DiagonalMatrix = new DiagonalMatrix(v)
 
-  def diag(v: Double, size: Int) = new DiagonalMatrix(v, size)
+  def diag(v: Double, size: Int): DiagonalMatrix = new DiagonalMatrix(v, size)
 
   /**
    * Create dense matrix out of inline arguments -- rows -- which can be tuples,
