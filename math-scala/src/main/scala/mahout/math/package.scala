@@ -158,7 +158,7 @@ package object math {
 
   def dvec(ddata: TraversableOnce[Double]) = new DenseVector(ddata.toArray)
 
-  def chol(m: Matrix) = new CholeskyDecomposition(m)
+  def chol(m: Matrix, typ: Boolean = false) = new CholeskyDecomposition(m, typ)
 
   /**
    * computes SVD

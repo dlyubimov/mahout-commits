@@ -76,9 +76,43 @@ class MatrixOpsTest extends FunSuite {
     val a = sparse((1, 3) :: Nil,
       (0, 2) ::(1, 2.5) :: Nil
     )
-
     println(a.toString)
+  }
 
+  test("chol") {
+
+    // try to solve Ax=b with cholesky:
+    // this requires
+    // (LL')x = B
+    // L'x= (L^-1)B
+    // x=(L'^-1)(L^-1)B
+
+    val a = dense((1, 2, 3), (2, 3, 4), (3, 4, 5.5))
+
+    // make sure it is symmetric for a valid solution
+    a := a.t %*% a
+
+    printf("A= \n%s\n", a)
+
+    val b = dense((9, 8, 7)).t
+
+    printf ("b = \n%s\n", b)
+
+    val ch = chol(a)
+
+    printf ("L = \n%s\n", ch.getL)
+
+    printf ( "(L^-1)b =\n%s\n", ch.solveLeft(b))
+
+    val x = ch.solveRight(diag(1,3)) %*% ch.solveLeft(b)
+
+    printf("x = \n%s\n", x.toString)
+
+    val axmb = (a %*% x) - b
+
+    printf("AX - B = \n%s\n", axmb.toString)
+
+    assert(axmb.norm < 1e-10)
 
   }
 

@@ -3,6 +3,7 @@ package mahout.math
 import org.apache.mahout.math.{Vector, Matrix}
 import scala.collection.JavaConversions._
 import org.apache.mahout.math.function.{DoubleFunction, Functions}
+import scala.math._
 
 /**
  * Created with IntelliJ IDEA.
@@ -40,15 +41,23 @@ class MatrixOps(val m: Matrix) {
 
   def +=(that: Matrix) = m.assign(that, Functions.PLUS)
 
+  def -=(that: Matrix) = m.assign(that, Functions.MINUS)
+
   def +=(that: Double) = m.assign(new DoubleFunction {
     def apply(x: Double): Double = x + that
   })
 
-  def +(that: Matrix) =
+  def -=(that: Double) = +=(-that)
+
+  def +(that: Matrix) = cloned += that
+
+  def -(that: Matrix) = cloned -= that
+
   // m.plus(that)?
-    cloned += that
 
   def +(that: Double) = cloned += that
+
+  def -(that: Double) = cloned -= that
 
   /**
    * Hadamard product
@@ -90,6 +99,10 @@ class MatrixOps(val m: Matrix) {
     })
     m
   }
+
+  def norm = sqrt(m.aggregate(Functions.PLUS, Functions.SQUARE))
+
+  def pnorm(p: Int) = pow(m.aggregate(Functions.PLUS, Functions.chain(Functions.ABS, Functions.pow(p))), 1.0 / p)
 
   def apply(row: Int, col: Int) = m.get(row, col)
 
