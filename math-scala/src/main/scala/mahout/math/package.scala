@@ -96,6 +96,8 @@ package object math {
 
   def diag(v: Double, size: Int): DiagonalMatrix = new DiagonalMatrix(v, size)
 
+  def eye(size:Int) = diag(1,size)
+
   /**
    * Create dense matrix out of inline arguments -- rows -- which can be tuples,
    * iterables of Double, or just single Number (for columnar vectors)

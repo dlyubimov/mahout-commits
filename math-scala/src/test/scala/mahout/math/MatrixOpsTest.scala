@@ -117,7 +117,7 @@ class MatrixOpsTest extends FunSuite {
 
     printf("(L^-1)b =\n%s\n", ch.solveLeft(b))
 
-    val x = ch.solveRight(diag(1, 3)) %*% ch.solveLeft(b)
+    val x = ch.solveRight(eye(3)) %*% ch.solveLeft(b)
 
     printf("x = \n%s\n", x.toString)
 
