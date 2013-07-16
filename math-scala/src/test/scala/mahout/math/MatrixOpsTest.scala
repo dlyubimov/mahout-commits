@@ -1,7 +1,6 @@
 package mahout.math
 
 import org.scalatest.FunSuite
-import org.apache.mahout.math.Vector
 
 
 class MatrixOpsTest extends FunSuite {
@@ -53,14 +52,35 @@ class MatrixOpsTest extends FunSuite {
 
     // assign to slice-vector
     a(0, 0 to 1) :=(3, 5)
+    // or
+    a(0, 0 to 1) = (3, 5)
+
     assert(a(0, ::).sum == 11)
 
     println(a.toString)
 
     // assign to a slice-matrix
     a(0 to 1, 0 to 1) := dense((1, 1), (2, 2.5))
+
+    // or
+    a(0 to 1, 0 to 1) = dense((1, 1), (2, 2.5))
+
     println(a.toString)
     println(a.sum)
+
+  }
+
+  test("assignments") {
+
+    val a = dense((1, 2, 3), (3, 4, 5))
+
+    val b = a cloned
+
+    b(0, 0) = 2.0
+
+    printf("B=\n%s\n", b)
+
+    assert((b - a).norm - 1 < 1e-10)
 
   }
 

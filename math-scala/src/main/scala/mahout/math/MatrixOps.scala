@@ -106,6 +106,17 @@ class MatrixOps(val m: Matrix) {
 
   def apply(row: Int, col: Int) = m.get(row, col)
 
+  def update(row: Int, col: Int, v: Double): Matrix = {
+    m.setQuick(row, col, v);
+    m
+  }
+
+  def update(rowRange: Range, colRange: Range, that: Matrix) = apply(rowRange, colRange) := that
+
+  def update(row: Int, colRange: Range, that: Vector) = apply(row, colRange) := that
+
+  def update(rowRange: Range, col: Int, that: Vector) = apply(rowRange, col) := that
+
   def apply(rowRange: Range, colRange: Range): Matrix = {
 
     if (rowRange.length == 0 &&
