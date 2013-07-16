@@ -12,7 +12,11 @@ class VectorOps(val v: Vector) {
 
   def apply(i: Int) = v.get(i)
 
+  def update(i: Int, that:Double) = v.setQuick(i, that)
+
   def apply(r: Range) = v.viewPart(r.start, r.length)
+
+  def update(r: Range, that:Vector ) = apply(r) := that
 
   def sum = v.zSum()
 
