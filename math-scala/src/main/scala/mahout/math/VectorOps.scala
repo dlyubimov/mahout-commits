@@ -12,11 +12,11 @@ class VectorOps(val v: Vector) {
 
   def apply(i: Int) = v.get(i)
 
-  def update(i: Int, that:Double) = v.setQuick(i, that)
+  def update(i: Int, that: Double) = v.setQuick(i, that)
 
   def apply(r: Range) = v.viewPart(r.start, r.length)
 
-  def update(r: Range, that:Vector ) = apply(r) := that
+  def update(r: Range, that: Vector) = apply(r) := that
 
   def sum = v.zSum()
 
@@ -37,6 +37,8 @@ class VectorOps(val v: Vector) {
   }
 
   def :=(that: Double): Vector = v.assign(that)
+
+  def :=(f: (Int, Double) => Double) = for (i <- 0 until length) v(i) = f(i, v(i))
 
   def equiv(that: Vector) =
     length == that.length &&

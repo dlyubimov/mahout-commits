@@ -163,6 +163,11 @@ class MatrixOps(val m: Matrix) {
     })
   }
 
+  def := (f: (Int, Int, Double) => Double): Matrix = {
+    for (r <- 0 until nrow; c <- 0 until ncol) m(r, c) = f(r, c, m(r, c))
+    m
+  }
+
   def cloned = m.like := m
 
   /**
@@ -180,6 +185,7 @@ class MatrixOps(val m: Matrix) {
       })
 
   def nequiv(that: Matrix) = !equiv(that)
+
 }
 
 object MatrixOps {

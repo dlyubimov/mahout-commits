@@ -94,9 +94,10 @@ package object math {
 
   def diagv(v: Vector): DiagonalMatrix = new DiagonalMatrix(v)
 
-  def diag(v: Double, size: Int): DiagonalMatrix = new DiagonalMatrix(v, size)
+  def diag(v: Double, size: Int): DiagonalMatrix =
+    new DiagonalMatrix(new DenseVector(Array.fill(size)(v)))
 
-  def eye(size:Int) = diag(1,size)
+  def eye(size: Int) = new DiagonalMatrix(1.0, size)
 
   /**
    * Create dense matrix out of inline arguments -- rows -- which can be tuples,
@@ -110,6 +111,7 @@ package object math {
       r match {
         case n: Number => Array(n.doubleValue())
         case t: Product => t.productIterator.map(_.asInstanceOf[Number].doubleValue()).toArray
+        case t: Vector => Array.tabulate(t.length)(t(_))
         case t: Array[Double] => t
         case t: Iterable[Double] => t.toArray
         case t: Array[Array[Double]] => if (rows.size == 1)

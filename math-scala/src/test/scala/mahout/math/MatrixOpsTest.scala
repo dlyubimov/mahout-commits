@@ -82,6 +82,10 @@ class MatrixOpsTest extends FunSuite {
 
     assert((b - a).norm - 1 < 1e-10)
 
+    val e = eye(5)
+
+    printf("4.5I=\n%s\n", e * 4.5)
+
   }
 
   test("SVD") {
