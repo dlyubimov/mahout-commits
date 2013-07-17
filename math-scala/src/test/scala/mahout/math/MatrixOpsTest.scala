@@ -135,6 +135,7 @@ class MatrixOpsTest extends FunSuite {
 
     printf("b = \n%s\n", b)
 
+    // fails if chol(a,true)
     val ch = chol(a)
 
     printf("L = \n%s\n", ch.getL)
