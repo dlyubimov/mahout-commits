@@ -198,6 +198,8 @@ package object math {
     (ed.getV, ed.getRealEigenvalues, ed.getImagEigenvalues)
   }
 
+  def qr(m:Matrix) = new QRDecomposition(m)
+
   def ::() = Range(0, 0)
 
 }
