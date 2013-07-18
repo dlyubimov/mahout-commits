@@ -11,6 +11,8 @@ package object math {
 
   implicit def vector2vectorOps(v: Vector) = new VectorOps(v)
 
+  implicit def diag2diagOps(m:DiagonalMatrix) = new DiagonalOps(m)
+
   implicit def matrix2matrixOps(m: Matrix) = new MatrixOps(m)
 
   implicit def seq2Vector(s: TraversableOnce[AnyVal]) =

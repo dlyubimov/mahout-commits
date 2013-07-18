@@ -1,6 +1,7 @@
 package mahout.math
 
 import org.scalatest.FunSuite
+import org.apache.mahout.math.DenseSymmetricMatrix
 
 
 class MatrixOpsTest extends FunSuite {
@@ -38,6 +39,17 @@ class MatrixOpsTest extends FunSuite {
     assert(a(0, 0) == 1)
     assert(a(1, 2) == 5)
     println(a.toString)
+
+  }
+
+  test("PlusTest") {
+    val a = dense((1, 2, 3), (3, 4, 5))
+    val b = dense((1, 1, 2), (2, 1, 1))
+
+    val c = a + b
+    assert(c(0, 0) == 2)
+    assert(c(1, 2) == 6)
+    println(c.toString)
 
   }
 
@@ -154,4 +166,53 @@ class MatrixOpsTest extends FunSuite {
 
   }
 
+  test("chol2") {
+
+    val vtv = new DenseSymmetricMatrix(
+      Array(
+        0.0021401286568947376,0.001309251254596442,0.0016003218703045058,
+        0.001545407014131058,0.0012772546647977234,
+        0.001747768702674435
+      ), true)
+
+    printf("V'V=\n%s\n", vtv cloned)
+
+    val vblock= dense(
+      (0.0012356809018514347,0.006141139195280868,8.037742467936037E-4),
+      (0.007910767859830255,0.007989899899005457,0.006877961936587515),
+      (0.007011211118759952,0.007458865101641882,0.0048344749320346795),
+      (0.006578789899685284,0.0010812485516549452,0.0062146270886981655)
+    )
+
+    val d = diag(15.0,4)
+
+
+    val b = dense(
+      (0.36378319648203084),
+      (0.3627384439613304),
+      (0.2996934112658234))
+
+    printf("B=\n%s\n", b)
+
+
+    val cholArg = vtv + (vblock.t %*% d %*% vblock) + diag(4e-6,3)
+
+    printf("cholArg=\n%s\n", cholArg)
+
+    printf("V'DV=\n%s\n", (vblock.t %*% d %*% vblock))
+
+    printf("V'V+V'DV=\n%s\n", vtv + (vblock.t %*% d %*% vblock))
+
+    val ch = chol(cholArg)
+
+    printf("L=\n%s\n", ch.getL)
+
+    val x = ch.solveRight(eye(cholArg.nrow)) %*% ch.solveLeft(b)
+
+    printf("X=\n%s\n", x)
+
+    assert(((cholArg %*% x) - b).norm < 1e-10)
+
+
+  }
 }
