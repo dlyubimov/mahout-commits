@@ -57,8 +57,4 @@ public class DenseSymmetricMatrix extends UpperTriangular {
     super.setQuick(row, column, value);
   }
 
-  @Override
-  public Matrix like() {
-    return new DenseSymmetricMatrix(numCols());
-  }
 }
