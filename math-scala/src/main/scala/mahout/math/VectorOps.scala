@@ -44,11 +44,19 @@ class VectorOps(val v: Vector) {
     length == that.length &&
       v.all.view.zip(that.all).forall(t => t._1.get == t._2.get)
 
+  def ===(that: Vector) = equiv(that)
+
+  def !==(that: Vector) = nequiv(that)
+
   def nequiv(that: Vector) = !equiv(that)
 
   def +=(that: Vector) = v.assign(that, Functions.PLUS)
 
+  def -=(that: Vector) = v.assign(that, Functions.MINUS)
+
   def +=(that: Double) = v.assign(Functions.PLUS, that)
+
+  def -=(that: Double) = +=(-that)
 
   def *=(that: Vector) = v.assign(that, Functions.MULT)
 
@@ -56,7 +64,11 @@ class VectorOps(val v: Vector) {
 
   def +(that: Vector) = cloned += that
 
+  def -(that: Vector) = cloned -= that
+
   def +(that: Double) = cloned += that
+
+  def -(that: Double) = cloned -= that
 
   def *(that: Vector) = cloned += that
 

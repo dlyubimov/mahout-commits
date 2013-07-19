@@ -198,7 +198,16 @@ package object math {
     (ed.getV, ed.getRealEigenvalues, ed.getImagEigenvalues)
   }
 
-  def qr(m:Matrix) = new QRDecomposition(m)
+  /**
+   * QR.
+   *
+   * Right now Mahout's QR seems to be using argument for in-place transformations,
+   * so the matrix context gets messed after this. Hence we force cloning of the
+   * argument before passing it to Mahout's QR so to keep expected semantics.
+   * @param m
+   * @return
+   */
+  def qr(m:Matrix) = new QRDecomposition(m cloned)
 
   def ::() = Range(0, 0)
 

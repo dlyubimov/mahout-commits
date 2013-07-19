@@ -24,4 +24,16 @@ class VectorOpsTest extends FunSuite {
     println(sparseVec3)
   }
 
+  test("plus-minus") {
+
+    val a: Vector = (1, 2, 3)
+    val b: Vector = (0 -> 3) :: (1 -> 4) :: (2 -> 5) :: Nil
+
+    val c = a + b
+    val d = b - a
+    assert(c ===(4, 6, 8))
+    assert(d ===(2, 2, 2))
+
+  }
+
 }
