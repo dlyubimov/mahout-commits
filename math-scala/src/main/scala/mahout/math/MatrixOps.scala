@@ -186,6 +186,10 @@ class MatrixOps(val m: Matrix) {
 
   def nequiv(that: Matrix) = !equiv(that)
 
+  def ===(that: Matrix) = equiv(that)
+
+  def !==(that: Matrix) = nequiv(that)
+
   /**
    * test if rank == min(nrow,ncol).
    * @return

@@ -12,7 +12,7 @@ import org.apache.mahout.math.{RandomAccessSparseVector, Vector}
  */
 class VectorOpsTest extends FunSuite {
 
-  test("CreateTest") {
+  test("inline create") {
 
     val sparseVec = svec((5 -> 1) :: (10 -> 2.0) :: Nil)
     println(sparseVec)
@@ -30,7 +30,7 @@ class VectorOpsTest extends FunSuite {
     println(denseVec2)
   }
 
-  test("plus-minus") {
+  test("plus minus") {
 
     val a: Vector = (1, 2, 3)
     val b: Vector = (0 -> 3) :: (1 -> 4) :: (2 -> 5) :: Nil
@@ -63,6 +63,5 @@ class VectorOpsTest extends FunSuite {
     assert(c == 26)
 
   }
-
 
 }

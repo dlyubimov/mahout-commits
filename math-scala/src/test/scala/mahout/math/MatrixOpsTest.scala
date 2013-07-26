@@ -8,15 +8,15 @@ import scala.math._
 class MatrixOpsTest extends FunSuite {
 
 
-  test("eqTest") {
+  test("equivalence") {
     val a = dense((1, 2, 3), (3, 4, 5))
     val b = dense((1, 2, 3), (3, 4, 5))
     val c = dense((1, 4, 3), (3, 4, 5))
-    assert(a equiv b)
-    assert(a nequiv c)
+    assert(a === b)
+    assert(a !== c)
 
   }
-  test("MulTest") {
+  test("multiplication") {
 
     val a = dense((1, 2, 3), (3, 4, 5))
     val b = dense(1, 4, 5)
@@ -27,7 +27,7 @@ class MatrixOpsTest extends FunSuite {
     println(m.toString)
   }
 
-  test("HadamardTest") {
+  test("Hadamard") {
     val a = dense((1, 2, 3), (3, 4, 5))
     val b = dense((1, 1, 2), (2, 1, 1))
 
@@ -43,7 +43,7 @@ class MatrixOpsTest extends FunSuite {
 
   }
 
-  test("PlusTest") {
+  test("elementwise plus, minus") {
     val a = dense((1, 2, 3), (3, 4, 5))
     val b = dense((1, 1, 2), (2, 1, 1))
 
@@ -54,7 +54,7 @@ class MatrixOpsTest extends FunSuite {
 
   }
 
-  test("ViewsRead") {
+  test("matrix, vector slicing") {
 
     val a = dense((1, 2, 3), (3, 4, 5))
 
@@ -105,7 +105,7 @@ class MatrixOpsTest extends FunSuite {
 
   }
 
-  test("SVD") {
+  test("svd") {
 
     val a = dense((1, 2, 3), (3, 4, 5))
 
@@ -125,7 +125,7 @@ class MatrixOpsTest extends FunSuite {
 
   }
 
-  test("SSVD") {
+  test("ssvd") {
 
     val a = dense((1, 2, 3), (3, 4, 5))
 
