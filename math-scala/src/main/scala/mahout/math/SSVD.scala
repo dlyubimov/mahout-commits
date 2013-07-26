@@ -65,7 +65,7 @@ private[math] object SSVD {
     val u = ch.solveRight(y) %*% uhat
     val v = bt %*% (uhat %*%: diagv(1 /: s))
 
-    (u(::,0 until k), v(::,0 until k), s(0 until k))
+    (u(::, 0 until k), v(::, 0 until k), s(0 until k))
 
   }
 
