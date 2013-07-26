@@ -164,6 +164,8 @@ package object math {
 
   def dvec(ddata: TraversableOnce[Double]) = new DenseVector(ddata.toArray)
 
+  def dvec(numbers:Number*) = new DenseVector(numbers.map(_.doubleValue()).toArray)
+
   def chol(m: Matrix, typ: Boolean = false) = new CholeskyDecomposition(m, typ)
 
   /**
@@ -205,9 +207,12 @@ package object math {
    * so the matrix context gets messed after this. Hence we force cloning of the
    * argument before passing it to Mahout's QR so to keep expected semantics.
    * @param m
-   * @return
+   * @return (Q,R)
    */
-  def qr(m:Matrix) = new QRDecomposition(m cloned)
+  def qr(m:Matrix) = {
+   val qrdec = new QRDecomposition(m cloned)
+    (qrdec.getQ,qrdec.getR)
+  }
 
   def ::() = Range(0, 0)
 

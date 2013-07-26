@@ -2,6 +2,7 @@ package mahout.math
 
 import org.scalatest.FunSuite
 import org.apache.mahout.math.DenseSymmetricMatrix
+import scala.math._
 
 
 class MatrixOpsTest extends FunSuite {
@@ -98,6 +99,10 @@ class MatrixOpsTest extends FunSuite {
 
     printf("4.5I=\n%s\n", e * 4.5)
 
+    a(0 to 1, 1 to 2) = dense((3, 2), (2, 3))
+    a(0 to 1, 1 to 2) := dense((3, 2), (2, 3))
+
+
   }
 
   test("SVD") {
@@ -170,21 +175,21 @@ class MatrixOpsTest extends FunSuite {
 
     val vtv = new DenseSymmetricMatrix(
       Array(
-        0.0021401286568947376,0.001309251254596442,0.0016003218703045058,
-        0.001545407014131058,0.0012772546647977234,
+        0.0021401286568947376, 0.001309251254596442, 0.0016003218703045058,
+        0.001545407014131058, 0.0012772546647977234,
         0.001747768702674435
       ), true)
 
     printf("V'V=\n%s\n", vtv cloned)
 
-    val vblock= dense(
-      (0.0012356809018514347,0.006141139195280868,8.037742467936037E-4),
-      (0.007910767859830255,0.007989899899005457,0.006877961936587515),
-      (0.007011211118759952,0.007458865101641882,0.0048344749320346795),
-      (0.006578789899685284,0.0010812485516549452,0.0062146270886981655)
+    val vblock = dense(
+      (0.0012356809018514347, 0.006141139195280868, 8.037742467936037E-4),
+      (0.007910767859830255, 0.007989899899005457, 0.006877961936587515),
+      (0.007011211118759952, 0.007458865101641882, 0.0048344749320346795),
+      (0.006578789899685284, 0.0010812485516549452, 0.0062146270886981655)
     )
 
-    val d = diag(15.0,4)
+    val d = diag(15.0, 4)
 
 
     val b = dense(
@@ -195,7 +200,7 @@ class MatrixOpsTest extends FunSuite {
     printf("B=\n%s\n", b)
 
 
-    val cholArg = vtv + (vblock.t %*% d %*% vblock) + diag(4e-6,3)
+    val cholArg = vtv + (vblock.t %*% d %*% vblock) + diag(4e-6, 3)
 
     printf("cholArg=\n%s\n", cholArg)
 
@@ -213,6 +218,16 @@ class MatrixOpsTest extends FunSuite {
 
     assert(((cholArg %*% x) - b).norm < 1e-10)
 
+  }
 
+  test("qr") {
+    val a = dense((1, 2, 3), (2, 3, 6), (3, 4, 5), (4, 7, 8))
+    val (q, r) = qr(a)
+
+    printf("Q=\n%s\n", q)
+    printf("R=\n%s\n", r)
+
+    for (i <- 0 until q.ncol; j <- i + 1 until q.ncol)
+      assert(abs(q(::, i) dot q(::, j)) < 1e-10)
   }
 }

@@ -70,7 +70,7 @@ class VectorOps(val v: Vector) {
 
   def -(that: Double) = cloned -= that
 
-  def *(that: Vector) = cloned += that
+  def *(that: Vector) = cloned *= that
 
   def *(that: Double) = cloned *= that
 
