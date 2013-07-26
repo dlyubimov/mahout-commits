@@ -38,7 +38,10 @@ class VectorOps(val v: Vector) {
 
   def :=(that: Double): Vector = v.assign(that)
 
-  def :=(f: (Int, Double) => Double) = for (i <- 0 until length) v(i) = f(i, v(i))
+  def :=(f: (Int, Double) => Double): Vector = {
+    for (i <- 0 until length) v(i) = f(i, v(i))
+    v
+  }
 
   def equiv(that: Vector) =
     length == that.length &&
@@ -58,24 +61,50 @@ class VectorOps(val v: Vector) {
 
   def -=(that: Double) = +=(-that)
 
+  def -=:(that: Vector) = v.assign(Functions.NEGATE).assign(that, Functions.PLUS)
+
+  def -=:(that: Double) = v.assign(Functions.NEGATE).assign(Functions.PLUS, that)
+
   def *=(that: Vector) = v.assign(that, Functions.MULT)
 
+  def /=(that: Vector) = v.assign(that, Functions.DIV)
+
   def *=(that: Double) = v.assign(Functions.MULT, that)
+
+  def /=(that: Double) = v.assign(Functions.DIV, that)
+
+  def /=:(that: Double) = v.assign(Functions.INV).assign(Functions.MULT, that)
+
+  def /=:(that: Vector) = v.assign(Functions.INV).assign(that, Functions.MULT)
 
   def +(that: Vector) = cloned += that
 
   def -(that: Vector) = cloned -= that
 
+  def -:(that: Vector) = that.cloned -= v
+
   def +(that: Double) = cloned += that
 
   def -(that: Double) = cloned -= that
+
+  def -:(that: Double) = that -=: v.cloned
 
   def *(that: Vector) = cloned *= that
 
   def *(that: Double) = cloned *= that
 
+  def /(that: Vector) = cloned /= that
+
+  def /(that: Double) = cloned /= that
+
+  def /:(that: Double) = that /=: v.cloned
+
+  def /:(that: Vector) = that.cloned /= v
+
   def length = v.size()
 
   def cloned: Vector = v.like := v
+
+  def sqrt = v.cloned.assign(Functions.SQRT)
 
 }

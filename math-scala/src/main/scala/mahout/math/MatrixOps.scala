@@ -1,6 +1,6 @@
 package mahout.math
 
-import org.apache.mahout.math.{Vector, Matrix}
+import org.apache.mahout.math.{QRDecomposition, Vector, Matrix}
 import scala.collection.JavaConversions._
 import org.apache.mahout.math.function.{DoubleFunction, Functions}
 import scala.math._
@@ -163,7 +163,7 @@ class MatrixOps(val m: Matrix) {
     })
   }
 
-  def := (f: (Int, Int, Double) => Double): Matrix = {
+  def :=(f: (Int, Int, Double) => Double): Matrix = {
     for (r <- 0 until nrow; c <- 0 until ncol) m(r, c) = f(r, c, m(r, c))
     m
   }
@@ -186,6 +186,12 @@ class MatrixOps(val m: Matrix) {
 
   def nequiv(that: Matrix) = !equiv(that)
 
+  /**
+   * test if rank == min(nrow,ncol).
+   * @return
+   */
+  def isFullRank: Boolean =
+    new QRDecomposition(if (nrow < ncol) m t else m cloned).hasFullRank
 }
 
 object MatrixOps {

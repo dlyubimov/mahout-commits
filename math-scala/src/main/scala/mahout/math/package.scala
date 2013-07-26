@@ -11,7 +11,7 @@ package object math {
 
   implicit def vector2vectorOps(v: Vector) = new VectorOps(v)
 
-  implicit def diag2diagOps(m:DiagonalMatrix) = new DiagonalOps(m)
+  implicit def diag2diagOps(m: DiagonalMatrix) = new DiagonalOps(m)
 
   implicit def matrix2matrixOps(m: Matrix) = new MatrixOps(m)
 
@@ -164,7 +164,7 @@ package object math {
 
   def dvec(ddata: TraversableOnce[Double]) = new DenseVector(ddata.toArray)
 
-  def dvec(numbers:Number*) = new DenseVector(numbers.map(_.doubleValue()).toArray)
+  def dvec(numbers: Number*) = new DenseVector(numbers.map(_.doubleValue()).toArray)
 
   def chol(m: Matrix, typ: Boolean = false) = new CholeskyDecomposition(m, typ)
 
@@ -195,8 +195,8 @@ package object math {
    * @param symmetric
    * @return (V, eigenvalues-real-vector, eigenvalues-imaginary-vector)
    */
-  def eigen(m: Matrix, symmetric: Boolean) {
-    val ed = new EigenDecomposition(m, true)
+  def eigenFull(m: Matrix, symmetric: Boolean = true) {
+    val ed = new EigenDecomposition(m, symmetric)
     (ed.getV, ed.getRealEigenvalues, ed.getImagEigenvalues)
   }
 
@@ -209,11 +209,13 @@ package object math {
    * @param m
    * @return (Q,R)
    */
-  def qr(m:Matrix) = {
-   val qrdec = new QRDecomposition(m cloned)
-    (qrdec.getQ,qrdec.getR)
+  def qr(m: Matrix) = {
+    val qrdec = new QRDecomposition(m cloned)
+    (qrdec.getQ, qrdec.getR)
   }
 
   def ::() = Range(0, 0)
+
+  def ssvd(a: Matrix, k: Int, p: Int = 15, q: Int = 0) = SSVD.ssvd(a, k, p, q)
 
 }

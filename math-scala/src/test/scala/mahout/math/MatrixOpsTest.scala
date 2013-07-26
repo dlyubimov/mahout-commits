@@ -125,6 +125,27 @@ class MatrixOpsTest extends FunSuite {
 
   }
 
+  test("SSVD") {
+
+    val a = dense((1, 2, 3), (3, 4, 5))
+
+    val (u, v, s) = ssvd(a, 2)
+
+    printf("U:\n%s\n", u.toString)
+    printf("V:\n%s\n", v.toString)
+    printf("Sigma:\n%s\n", s.toString)
+
+    val aBar = u %*% diagv(s) %*% v.t
+
+    val amab = a - aBar
+
+    printf("A-USV'=\n%s\n", amab.toString)
+
+    assert(amab.norm < 1e-10)
+
+  }
+
+
   test("sparse") {
 
     val a = sparse((1, 3) :: Nil,
