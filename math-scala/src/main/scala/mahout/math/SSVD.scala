@@ -13,6 +13,15 @@ import scala.util.Random
  */
 private[math] object SSVD {
 
+  /**
+   * In-core SSVD algorithm.
+   *
+   * @param a input matrix A
+   * @param k request SSVD rank
+   * @param p oversampling parameter
+   * @param q number of power iterations
+   * @return (U,V,s)
+   */
   def ssvd(a: Matrix, k: Int, p: Int = 15, q: Int = 0) = {
     val m = a.nrow
     val n = a.ncol
