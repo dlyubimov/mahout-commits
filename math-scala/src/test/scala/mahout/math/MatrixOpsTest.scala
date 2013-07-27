@@ -237,7 +237,7 @@ class MatrixOpsTest extends FunSuite {
 
     printf("X=\n%s\n", x)
 
-    assert(((cholArg %*% x) - b).norm < 1e-10)
+    assert((cholArg %*% x - b).norm < 1e-10)
 
   }
 

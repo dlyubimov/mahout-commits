@@ -9,6 +9,8 @@ import org.apache.mahout.math.solver.EigenDecomposition
  */
 package object math {
 
+  final val `::` = Range(0, 0)
+
   implicit def vector2vectorOps(v: Vector) = new VectorOps(v)
 
   implicit def diag2diagOps(m: DiagonalMatrix) = new DiagonalOps(m)
@@ -213,8 +215,6 @@ package object math {
     val qrdec = new QRDecomposition(m cloned)
     (qrdec.getQ, qrdec.getR)
   }
-
-  def ::() = Range(0, 0)
 
   def ssvd(a: Matrix, k: Int, p: Int = 15, q: Int = 0) = SSVD.ssvd(a, k, p, q)
 
