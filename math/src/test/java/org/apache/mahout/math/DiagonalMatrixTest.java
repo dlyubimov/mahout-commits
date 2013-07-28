@@ -42,7 +42,7 @@ public class DiagonalMatrixTest extends MahoutTestCase {
 
     m = new DenseMatrix(new double[][]{{1, 2, 3, 4}, {5, 6, 7, 8}});
 
-    assertEquals(100, a.leftMult(m).aggregate(Functions.PLUS, Functions.ABS), 1.0e-10);
+    assertEquals(100, a.timesLeft(m).aggregate(Functions.PLUS, Functions.ABS), 1.0e-10);
     assertEquals(100, a.times(m.transpose()).aggregate(Functions.PLUS, Functions.ABS), 1.0e-10);
   }
 
