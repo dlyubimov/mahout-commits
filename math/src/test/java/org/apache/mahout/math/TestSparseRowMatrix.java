@@ -17,6 +17,8 @@
 
 package org.apache.mahout.math;
 
+import org.apache.mahout.math.function.Functions;
+
 public final class TestSparseRowMatrix extends MatrixTest {
 
   @Override
@@ -29,6 +31,5 @@ public final class TestSparseRowMatrix extends MatrixTest {
     }
     return matrix;
   }
-
 
 }
