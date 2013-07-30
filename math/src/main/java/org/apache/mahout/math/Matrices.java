@@ -17,6 +17,7 @@
 
 package org.apache.mahout.math;
 
+import org.apache.mahout.common.RandomUtils;
 import org.apache.mahout.math.function.DoubleFunction;
 import org.apache.mahout.math.function.Functions;
 import org.apache.mahout.math.function.IntIntFunction;
@@ -94,7 +95,7 @@ public final class Matrices {
    *
    * @param seed generator seed
    */
-  public static final Matrix uniformSymmetricView(final int rows,
+  public static final Matrix symmetricUniformView(final int rows,
                                                   final int columns,
                                                   int seed) {
     return functionalMatrixView(rows, columns, uniformSymmetricGenerator(seed), true);
@@ -118,12 +119,12 @@ public final class Matrices {
    * @return Gaussian {@link IntIntFunction} generating matrix view with normal values
    */
   public static final IntIntFunction gaussianGenerator(final long seed) {
-    final Random rnd = new Random();
+    final Random rnd = RandomUtils.getRandom(seed);
     IntIntFunction gaussianGF = new IntIntFunction() {
       @Override
       public double apply(int first, int second) {
         rnd.setSeed(seed ^ (((long) first << 32) | (second & 0xffffffffl)));
-        return rnd.nextDouble();
+        return rnd.nextGaussian();
       }
     };
     return gaussianGF;
@@ -147,7 +148,7 @@ public final class Matrices {
       @Override
       public double apply(int row, int column) {
         long d = ((long) row << Integer.SIZE) | (column & 0xffffffffl);
-        for (int i = 0; i < 8; d >>>= 8) data[i] = (byte) d;
+        for (int i = 0; i < 8; i++, d >>>= 8) data[i] = (byte) d;
         long hash = MurmurHash.hash64A(data, seed);
         return hash / UNIFORM_DIVISOR;
       }
