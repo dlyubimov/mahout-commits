@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,9 +18,9 @@
 package mahout.math
 
 import math._
-import org.apache.mahout.math.{Matrix, DenseMatrix}
-import scala.util.Random
+import org.apache.mahout.math.{Matrices, Matrix}
 import RLikeOps._
+import org.apache.mahout.common.RandomUtils
 
 private[math] object SSVD {
 
@@ -44,15 +44,9 @@ private[math] object SSVD {
     // actual decomposition rank
     val r = k + pfxed
 
-    // we actually fill the random matrix here
-    // just like in our R prototype, although technically
-    // that would not be necessary if we implemented specific random
-    // matrix view. But ok, this should do for now.
-    // it is actually the distributed version we are after -- we
-    // certainly would try to be efficient there.
-
-    val rnd = new Random()
-    val omega = new DenseMatrix(n, r) := ((r, c, v) => rnd.nextGaussian)
+    val rnd = RandomUtils.getRandom
+    //    val omega = new DenseMatrix(n, r) := ((r, c, v) => rnd.nextGaussian)
+    val omega = Matrices.symmetricUniformView(n, r, rnd.nextInt)
 
     var y = a %*% omega
     var yty = y.t %*% y

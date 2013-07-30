@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
 
 package mahout.math
 
-import org.apache.mahout.math.{QRDecomposition, Vector, Matrix}
+import org.apache.mahout.math.{Matrices, QRDecomposition, Vector, Matrix}
 import scala.collection.JavaConversions._
 import org.apache.mahout.math.function.{DoubleFunction, Functions}
 import scala.math._
@@ -95,7 +95,13 @@ class MatrixOps(val m: Matrix) {
     c
   }
 
-  def t = m.transpose()
+  /**
+   * Warning: This provides read-only view only.
+   * In most cases that's what one wants. To get a copy,
+   * use <code>m.t cloned</code>
+   * @return transposed view
+   */
+  def t = Matrices.transposedView(m)
 
   def det = m.determinant()
 
@@ -120,7 +126,7 @@ class MatrixOps(val m: Matrix) {
     m
   }
 
-  def cloned:Matrix= m.like := m
+  def cloned: Matrix = m.like := m
 
   /**
    * Ideally, we would probably want to override equals(). But that is not
@@ -151,6 +157,7 @@ class MatrixOps(val m: Matrix) {
 }
 
 object MatrixOps {
-  implicit def m2ops(m:Matrix):MatrixOps = new MatrixOps(m)
-  implicit def v2ops(v:Vector):VectorOps = new VectorOps(v)
+  implicit def m2ops(m: Matrix): MatrixOps = new MatrixOps(m)
+
+  implicit def v2ops(v: Vector): VectorOps = new VectorOps(v)
 }
