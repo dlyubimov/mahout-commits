@@ -1,3 +1,19 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package mahout
 
 import org.apache.mahout.math._
@@ -10,12 +26,6 @@ import org.apache.mahout.math.solver.EigenDecomposition
 package object math {
 
   final val `::` = Range(0, 0)
-
-  implicit def vector2vectorOps(v: Vector) = new VectorOps(v)
-
-  implicit def diag2diagOps(m: DiagonalMatrix) = new TimesOps(m)
-
-  implicit def matrix2matrixOps(m: Matrix) = new MatrixOps(m)
 
   implicit def seq2Vector(s: TraversableOnce[AnyVal]) =
     new DenseVector(s.map(_.asInstanceOf[Number].doubleValue()).toArray)
@@ -111,6 +121,7 @@ package object math {
    * @return
    */
   def dense[R](rows: R*): DenseMatrix = {
+    import MatrixOps._
     val data = for (r <- rows) yield {
       r match {
         case n: Number => Array(n.doubleValue())
@@ -143,6 +154,7 @@ package object math {
    */
 
   def sparse(rows: Vector*): SparseRowMatrix = {
+    import MatrixOps._
     val nrow = rows.size
     val ncol = rows.map(_.size()).max
     val m = new SparseRowMatrix(nrow, ncol)
@@ -212,6 +224,7 @@ package object math {
    * @return (Q,R)
    */
   def qr(m: Matrix) = {
+    import MatrixOps._
     val qrdec = new QRDecomposition(m cloned)
     (qrdec.getQ, qrdec.getR)
   }

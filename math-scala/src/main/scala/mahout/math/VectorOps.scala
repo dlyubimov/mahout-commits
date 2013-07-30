@@ -1,6 +1,23 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package mahout.math
 
-import org.apache.mahout.math.Vector
+import org.apache.mahout.math.{Matrix, Vector}
 import scala.collection.JavaConversions._
 import org.apache.mahout.math.function.Functions
 
@@ -9,6 +26,8 @@ import org.apache.mahout.math.function.Functions
  * @param v Mahout vector
  */
 class VectorOps(val v: Vector) {
+
+  import VectorOps.v2ops
 
   def apply(i: Int) = v.get(i)
 
@@ -65,18 +84,6 @@ class VectorOps(val v: Vector) {
 
   def -=:(that: Double) = v.assign(Functions.NEGATE).assign(Functions.PLUS, that)
 
-  def *=(that: Vector) = v.assign(that, Functions.MULT)
-
-  def /=(that: Vector) = v.assign(that, Functions.DIV)
-
-  def *=(that: Double) = v.assign(Functions.MULT, that)
-
-  def /=(that: Double) = v.assign(Functions.DIV, that)
-
-  def /=:(that: Double) = v.assign(Functions.INV).assign(Functions.MULT, that)
-
-  def /=:(that: Vector) = v.assign(Functions.INV).assign(that, Functions.MULT)
-
   def +(that: Vector) = cloned += that
 
   def -(that: Vector) = cloned -= that
@@ -89,22 +96,14 @@ class VectorOps(val v: Vector) {
 
   def -:(that: Double) = that -=: v.cloned
 
-  def *(that: Vector) = cloned *= that
-
-  def *(that: Double) = cloned *= that
-
-  def /(that: Vector) = cloned /= that
-
-  def /(that: Double) = cloned /= that
-
-  def /:(that: Double) = that /=: v.cloned
-
-  def /:(that: Vector) = that.cloned /= v
-
   def length = v.size()
 
   def cloned: Vector = v.like := v
 
   def sqrt = v.cloned.assign(Functions.SQRT)
 
+}
+
+object VectorOps {
+  private implicit def v2ops(v:Vector):VectorOps = new VectorOps(v)
 }
