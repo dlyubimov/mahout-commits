@@ -93,4 +93,14 @@ public class MatricesTest extends MahoutTestCase {
     assertEquals(0, diff.aggregate(Functions.PLUS, Functions.ABS), 1e-10);
   }
 
+  @Test
+  public void testGaussianView() {
+    Matrix m1 = Matrices.gaussianView(5, 6, 1234);
+    Matrix m2 = Matrices.gaussianView(5, 6, 1234);
+
+    Matrix diff = m1.minus(m2);
+
+    assertEquals(0, diff.aggregate(Functions.PLUS, Functions.ABS), 1e-10);
+  }
+
 }
