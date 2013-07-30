@@ -15,21 +15,17 @@
  * limitations under the License.
  */
 
-package org.apache.mahout.common.mapreduce;
+package org.apache.mahout.clustering.spectral;
 
-import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.mahout.math.VectorWritable;
-import org.apache.mahout.math.hadoop.similarity.cooccurrence.Vectors;
+public class Keys {
 
-import java.io.IOException;
+  /**
+   * Sets the SequenceFile index for the diagonal matrix.
+   */
+  public static final int DIAGONAL_CACHE_INDEX = 1;
 
-public class VectorSumReducer
-    extends Reducer<WritableComparable<?>, VectorWritable, WritableComparable<?>, VectorWritable> {
+  public static final String AFFINITY_DIMENSIONS = "org.apache.mahout.clustering.spectral.common.affinitydimensions";
 
-  @Override
-  protected void reduce(WritableComparable<?> key, Iterable<VectorWritable> values, Context ctx)
-    throws IOException, InterruptedException {
-    ctx.write(key, new VectorWritable(Vectors.sum(values.iterator())));
-  }
+  private Keys() {}
+
 }

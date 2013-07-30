@@ -24,12 +24,15 @@ import org.apache.mahout.math.hadoop.similarity.cooccurrence.Vectors;
 
 import java.io.IOException;
 
-public class VectorSumReducer
-    extends Reducer<WritableComparable<?>, VectorWritable, WritableComparable<?>, VectorWritable> {
+public class VectorSumCombiner
+      extends Reducer<WritableComparable<?>, VectorWritable, WritableComparable<?>, VectorWritable> {
 
-  @Override
-  protected void reduce(WritableComparable<?> key, Iterable<VectorWritable> values, Context ctx)
-    throws IOException, InterruptedException {
-    ctx.write(key, new VectorWritable(Vectors.sum(values.iterator())));
+    private final VectorWritable result = new VectorWritable();
+
+    @Override
+    protected void reduce(WritableComparable<?> key, Iterable<VectorWritable> values, Context ctx)
+      throws IOException, InterruptedException {
+      result.set(Vectors.sum(values.iterator()));
+      ctx.write(key, result);
+    }
   }
-}
