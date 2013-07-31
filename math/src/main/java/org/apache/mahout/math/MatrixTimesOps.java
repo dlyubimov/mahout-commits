@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -15,21 +15,21 @@
  * limitations under the License.
  */
 
-package org.apache.mahout.common.mapreduce;
+package org.apache.mahout.math;
 
-import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.mahout.math.VectorWritable;
-import org.apache.mahout.math.hadoop.similarity.cooccurrence.Vectors;
+/**
+ * Optional interface for optimized matrix multiplications.
+ * Some concrete Matrix implementations may mix this in.
+ */
+public interface MatrixTimesOps {
+  /**
+   * computes matrix product of (this * that)
+   */
+  Matrix timesRight(Matrix that);
 
-import java.io.IOException;
+  /**
+   * Computes matrix product of (that * this)
+   */
+  Matrix timesLeft(Matrix that);
 
-public class VectorSumReducer
-    extends Reducer<WritableComparable<?>, VectorWritable, WritableComparable<?>, VectorWritable> {
-
-  @Override
-  protected void reduce(WritableComparable<?> key, Iterable<VectorWritable> values, Context ctx)
-    throws IOException, InterruptedException {
-    ctx.write(key, new VectorWritable(Vectors.sum(values.iterator())));
-  }
 }
