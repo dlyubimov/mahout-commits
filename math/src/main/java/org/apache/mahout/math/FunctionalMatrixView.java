@@ -74,11 +74,8 @@ class FunctionalMatrixView extends AbstractMatrix {
 
   @Override
   public void setQuick(int row, int column, double value) {
-    //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  @Override
-  public Matrix viewPart(int[] offset, int[] size) {
     throw new UnsupportedOperationException("Assignment to a matrix view not supported");
   }
+
+
 }
