@@ -17,13 +17,8 @@
 
 package org.apache.mahout.math.hadoop.stochasticsvd;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.util.Deque;
-import java.util.Random;
-
 import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -37,9 +32,14 @@ import org.apache.mahout.common.RandomUtils;
 import org.apache.mahout.math.*;
 import org.apache.mahout.math.function.DoubleFunction;
 import org.apache.mahout.math.function.Functions;
+import org.apache.mahout.math.function.VectorFunction;
 import org.junit.Test;
 
-import com.google.common.io.Closeables;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.util.Deque;
+import java.util.Random;
 
 public class LocalSSVDPCASparseTest extends MahoutTestCase {
 
@@ -81,7 +81,7 @@ public class LocalSSVDPCASparseTest extends MahoutTestCase {
 
   @Test
   public void runPCATest1() throws IOException {
-    runSSVDSolver(0);
+    runSSVDSolver(1);
   }
 
   public void runSSVDSolver(int q) throws IOException {
@@ -124,7 +124,7 @@ public class LocalSSVDPCASparseTest extends MahoutTestCase {
     double muAmplitude = 50.0;
     for (int i = 0; i < m; i++) {
       Vector dv = new SequentialAccessSparseVector(n);
-      NamedVector namedRow = new NamedVector(dv,"row-"+i);
+      NamedVector namedRow = new NamedVector(dv, "row-" + i);
       for (int j = 0; j < n * percent / 100; j++) {
         dv.setQuick(rnd.nextInt(n), muAmplitude * (rnd.nextDouble() - 0.25));
       }
@@ -159,7 +159,7 @@ public class LocalSSVDPCASparseTest extends MahoutTestCase {
     int k = 40;
     SSVDSolver ssvd =
       new SSVDSolver(conf,
-                     new Path[] { aPath },
+                     new Path[]{aPath},
                      svdOutPath,
                      ablockRows,
                      k,
@@ -189,9 +189,11 @@ public class LocalSSVDPCASparseTest extends MahoutTestCase {
     // try to run the same thing without stochastic algo
     Matrix a = new DenseMatrix(SSVDHelper.loadDistributedRowMatrix(fs, aPath, conf));
 
+    verifyInternals(svdOutPath, a, new Omega(ssvd.getOmegaSeed(), k + p), k + p, q);
+
     // subtract pseudo pca mean
     for (int i = 0; i < m; i++) {
-      a.viewRow(i).assign(xi,Functions.MINUS);
+      a.viewRow(i).assign(xi, Functions.MINUS);
     }
 
     SingularValueDecomposition svd2 =
@@ -206,13 +208,58 @@ public class LocalSSVDPCASparseTest extends MahoutTestCase {
 
     double[][] mQ =
       SSVDHelper.loadDistributedRowMatrix(fs, new Path(svdOutPath, "Bt-job/"
-          + BtJob.OUTPUT_Q + "-*"), conf);
+        + BtJob.OUTPUT_Q + "-*"), conf);
 
     SSVDCommonTest.assertOrthonormality(new DenseMatrix(mQ),
-                                           false,
-                                           s_epsilon);
+                                        false,
+                                        s_epsilon);
 
     IOUtils.close(closeables);
+  }
+
+  private void verifyInternals(Path tempDir, Matrix a, Omega omega, int kp, int q) {
+    int m = a.numRows();
+    int n = a.numCols();
+
+    Vector xi = a.aggregateColumns(new VectorFunction() {
+      @Override
+      public double apply(Vector v) {
+        return v.zSum() / v.size();
+      }
+    });
+
+    // materialize omega
+    Matrix momega = new DenseMatrix(n, kp);
+    for (int i = 0; i < n; i++)
+      for (int j = 0; j < kp; j++)
+        momega.setQuick(i, j, omega.getQuick(i, j));
+
+    Vector s_o = omega.mutlithreadedTRightMultiply(xi);
+
+    System.out.printf("s_omega=\n%s\n",s_o);
+
+    Matrix y = a.times(momega);
+    for (int i = 0; i < n; i++ ) y.viewRow(i).assign(s_o,Functions.MINUS);
+
+    QRDecomposition qr= new QRDecomposition(y);
+    Matrix qm = qr.getQ();
+
+    Vector s_q = qm.aggregateColumns(new VectorFunction() {
+      @Override
+      public double apply(Vector v) {
+        return v.zSum();
+      }
+    });
+
+    System.out.printf("s_q=\n%s\n",s_q);
+
+    Matrix b = qm.transpose().times(a);
+
+    Vector s_b = b.times(xi);
+
+    System.out.printf("s_b=\n%s\n",s_b);
+
+
   }
 
 }
