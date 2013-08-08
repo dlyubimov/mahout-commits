@@ -17,17 +17,49 @@
 
 package mahout.math
 
-import org.apache.mahout.math.{Vector, MatrixTimesOps, Matrix}
+import org.scalatest.FunSuite
+import RLikeOps._
 
-/**
- * R-like operators. Declare <code>import RLikeOps._</code> to enable.
- */
-object RLikeOps {
+class RLikeMatrixOpsSuite extends FunSuite {
 
-  implicit def v2vOps(v: Vector) = new RLikeVectorOps(v)
+  test("multiplication") {
 
-  implicit def times2timesOps(m: MatrixTimesOps) = new RLikeTimesOps(m)
+    val a = dense((1, 2, 3), (3, 4, 5))
+    val b = dense(1, 4, 5)
+    val m = a %*% b
 
-  implicit def m2mOps(m: Matrix) = new RLikeMatrixOps(m)
+    assert(m(0, 0) == 24)
+    assert(m(1, 0) == 44)
+    println(m.toString)
+  }
+
+  test("Hadamard") {
+    val a = dense(
+      (1, 2, 3),
+      (3, 4, 5)
+    )
+    val b = dense(
+      (1, 1, 2),
+      (2, 1, 1)
+    )
+
+    val c = a * b
+
+    printf("C=\n%s\n", c)
+
+    assert(c(0, 0) == 1)
+    assert(c(1, 2) == 5)
+    println(c.toString)
+
+    val d = a * 5.0
+    assert(d(0, 0) == 5)
+    assert(d(1, 1) == 20)
+
+    a *= b
+    assert(a(0, 0) == 1)
+    assert(a(1, 2) == 5)
+    println(a.toString)
+
+  }
 
 }

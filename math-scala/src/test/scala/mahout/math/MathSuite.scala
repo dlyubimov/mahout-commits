@@ -5,7 +5,7 @@ import org.apache.mahout.math.DenseSymmetricMatrix
 import math._
 import RLikeOps._
 
-class MathTests extends FunSuite {
+class MathSuite extends FunSuite {
 
   test("chol") {
 

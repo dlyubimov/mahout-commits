@@ -45,7 +45,7 @@ import MatrixOps._
  * Time: 10:26 PM
  * To change this template use File | Settings | File Templates.
  */
-class VectorOpsTest extends FunSuite {
+class VectorOpsSuite extends FunSuite {
 
   test("inline create") {
 

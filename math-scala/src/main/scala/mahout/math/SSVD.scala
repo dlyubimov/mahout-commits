@@ -62,7 +62,6 @@ private[math] object SSVD {
     val r = k + pfxed
 
     val rnd = RandomUtils.getRandom
-    //    val omega = new DenseMatrix(n, r) := ((r, c, v) => rnd.nextGaussian)
     val omega = Matrices.symmetricUniformView(n, r, rnd.nextInt)
 
     var y = a %*% omega

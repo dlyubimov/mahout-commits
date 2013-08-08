@@ -17,23 +17,19 @@
 
 package mahout.math
 
-import org.scalatest.FunSuite
-import org.apache.mahout.math.Vector
-import RLikeOps._
+import org.apache.mahout.math.{Vector, MatrixTimesOps, Matrix}
 
 /**
+ * Matlab-like operators. Declare <code>import MatlabLikeOps._</code> to enable.
  *
- * @author dmitriy
+ * (This option is mutually exclusive to other translations such as RLikeOps).
  */
-class RLikeVectorOpsTest extends FunSuite {
+object MatlabLikeOps {
 
-  test("Hadamard") {
-    val a: Vector = (1, 2, 3)
-    val b = (3, 4, 5)
+  implicit def v2vOps(v: Vector) = new MatlabLikeVectorOps(v)
 
-    val c = a * b
-    println(c)
-    assert(c ===(3, 8, 15))
-  }
+  implicit def times2timesOps(m: MatrixTimesOps) = new MatlabLikeTimesOps(m)
+
+  implicit def m2mOps(m: Matrix) = new MatlabLikeMatrixOps(m)
 
 }

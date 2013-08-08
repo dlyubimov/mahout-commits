@@ -22,47 +22,52 @@ import org.apache.mahout.math.function.Functions
 import RLikeOps._
 
 /**
- * R-like operators
+ * R-like operators.
+ *
+ * For now, all element-wise operators are declared private to math package
+ * since we are still discussing what is the best approach to have to replace
+ * Matlab syntax for elementwise '.*' since it is not directly available for
+ * Scala DSL.
  *
  * @param _v
  */
-class RLikeVectorOps(_v: Vector) extends VectorOps(_v) {
+class MatlabLikeVectorOps(_v: Vector) extends VectorOps(_v) {
 
   /** Elementwise *= */
-  def *=(that: Vector) = v.assign(that, Functions.MULT)
+  private[math] def *@=(that: Vector) = v.assign(that, Functions.MULT)
 
   /** Elementwise /= */
-  def /=(that: Vector) = v.assign(that, Functions.DIV)
+  private[math] def /@=(that: Vector) = v.assign(that, Functions.DIV)
 
   /** Elementwise *= */
-  def *=(that: Double) = v.assign(Functions.MULT, that)
+  private[math] def *@=(that: Double) = v.assign(Functions.MULT, that)
 
   /** Elementwise /= */
-  def /=(that: Double) = v.assign(Functions.DIV, that)
+  private[math] def /@=(that: Double) = v.assign(Functions.DIV, that)
 
   /** Elementwise right-associative /= */
-  def /=:(that: Double) = v.assign(Functions.INV).assign(Functions.MULT, that)
+  private[math] def /@=:(that: Double) = v.assign(Functions.INV).assign(Functions.MULT, that)
 
   /** Elementwise right-associative /= */
-  def /=:(that: Vector) = v.assign(Functions.INV).assign(that, Functions.MULT)
+  private[math] def /@=:(that: Vector) = v.assign(Functions.INV).assign(that, Functions.MULT)
 
   /** Elementwise * */
-  def *(that: Vector) = cloned *= that
+  private[math] def *@(that: Vector) = cloned *= that
 
   /** Elementwise * */
-  def *(that: Double) = cloned *= that
+  private[math] def *@(that: Double) = cloned *= that
 
   /** Elementwise / */
-  def /(that: Vector) = cloned /= that
+  private[math] def /@(that: Vector) = cloned /= that
 
   /** Elementwise / */
-  def /(that: Double) = cloned /= that
+  private[math] def /@(that: Double) = cloned /= that
 
   /** Elementwise right-associative / */
-  def /:(that: Double) = that /=: v.cloned
+  private[math] def /@:(that: Double) = that /=: v.cloned
 
   /** Elementwise right-associative / */
-  def /:(that: Vector) = that.cloned /= v
+  private[math] def /@:(that: Vector) = that.cloned /= v
 
 
 }

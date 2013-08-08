@@ -23,7 +23,7 @@ import scala.math._
 import MatrixOps._
 
 
-class MatrixOpsTest extends FunSuite {
+class MatrixOpsSuite extends FunSuite {
 
 
   test("equivalence") {
