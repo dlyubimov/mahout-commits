@@ -88,7 +88,7 @@ public class LocalSSVDPCASparseTest extends MahoutTestCase {
     runSSVDSolver(1);
   }
 
-  @Test
+//  @Test
   public void runPCATest0() throws IOException {
     runSSVDSolver(0);
   }
