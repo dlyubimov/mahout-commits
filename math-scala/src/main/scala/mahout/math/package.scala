@@ -28,12 +28,6 @@ package object math {
 
   final val `::` = Range(0, 0)
 
-  implicit def vector2vectorOps(v: Vector) = new VectorOps(v)
-
-  implicit def diag2diagOps(m: DiagonalMatrix) = new TimesOps(m)
-
-  implicit def matrix2matrixOps(m: Matrix) = new MatrixOps(m)
-
   implicit def seq2Vector(s: TraversableOnce[AnyVal]) =
     new DenseVector(s.map(_.asInstanceOf[Number].doubleValue()).toArray)
 
@@ -128,6 +122,7 @@ package object math {
    * @return
    */
   def dense[R](rows: R*): DenseMatrix = {
+    import MatrixOps._
     val data = for (r <- rows) yield {
       r match {
         case n: Number => Array(n.doubleValue())
@@ -160,6 +155,7 @@ package object math {
    */
 
   def sparse(rows: Vector*): SparseRowMatrix = {
+    import MatrixOps._
     val nrow = rows.size
     val ncol = rows.map(_.size()).max
     val m = new SparseRowMatrix(nrow, ncol)
@@ -229,6 +225,7 @@ package object math {
    * @return (Q,R)
    */
   def qr(m: Matrix) = {
+    import MatrixOps._
     val qrdec = new QRDecomposition(m cloned)
     (qrdec.getQ, qrdec.getR)
   }

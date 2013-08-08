@@ -17,7 +17,7 @@
 
 package mahout.math
 
-import org.apache.mahout.math.Vector
+import org.apache.mahout.math.{Matrix, Vector}
 import scala.collection.JavaConversions._
 import org.apache.mahout.math.function.Functions
 
@@ -26,6 +26,8 @@ import org.apache.mahout.math.function.Functions
  * @param v Mahout vector
  */
 class VectorOps(val v: Vector) {
+
+  import VectorOps.v2ops
 
   def apply(i: Int) = v.get(i)
 
@@ -84,18 +86,6 @@ class VectorOps(val v: Vector) {
 
   def -=:(that: Double) = v.assign(Functions.NEGATE).assign(Functions.PLUS, that)
 
-  def *=(that: Vector) = v.assign(that, Functions.MULT)
-
-  def /=(that: Vector) = v.assign(that, Functions.DIV)
-
-  def *=(that: Double) = v.assign(Functions.MULT, that)
-
-  def /=(that: Double) = v.assign(Functions.DIV, that)
-
-  def /=:(that: Double) = v.assign(Functions.INV).assign(Functions.MULT, that)
-
-  def /=:(that: Vector) = v.assign(Functions.INV).assign(that, Functions.MULT)
-
   def +(that: Vector) = cloned += that
 
   def -(that: Vector) = cloned -= that
@@ -108,22 +98,14 @@ class VectorOps(val v: Vector) {
 
   def -:(that: Double) = that -=: v.cloned
 
-  def *(that: Vector) = cloned *= that
-
-  def *(that: Double) = cloned *= that
-
-  def /(that: Vector) = cloned /= that
-
-  def /(that: Double) = cloned /= that
-
-  def /:(that: Double) = that /=: v.cloned
-
-  def /:(that: Vector) = that.cloned /= v
-
   def length = v.size()
 
   def cloned: Vector = v.like := v
 
   def sqrt = v.cloned.assign(Functions.SQRT)
 
+}
+
+object VectorOps {
+  private implicit def v2ops(v:Vector):VectorOps = new VectorOps(v)
 }

@@ -17,44 +17,19 @@
 
 package mahout.math
 
-import org.apache.mahout.math.{QRDecomposition, Vector, Matrix}
+import org.apache.mahout.math.{Matrices, QRDecomposition, Vector, Matrix}
 import scala.collection.JavaConversions._
 import org.apache.mahout.math.function.{DoubleFunction, Functions}
 import scala.math._
 
-/**
- * Created with IntelliJ IDEA.
- * User: dmitriy
- * Date: 6/21/13
- * Time: 10:27 PM
- * To change this template use File | Settings | File Templates.
- */
 class MatrixOps(val m: Matrix) {
+
+  import MatrixOps._
 
   def nrow = m.rowSize()
 
   def ncol = m.columnSize()
 
-  /**
-   * matrix-matrix multiplication
-   * @param that
-   * @return
-   */
-  def %*%(that: Matrix) = m.times(that)
-
-  /**
-   * matrix-scalar multiplication
-   * @param that
-   * @return
-   */
-  def %*%(that: Double) = m.times(that)
-
-  /**
-   * matrix-vector multiplication
-   * @param that
-   * @return
-   */
-  def %*%(that: Vector) = m.times(that)
 
   def unary_- = m.assign(Functions.NEGATE)
 
@@ -78,46 +53,6 @@ class MatrixOps(val m: Matrix) {
 
   def -(that: Double) = cloned -= that
 
-  /**
-   * Hadamard product
-   *
-   * @param that
-   * @return
-   */
-
-  def *(that: Matrix) = cloned *= that
-
-  def *(that: Double) = cloned *= that
-
-  /**
-   * in-place Hadamard product. We probably don't want to use assign
-   * to optimize for sparse operations, in case of Hadamard product
-   * it really can be done
-   * @param that
-   */
-  def *=(that: Matrix) = {
-    m.iterateAll().foreach(slice => {
-      val r = slice.index()
-      slice.nonZeroes().foreach(el => {
-        val c = el.index()
-        val v = el.get() * that.get(r, c)
-        m.setQuick(r, c, v)
-      })
-    })
-    m
-  }
-
-  def *=(that: Double) = {
-    m.iterateAll().foreach(slice => {
-      val r = slice.index()
-      slice.nonZeroes().foreach(el => {
-        val c = el.index()
-        val v = el.get() * that
-        m.setQuick(r, c, v)
-      })
-    })
-    m
-  }
 
   def norm = sqrt(m.aggregate(Functions.PLUS, Functions.SQUARE))
 
@@ -162,7 +97,13 @@ class MatrixOps(val m: Matrix) {
     c
   }
 
-  def t = m.transpose()
+  /**
+   * Warning: This provides read-only view only.
+   * In most cases that's what one wants. To get a copy,
+   * use <code>m.t cloned</code>
+   * @return transposed view
+   */
+  def t = Matrices.transposedView(m)
 
   def det = m.determinant()
 
@@ -187,7 +128,7 @@ class MatrixOps(val m: Matrix) {
     m
   }
 
-  def cloned = m.like := m
+  def cloned: Matrix = m.like := m
 
   /**
    * Ideally, we would probably want to override equals(). But that is not
@@ -218,5 +159,7 @@ class MatrixOps(val m: Matrix) {
 }
 
 object MatrixOps {
+  implicit def m2ops(m: Matrix): MatrixOps = new MatrixOps(m)
 
+  implicit def v2ops(v: Vector): VectorOps = new VectorOps(v)
 }
