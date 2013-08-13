@@ -73,12 +73,12 @@ class MatrixOps(val m: Matrix) {
 
   def apply(rowRange: Range, colRange: Range): Matrix = {
 
-    if (rowRange.length == 0 &&
-      colRange.length == 0) return m
+    if (rowRange == :: &&
+        colRange == ::) return m
 
-    val rr = if (rowRange.length == 0) (0 until m.nrow)
+    val rr = if (rowRange == ::) (0 until m.nrow)
     else rowRange
-    val cr = if (colRange.length == 0) (0 until m.ncol)
+    val cr = if (colRange == ::) (0 until m.ncol)
     else colRange
 
     return m.viewPart(rr.start, rr.length, cr.start, cr.length)
@@ -87,13 +87,13 @@ class MatrixOps(val m: Matrix) {
 
   def apply(row: Int, colRange: Range): Vector = {
     var r = m.viewRow(row)
-    if (colRange.length > 0) r = r.viewPart(colRange.start, colRange.length)
+    if (colRange != ::) r = r.viewPart(colRange.start, colRange.length)
     r
   }
 
   def apply(rowRange: Range, col: Int): Vector = {
     var c = m.viewColumn(col)
-    if (rowRange.length > 0) c = c.viewPart(rowRange.start, rowRange.length)
+    if (rowRange != ::) c = c.viewPart(rowRange.start, rowRange.length)
     c
   }
 
@@ -139,10 +139,10 @@ class MatrixOps(val m: Matrix) {
    */
   def equiv(that: Matrix) =
     that != null &&
-      nrow == that.nrow &&
-      m.view.zip(that).forall(t => {
-        t._1.equiv(t._2)
-      })
+        nrow == that.nrow &&
+        m.view.zip(that).forall(t => {
+          t._1.equiv(t._2)
+        })
 
   def nequiv(that: Matrix) = !equiv(that)
 

@@ -26,7 +26,8 @@ import org.apache.mahout.math.solver.EigenDecomposition
  */
 package object math {
 
-  final val `::` = Range(0, 0)
+  // Reserved "ALL" range
+  final val `::`: Range = null
 
   implicit def seq2Vector(s: TraversableOnce[AnyVal]) =
     new DenseVector(s.map(_.asInstanceOf[Number].doubleValue()).toArray)
@@ -56,56 +57,56 @@ package object math {
   : Vector = prod2Vec(s)
 
   implicit def t11vec(s: Tuple11[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
-    , AnyVal])
+      , AnyVal])
   : Vector = prod2Vec(s)
 
   implicit def t12vec(s: Tuple12[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
-    , AnyVal, AnyVal])
+      , AnyVal, AnyVal])
   : Vector = prod2Vec(s)
 
   implicit def t13vec(s: Tuple13[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
-    , AnyVal, AnyVal, AnyVal])
+      , AnyVal, AnyVal, AnyVal])
   : Vector = prod2Vec(s)
 
   implicit def t14vec(s: Tuple14[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
-    , AnyVal, AnyVal, AnyVal, AnyVal])
+      , AnyVal, AnyVal, AnyVal, AnyVal])
   : Vector = prod2Vec(s)
 
   implicit def t15vec(s: Tuple15[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
-    , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
+      , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
   : Vector = prod2Vec(s)
 
   implicit def t16vec(s: Tuple16[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
-    , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
+      , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
   : Vector = prod2Vec(s)
 
   implicit def t17vec(s: Tuple17[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
-    , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
+      , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
   : Vector = prod2Vec(s)
 
   implicit def t18vec(s: Tuple18[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
-    , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
+      , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
   : Vector = prod2Vec(s)
 
   implicit def t19vec(s: Tuple19[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
-    , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
+      , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
   : Vector = prod2Vec(s)
 
   implicit def t20vec(s: Tuple20[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
-    , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
+      , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
   : Vector = prod2Vec(s)
 
   implicit def t21vec(s: Tuple21[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
-    , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
+      , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
   : Vector = prod2Vec(s)
 
   implicit def t22vec(s: Tuple22[AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal
-    , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
+      , AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal, AnyVal])
   : Vector = prod2Vec(s)
 
 
   def prod2Vec(s: Product) = new DenseVector(s.productIterator.
-    map(_.asInstanceOf[Number].doubleValue()).toArray)
+      map(_.asInstanceOf[Number].doubleValue()).toArray)
 
   def diagv(v: Vector): DiagonalMatrix = new DiagonalMatrix(v)
 

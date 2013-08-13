@@ -17,7 +17,7 @@
 
 package mahout.math
 
-import org.apache.mahout.math.{Matrix, Vector}
+import org.apache.mahout.math.Vector
 import scala.collection.JavaConversions._
 import org.apache.mahout.math.function.Functions
 
@@ -33,7 +33,8 @@ class VectorOps(val v: Vector) {
 
   def update(i: Int, that: Double) = v.setQuick(i, that)
 
-  def apply(r: Range) = v.viewPart(r.start, r.length)
+  /** Warning: we only support consecutive views, step is not supported directly */
+  def apply(r: Range) = if (r == ::) v else v.viewPart(r.start, r.length * r.step)
 
   def update(r: Range, that: Vector) = apply(r) := that
 
@@ -64,7 +65,7 @@ class VectorOps(val v: Vector) {
 
   def equiv(that: Vector) =
     length == that.length &&
-      v.all.view.zip(that.all).forall(t => t._1.get == t._2.get)
+        v.all.view.zip(that.all).forall(t => t._1.get == t._2.get)
 
   def ===(that: Vector) = equiv(that)
 
@@ -107,5 +108,5 @@ class VectorOps(val v: Vector) {
 }
 
 object VectorOps {
-  private implicit def v2ops(v:Vector):VectorOps = new VectorOps(v)
+  private implicit def v2ops(v: Vector): VectorOps = new VectorOps(v)
 }
