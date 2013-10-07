@@ -43,7 +43,7 @@ abstract class AbstractSimilarity extends AbstractItemSimilarity implements User
 
   /**
    * <p>
-   * Creates a possibly weighted AbstractSimilarity.
+   * Creates a possibly weighted {@link AbstractSimilarity}.
    * </p>
    */
   AbstractSimilarity(final DataModel dataModel, Weighting weighting, boolean centerData) throws TasteException {
@@ -93,7 +93,7 @@ abstract class AbstractSimilarity extends AbstractItemSimilarity implements User
    * @param n
    *          total number of users or items
    * @param sumXY
-   *          sum of product of user/item preference values, over all items/users prefererred by both
+   *          sum of product of user/item preference values, over all items/users preferred by both
    *          users/items
    * @param sumX2
    *          sum of the square of user/item preference values, over the first item/user
@@ -102,7 +102,7 @@ abstract class AbstractSimilarity extends AbstractItemSimilarity implements User
    * @param sumXYdiff2
    *          sum of squares of differences in X and Y values
    * @return similarity value between -1.0 and 1.0, inclusive, or {@link Double#NaN} if no similarity can be
-   *         computed (e.g. when no items have been rated by both uesrs
+   *         computed (e.g. when no items have been rated by both users
    */
   abstract double computeResult(int n, double sumXY, double sumX2, double sumY2, double sumXYdiff2);
   
@@ -184,7 +184,7 @@ abstract class AbstractSimilarity extends AbstractItemSimilarity implements User
       if (compare >= 0) {
         if (++yPrefIndex >= yLength) {
           if (hasInferrer) {
-            // Must count other Xs; pretend next Y is far away            
+            // Must count other Xs; pretend next Y is far away
             if (xIndex == Long.MAX_VALUE) {
               // ... but stop if both are done!
               break;
@@ -246,7 +246,7 @@ abstract class AbstractSimilarity extends AbstractItemSimilarity implements User
     double sumXYdiff2 = 0.0;
     int count = 0;
     
-    // No, pref inferrers and transforms don't appy here. I think.
+    // No, pref inferrers and transforms don't apply here. I think.
     
     while (true) {
       int compare = xIndex < yIndex ? -1 : xIndex > yIndex ? 1 : 0;

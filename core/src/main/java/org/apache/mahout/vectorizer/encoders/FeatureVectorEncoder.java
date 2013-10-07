@@ -83,7 +83,7 @@ public abstract class FeatureVectorEncoder {
    * @param data         The vector to which the value should be added.
    */
   public void addToVector(String originalForm, double weight, Vector data) {
-    addToVector(bytesForString(originalForm), weight, data);        
+    addToVector(bytesForString(originalForm), weight, data);
   }
 
   public abstract void addToVector(byte[] originalForm, double weight, Vector data);
@@ -95,9 +95,9 @@ public abstract class FeatureVectorEncoder {
    * should not be used.
    *
    * @param originalForm  The original byte array value
-   * @param dataSize      The length of hte vector being encoded
+   * @param dataSize      The length of the vector being encoded
    * @param name          The name of the variable being encoded
-   * @param probe             The probe number
+   * @param probe         The probe number
    * @return              The hash of the current probe
    */
   protected abstract int hashForProbe(byte[] originalForm, int dataSize, String name, int probe);

@@ -21,7 +21,7 @@ import java.io.Serializable;
 
 /**
  * <p>
- * A simple class that can keep track of a running avearage of a series of numbers. One can add to or remove
+ * A simple class that can keep track of a running average of a series of numbers. One can add to or remove
  * from the series, as well as update a datum in the series. The class does not actually keep track of the
  * series of values, just its running average, so it doesn't even matter if you remove/change a value that
  * wasn't added.
@@ -38,7 +38,7 @@ public class FullRunningAverage implements RunningAverage, Serializable {
 
   public FullRunningAverage(int count, double average) {
     this.count = count;
-    this.average = average;    
+    this.average = average;
   }
 
   /**
