@@ -59,14 +59,15 @@ class IntIndexedRowsDRMOpsTests extends FunSuite {
 
       printf("drm A -> nrow=%d, ncol=%d.\n", drmA.nrow, drmA.ncol)
 
-      // transpose
+      // distributed transpose
       val drmAt = drmA.t
+
       printf("drm A' -> nrow=%d, ncol=%d.\n", drmAt.nrow, drmAt.ncol)
 
-      // actually run and collect
+      // now actually run and collect
       val coreAt = drmAt.collect
 
-      println(coreAt.toString)
+      println(coreAt)
 
     } finally {
       sc.stop()
@@ -131,14 +132,21 @@ class IntIndexedRowsDRMOpsTests extends FunSuite {
     implicit val sc = mahoutSparkContext("local", "DrmOpsTests", buildJars)
 
     val rnd = new Random(1234L)
+
+    // in-core random A
     val icA = new SparseMatrix(50, 50) := ((r, c, v) => if (rnd.nextDouble() > 0.7) rnd.nextDouble() else 0.0)
 
+    // in-core A'A actual
     val icAtAactual = icA.t %*% icA
 
+    // distributed A
     val drmA = drmParallelize(icA)
 
+    // distributed computation and collection to the in-core A'A. The slim variation reduces to a
+    // tiny matrix collected to the front end.
     val icAtA = drmA.t_sq_slim()
 
+    // norm of residual
     val normResidual = (icAtA - icAtAactual).norm
 
     printf("A=\n%s\n", icA)
@@ -147,8 +155,6 @@ class IntIndexedRowsDRMOpsTests extends FunSuite {
     printf("AtA actual = \n%s\n",icAtAactual)
 
     assert(normResidual < 1e-10, "norm residual high: %.2f".format(normResidual))
-
-
   }
 
   test("t squared slim dense") {
@@ -159,12 +165,16 @@ class IntIndexedRowsDRMOpsTests extends FunSuite {
     val rnd = new Random(1234L)
     val icA = new DenseMatrix(50, 50) := ((r, c, v) => rnd.nextDouble())
 
+    // in-core A'A actual computation
     val icAtAactual = icA.t %*% icA
 
+    // distributed A
     val drmA = drmParallelize(icA)
 
+    // distributed slim squared computation
     val icAtA = drmA.t_sq_slim()
 
+    // norm of residuals
     val normResidual = (icAtA - icAtAactual).norm
 
     printf("A=\n%s\n", icA)
@@ -173,8 +183,6 @@ class IntIndexedRowsDRMOpsTests extends FunSuite {
     printf("AtA actual = \n%s\n",icAtAactual)
 
     assert(normResidual < 1e-10, "norm residual high: %.2f".format(normResidual))
-
-
   }
 
 }
