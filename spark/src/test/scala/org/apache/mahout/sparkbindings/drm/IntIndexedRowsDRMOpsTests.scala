@@ -127,7 +127,7 @@ class IntIndexedRowsDRMOpsTests extends FunSuite {
 
     val drmA = drmParallelize(icA)
 
-    val icAtA = drmA.t_sq()
+    val icAtA = drmA.t_sq_slim()
 
     val normResidual = (icAtA - icAtAactual).norm
 
@@ -153,7 +153,7 @@ class IntIndexedRowsDRMOpsTests extends FunSuite {
 
     val drmA = drmParallelize(icA)
 
-    val icAtA = drmA.t_sq()
+    val icAtA = drmA.t_sq_slim()
 
     val normResidual = (icAtA - icAtAactual).norm
 

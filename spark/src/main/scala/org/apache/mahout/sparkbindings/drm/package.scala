@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.mahout.sparkbindings
 
 import org.apache.mahout.math._
@@ -16,16 +33,16 @@ package object drm {
 
   final val s_log = Logger.getLogger("mahout.spark.drm");
 
-  implicit def drm2drmOps[K <% Writable : ClassManifest](drm: DRM[K]): DRMOps[K] =
-    new DRMOps[K](drm)
+  implicit def drm2drmOps[K <% Writable : ClassManifest](drm: BaseDRM[K]): ExtendedDRMOps[K] =
+    new ExtendedDRMOps[K](drm)
 
-  implicit def drm2IntDrmOps(drm: DRM[Int]): IntIndexedRowsDRMOps = new IntIndexedRowsDRMOps(drm)
+  implicit def drm2IntDrmOps(drm: BaseDRM[Int]): IntIndexedRowsDRMOps = new IntIndexedRowsDRMOps(drm)
 
   implicit def v2drmvops(v: Vector): DRMVectorOps = new DRMVectorOps(v)
 
-  implicit def v2Writable(v: Vector):VectorWritable = new VectorWritable(v)
+  implicit def v2Writable(v: Vector): VectorWritable = new VectorWritable(v)
 
-  implicit def m2Writable(m: Matrix):MatrixWritable = new MatrixWritable(m)
+  implicit def m2Writable(m: Matrix): MatrixWritable = new MatrixWritable(m)
 
   implicit def vw2v(vw: VectorWritable): Vector = vw.get()
 
@@ -41,7 +58,7 @@ package object drm {
    *
    * @return DRM[Any] where Any is automatically translated to value type
    */
-  def drmFromHDFS(sc: SparkContext, path: String): DRM[Any] = {
+  def drmFromHDFS(sc: SparkContext, path: String): BaseDRM[Any] = {
     val rdd = sc.sequenceFile(path, classOf[Writable], classOf[VectorWritable]).map(t => (t._1, t._2.get()))
 
     val key = rdd.map(_._1).take(1)(0)
@@ -64,72 +81,45 @@ package object drm {
     {
       implicit val km: ClassManifest[AnyRef] = ClassManifest.classType(key.getClass)
       implicit def getWritable(x: Any): Writable = val2key()
-      new DRM[Any](rdd.map(t => (key2val(t._1), t._2)))
+      new BaseDRM[Any](rdd.map(t => (key2val(t._1), t._2)))
     }
   }
 
-  /**
-   * Shortcut to parallelizing matrices with indices, ignore row labels.
-   * @param m
-   * @param numPartitions
-   * @param sc
-   * @return
-   */
+  /** Shortcut to parallelizing matrices with indices, ignore row labels. */
   def drmParallelize(m: Matrix, numPartitions: Int = 1)
-                    (implicit sc: SparkContext) =
+      (implicit sc: SparkContext) =
     drmParallelizeWithRowIndices(m, numPartitions)(sc)
 
-  /**
-   * drmParallelize in-core matrix as spark distributed matrix, using row ordinal indices as data set keys.
-   * @param m
-   * @param numPartitions
-   * @param sc
-   * @return
-   */
+  /** Parallelize in-core matrix as spark distributed matrix, using row ordinal indices as data set keys. */
   def drmParallelizeWithRowIndices(m: Matrix, numPartitions: Int = 1)
-                                  (implicit sc: SparkContext)
-  : DRM[Int] = {
+      (implicit sc: SparkContext)
+  : BaseDRM[Int] = {
+
     import mahout.math.RLikeOps._
 
-    val p = for (i <- 0 until m.nrow) yield (i, m(i, ::).toByteArray)
-    new DRM(sc.parallelize(p, numPartitions).map(t => (t._1, DRMVectorOps.fromByteArray(t._2))))
+    val p = (0 until m.nrow).map(i => i -> m(i, ::))
+    new BaseDRM(sc.parallelize(p, numPartitions))
   }
 
-  /**
-   * drmParallelize in-core matrix as spark distributed matrix, using row labels as a data set keys.
-   * @param m
-   * @param numPartitions
-   * @param sc
-   * @return
-   */
+  /** Parallelize in-core matrix as spark distributed matrix, using row labels as a data set keys. */
   def drmParallelizeWithRowLabels(m: Matrix, numPartitions: Int = 1)
-                                 (implicit sc: SparkContext)
-  : DRM[String] = {
+      (implicit sc: SparkContext)
+  : BaseDRM[String] = {
 
     import mahout.math.RLikeOps._
 
-    // TODO: my spark 0.8 patches should do automatic kryo parallelization now,
-    // pre-serialization should not be necessary any longer.
+    // In spark 0.8, I have patched ability to parallelize kryo objects directly, so no need to
+    // wrap that into byte array anymore
     val rb = m.getRowLabelBindings
-    val p = for (i: String <- rb.keySet().toIndexedSeq) yield {
-      (i, m(rb(i), ::).toByteArray)
-    }
+    val p = for (i: String <- rb.keySet().toIndexedSeq) yield i -> m(rb(i), ::)
 
-    new DRM(sc.parallelize(p, numPartitions).map(t => (t._1, DRMVectorOps.fromByteArray(t._2))))
+
+    new BaseDRM(sc.parallelize(p, numPartitions))
   }
 
-  /**
-   * This creates an empty DRM with specified number of partitions
-   * and cardinality.
-   *
-   * @param nrow
-   * @param ncol
-   * @param numPartitions
-   * @param sc
-   * @return
-   */
+  /** This creates an empty DRM with specified number of partitions and cardinality. */
   def drmParallelizeEmpty(nrow: Int, ncol: Int, numPartitions: Int = 10)
-                         (implicit sc: SparkContext): DRM[Int] = {
+      (implicit sc: SparkContext): BaseDRM[Int] = {
     val rdd = sc.parallelize(0 to numPartitions, numPartitions).flatMap(part => {
       val partNRow = (nrow - 1) / numPartitions + 1
       val partStart = partNRow * part
@@ -137,11 +127,11 @@ package object drm {
 
       for (i <- partStart until partEnd) yield (i, new RandomAccessSparseVector(ncol): Vector)
     })
-    new DRM[Int](rdd, nrow, ncol)
+    new BaseDRM[Int](rdd, nrow, ncol)
   }
 
   def drmParallelizeEmptyLong(nrow: Long, ncol: Int, numPartitions: Int = 10)
-                         (implicit sc: SparkContext): DRM[Long] = {
+      (implicit sc: SparkContext): BaseDRM[Long] = {
     val rdd = sc.parallelize(0 to numPartitions, numPartitions).flatMap(part => {
       val partNRow = (nrow - 1) / numPartitions + 1
       val partStart = partNRow * part
@@ -149,19 +139,19 @@ package object drm {
 
       for (i <- partStart until partEnd) yield (i, new RandomAccessSparseVector(ncol): Vector)
     })
-    new DRM[Long](rdd, nrow, ncol)
+    new BaseDRM[Long](rdd, nrow, ncol)
   }
 
 
   /**
-   * create proper spark context that includes local Mahout jars
+   * Create proper spark context that includes local Mahout jars
    * @param masterUrl
    * @param appName
    * @param customJars
    * @return
    */
   def mahoutSparkContext(masterUrl: String, appName: String,
-                         customJars: TraversableOnce[String] = Nil): SparkContext = {
+      customJars: TraversableOnce[String] = Nil): SparkContext = {
     val closeables = new java.util.ArrayDeque[Closeable]()
 
     try {
@@ -217,18 +207,19 @@ package object drm {
       // context specific jars
       val mcjars = jars.filter(j =>
         j.matches(".*mahout-math-.*\\.jar") ||
-          j.matches(".*mahout-math-scala-.*\\.jar") ||
-          j.matches(".*mahout-core-.*\\.jar")
+            j.matches(".*mahout-math-scala-.*\\.jar") ||
+            j.matches(".*mahout-core-.*\\.jar") ||
+            j.matches(".*mahout-spark-.*\\.jar")
       ).filter(!_.matches(".*-tests.jar")) ++
-        SparkContext.jarOfClass(classOf[DRMVectorOps]) ++ customJars
+          SparkContext.jarOfClass(classOf[DRMVectorOps]) ++ customJars
 
       if (s_log.isDebugEnabled) {
         s_log.debug("Mahout jars:")
         mcjars.foreach(j => s_log.debug(j))
       }
 
-      System.setProperty("spark.serializer", "spark.KryoSerializer")
-      System.setProperty("spark.kryo.registrator", "mahout.spark.io.MahoutKryoRegistrator")
+      System.setProperty("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+      System.setProperty("spark.kryo.registrator", "org.apache.mahout.sparkbindings.io.MahoutKryoRegistrator")
 
       new SparkContext(masterUrl, appName, jars = mcjars.toSeq)
 
@@ -237,6 +228,4 @@ package object drm {
     }
 
   }
-
-
 }

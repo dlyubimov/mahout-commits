@@ -10,8 +10,9 @@ import org.apache.spark.SparkContext._
 
 /**
  *
+ * @author dmitriy
  */
-class DrmOpsTests extends FunSuite {
+class DRMTests extends FunSuite {
 
 
   BasicConfigurator.resetConfiguration()
@@ -19,35 +20,41 @@ class DrmOpsTests extends FunSuite {
   Logger.getRootLogger.setLevel(Level.ERROR)
   Logger.getLogger("mahout.spark").setLevel(Level.DEBUG)
 
-  // in case we are running from ide, it won't use jars
-  // for class path so we need to get maven-computed one
-  // in order to pass it to the spark
-  val buildJars = {
-    val buildDir = new File("ceml-spark-solvers/target/")
-    val ls = buildDir.list()
-    if (ls == null) Nil
-    else
-      ls.filter(_.matches(".*\\.jar")).map(buildDir.getAbsolutePath + "/" + _).toIterable
-  }
+  val buildJars = Traversable.empty[String]
 
   println("pwd: " + new File(".").getAbsolutePath)
   println(buildJars.toString)
 
-  test("DRM-io") {
+  test("DRM DFS i/o (local)") {
+    drmIOTest(
+      sparkMaster = "local",
+      uploadPath = "UploadDRM"
+    )
+  }
+  test("DRM DFS i/o (standalone+hdfs)") {
+    drmIOTest(
+      sparkMaster = "spark://localhost:7077",
+      uploadPath = "hdfs://localhost:11010/tmp/UploadDRM"
+    )
+  }
 
-    implicit val sc = mahoutSparkContext("spark://localhost:7077", "DrmOpsTests", buildJars)
-    //        implicit val sc = mahoutSparkContext("local", "DrmOpsTests", buildJars)
+  def drmIOTest(sparkMaster: String, uploadPath: String) {
+
+    //    implicit val sc = mahoutSparkContext("spark://localhost:7077", "DrmOpsTests", buildJars)
+    implicit val sc = mahoutSparkContext(sparkMaster, "DrmOpsTests", buildJars)
     try {
 
       val inCoreA = dense((1, 2, 3), (3, 4, 5))
       val drmA = drmParallelize(inCoreA)
 
-      drmA.writeDRM("hdfs://localhost:11010/tmp/UploadedDRM")
+//      drmA.writeDRM("hdfs://localhost:11010/tmp/UploadedDRM")
+      drmA.writeDRM(uploadPath)
 
       println(inCoreA)
 
       // load back from hdfs
-      val drmB = drmFromHDFS(sc, "hdfs://localhost:11010/tmp/UploadedDRM")
+//      val drmB = drmFromHDFS(sc, "hdfs://localhost:11010/tmp/UploadedDRM")
+      val drmB = drmFromHDFS(sc, uploadPath)
 
       // collect back into in-core
       val inCoreB = drmB.collect
@@ -61,7 +68,7 @@ class DrmOpsTests extends FunSuite {
     }
   }
 
-  test("DRM-parallelizeEmpty") {
+  test("DRM parallelizeEmpty") {
 
     //    implicit val sc = mahoutSparkContext("spark://localhost:7077", "DrmOpsTests", buildJars)
     implicit val sc = mahoutSparkContext("local", "DrmOpsTests", buildJars)
@@ -84,7 +91,7 @@ class DrmOpsTests extends FunSuite {
 
   }
 
-  test("AtA") {
+  test("AtA slim") {
     //    implicit val sc = mahoutSparkContext("spark://localhost:7077", "DrmOpsTests", buildJars)
     implicit val sc = mahoutSparkContext("local", "DrmOpsTests", buildJars)
     try {
@@ -92,13 +99,13 @@ class DrmOpsTests extends FunSuite {
       val inCoreA = dense((1, 2), (2, 3))
       val drmA = drmParallelize(inCoreA)
 
-      val inCoreAtA = drmA.t_sq()
+      val inCoreAtA = drmA.t_sq_slim()
       println(inCoreAtA)
 
       val expectedAtA = inCoreA.t %*% inCoreA
       println(expectedAtA)
 
-      assert(expectedAtA equiv inCoreAtA)
+      assert(expectedAtA === inCoreAtA)
 
     } finally {
       sc.stop()

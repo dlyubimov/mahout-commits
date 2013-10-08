@@ -8,11 +8,12 @@ import mahout.math.RLikeOps._
 import collection.JavaConversions._
 import org.apache.hadoop.io.Writable
 
-class DRMOps[K <% Writable : ClassManifest](val drm: DRM[K]) {
-
-  //  def writeDRM(path: String) =  drm.getRDD.map(t=>(t._1,t._2:VectorWritable)).saveAsSequenceFile(path)
-  def writeDRM(path: String) = drm.getRDD.saveAsSequenceFile(path)
-
+/**
+ * Additional experimental operations over BaseDRM implementation. I will possibly move them up to
+ * the DRMBase once they stabilize.
+ *
+ */
+class ExtendedDRMOps[K <% Writable : ClassManifest](val drm: BaseDRM[K]) {
 
   /**
    * Reorganize every partition into a single in-core matrix
@@ -48,7 +49,7 @@ class DRMOps[K <% Writable : ClassManifest](val drm: DRM[K]) {
    * @param maxInMemNCol maximum ncol of A during which in-memory accumulation is possible.
    * @return
    */
-  def t_sq(maxInMemNCol: Int = 2000): Matrix = {
+  def t_sq_slim(maxInMemNCol: Int = 2000): Matrix = {
 
     val ncol = drm.ncol
 

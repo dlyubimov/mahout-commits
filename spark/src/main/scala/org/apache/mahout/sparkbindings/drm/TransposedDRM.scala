@@ -10,9 +10,13 @@ import org.apache.spark.SparkContext._
 
 /**
  *
- * @author dmitriy
+ * Transposed DRM.
+ *
+ * TODO: add algorithm that uses blockify + sparse vector messages instead of element messages. I
+ * expect it to be quite faster than element-based messages.
+ *
  */
-private[sparkbindings] class TransposedDRM(val transposee: DRM[Int], withCombiners: Boolean = false) extends DRM[Int] {
+private[sparkbindings] class TransposedDRM(val transposee: BaseDRM[Int], withCombiners: Boolean = false) extends BaseDRM[Int] {
 
   // transposeAlg2 (with combiners) which, cpu-wise, seems to run longer,
   // most likely because of lack of much of aggregation effect and serialization overhead,

@@ -147,7 +147,12 @@ then
   for f in $MAHOUT_HOME/math-scala/target/mahout-math-scala-*.jar ; do 
     CLASSPATH=${CLASSPATH}:$f;
   done
-    
+
+  # add mahout-spark since it is currently not used in examples
+  for f in $MAHOUT_HOME/spark/target/mahout-spark-*.jar ; do 
+    CLASSPATH=${CLASSPATH}:$f;
+  done
+  
 
   # add release dependencies to CLASSPATH
   for f in $MAHOUT_HOME/lib/*.jar; do

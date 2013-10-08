@@ -5,7 +5,7 @@ import org.apache.spark.SparkContext._
 /**
  *
  */
-class ProductDRM(aMtx:DRM[Int], bMtx:DRM[Int]) extends DRM[Int] {
+class ProductDRM(aMtx:BaseDRM[Int], bMtx:BaseDRM[Int]) extends BaseDRM[Int] {
 
 
 //  def computeLargeProduct(aMtx:DRM[Int],bMtx:DRM[Int]):RDD[(Int,Vector)] = {
