@@ -39,13 +39,7 @@ class IntIndexedRowsDRMOpsTests extends FunSuite {
   // in case we are running from ide, it won't use jars
   // for class path so we need to get maven-computed one
   // in order to pass it to the spark
-  val buildJars = {
-    val buildDir = new File("ceml-spark-solvers/target/")
-    val ls = buildDir.list()
-    if (ls == null) Nil
-    else
-      ls.filter(_.matches(".*\\.jar")).map(buildDir.getAbsolutePath + "/" + _).toIterable
-  }
+  val buildJars = Traversable.empty[String]
 
 
   test("DRM-transpose") {
@@ -131,7 +125,7 @@ class IntIndexedRowsDRMOpsTests extends FunSuite {
 
   }
 
-  test("t_squared_sparse") {
+  test("t squared slim sparse") {
 
     //    implicit val sc = mahoutSparkContext("spark://localhost:7077", "DrmOpsTests", buildJars)
     implicit val sc = mahoutSparkContext("local", "DrmOpsTests", buildJars)
@@ -157,7 +151,7 @@ class IntIndexedRowsDRMOpsTests extends FunSuite {
 
   }
 
-  test("t_squared_dense") {
+  test("t squared slim dense") {
 
     //    implicit val sc = mahoutSparkContext("spark://localhost:7077", "DrmOpsTests", buildJars)
     implicit val sc = mahoutSparkContext("local", "DrmOpsTests", buildJars)
