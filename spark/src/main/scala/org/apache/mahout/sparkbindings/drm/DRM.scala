@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.mahout.sparkbindings.drm
 
 import org.apache.mahout.math.{Matrix, Vector}
@@ -28,8 +29,10 @@ import org.apache.mahout.math.{Matrix, Vector}
  */
 trait DRM[K] {
 
+  /** R-like syntax for number of rows. */
   def nrow: Long
 
+  /** R-like syntax for number of columns */
   def ncol: Int
 
   /**
