@@ -5,8 +5,58 @@
 \textclass article
 \begin_preamble
 \usepackage{fullpage}
+\usepackage{multicol,caption}
+\usepackage{wrapfig}
+
+\usepackage{amsthm}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{problem}{Problem}
+\theoremstyle{remark}
+\newtheorem{observation}{Observation}
+
+
+\usepackage{tikz}
+\usetikzlibrary{positioning,shadings,fadings,automata,matrix,shapes,arrows,backgrounds}
+
+\tikzstyle{every picture}=[execute at end picture=
+{
+\begin{pgfonlayer}{background}
+\path[fill=red!10!green!4,rounded corners]
+(current bounding box.south west) rectangle
+(current bounding box.north east);
+\end{pgfonlayer}
+}]
+
+\definecolor{tentative}{rgb}{0.4,0.6,0.7}
+\definecolor{comment}{rgb}{0.7,0.4,0.4}
+\definecolor{Turquoise}{rgb}{0,0.81,0.85}
+\definecolor{Violet}{rgb}{0.93,0.5,0.93}
+\definecolor{hlhc}{rgb}{0.96,0.75,0.75}
+\definecolor{hllc}{rgb}{0.75,0.96,0.75}
+
+\newenvironment{Figure}
+  {\par\medskip\noindent\minipage{\linewidth}\centering\vspace{20pt}}
+  {\endminipage\par\medskip\vspace{20pt}}
+
+\newbox\mybox
+
+% \renewcommand{\thefootnote}{\fnsymbol{footnote}}
+
+\setlength{\columnseprule}{0.4pt}
+\renewcommand\columnseprulecolor{\color{black!10}}
+\setlength{\columnsep}{28.0pt}
+
+\usepackage{soul}
+\newcommand{\hlhigh}[1]{\sethlcolor{hlhc}\hl{#1}}
+\newcommand{\hlmed}[1]{\sethlcolor{yellow}\hl{#1}}
+\newcommand{\hllow}[1]{\sethlcolor{hllc}\hl{#1}}
 \end_preamble
 \use_default_options true
+\begin_modules
+knitr
+\end_modules
 \maintain_unincluded_children false
 \language english
 \language_package default
@@ -50,15 +100,15 @@
 \use_indices false
 \paperorientation portrait
 \suppress_date true
-\use_refstyle 0
+\use_refstyle 1
 \index Index
 \shortcut idx
 \color #008000
 \end_index
 \secnumdepth 3
-\tocdepth 3
+\tocdepth 4
 \paragraph_separation skip
-\defskip bigskip
+\defskip medskip
 \quotes_language english
 \papercolumns 1
 \papersides 1
@@ -105,6 +155,34 @@ LatexCommand tableofcontents
 
 \begin_layout Section
 Background information
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{multicols}{2}
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -484,6 +562,22 @@ Some of interesting applications of SVD is dimensionality reduction and
  both PCA and dimensionality reduction transformations.
 \end_layout
 
+\begin_layout Standard
+PCA is also one of the methods to achieve 
+\emph on
+
+\begin_inset CommandInset href
+LatexCommand href
+name "dimensionality reduction"
+target "http://en.wikipedia.org/wiki/Dimensionality_reduction"
+
+\end_inset
+
+
+\emph default
+.
+\end_layout
+
 \begin_layout Paragraph
 Outline: data points are row vectors.
 \end_layout
@@ -515,10 +609,10 @@ Note that in wikipedia article input data points are considered to be column
 : 
 \begin_inset Formula 
 \[
-\mathbf{A}^{\left(pca\right)}=\left(\begin{matrix}\mathbf{a}_{1}^{\top}\\
-\mathbf{a}_{2}^{\top}\\
+\mathbf{A}^{\left(pca\right)}=\left(\begin{matrix}\boldsymbol{a}_{1}^{\top}\\
+\boldsymbol{a}_{2}^{\top}\\
 \vdots\\
-\mathbf{a}_{m}^{\top}
+\boldsymbol{a}_{m}^{\top}
 \end{matrix}\right)
 \]
 
@@ -551,7 +645,7 @@ In many cases in literature one would find PCA mean vector denoted as
 \vdots\\
 \xi_{n}
 \end{matrix}\right)\\
- & = & \frac{1}{m}\sum_{i}^{m}\mathbf{a}_{i}.
+ & = & \frac{1}{m}\sum_{i}^{m}\boldsymbol{a}_{i}.
 \end{eqnarray*}
 
 \end_inset
@@ -955,7 +1049,7 @@ MAHOUT-817 introduces two additional pca options:
 \family default
 
 \begin_inset Foot
-status open
+status collapsed
 
 \begin_layout Plain Layout
 Careful, option parsing in Mahout is tricky: just 
@@ -1003,8 +1097,59 @@ reference "sec:Usage"
  for details.
 \end_layout
 
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{multicols}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Input/output file formats and layout
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{multicols}{2}
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -1140,6 +1285,29 @@ Output of
 .
 \end_layout
 
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{multicols}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 CLI usage
 \begin_inset CommandInset label
@@ -1168,6 +1336,18 @@ As of Mahout 0.8 trunk.
 
 10/07/2012 adjusted for MAHOUT-1067 changes.
 \end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
 
 \end_inset
 
@@ -1803,8 +1983,43 @@ Standard Mahout options.
 overwrite output if exists.
 \end_layout
 
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Embedded use
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{multicols}{2}
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -1863,8 +2078,36 @@ SSVDCli
  for an example of how to run this 2 step solution.
 \end_layout
 
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{multicols}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 FAQ
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -2054,14 +2297,6 @@ SequenceFileInputFormat
 ).
  This is always the case with hadoop versions as of the time of this writing
  though.
-\end_layout
-
-\begin_layout Section
-Mixed environments: R+Mahout
-\end_layout
-
-\begin_layout Standard
-wip, todo, check back later.
 \end_layout
 
 \end_body
