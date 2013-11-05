@@ -98,7 +98,7 @@ public final class SequenceFilesFromMailArchivesTest extends MahoutTestCase {
     String expectedChunkPath = expectedChunkFile.getAbsolutePath();
     Assert.assertTrue("Expected chunk file " + expectedChunkPath + " not found!", expectedChunkFile.isFile());
 
-    Configuration conf = new Configuration();
+    Configuration conf = getConfiguration();
     SequenceFileIterator<Text, Text> iterator = new SequenceFileIterator<Text, Text>(new Path(expectedChunkPath), true, conf);
     Assert.assertTrue("First key/value pair not found!", iterator.hasNext());
     Pair<Text, Text> record = iterator.next();
@@ -129,14 +129,15 @@ public final class SequenceFilesFromMailArchivesTest extends MahoutTestCase {
   @Test
   public void testMapReduce() throws Exception {
 
-    Path tmpDir = this.getTestTempDirPath();
+    Path tmpDir = getTestTempDirPath();
     Path mrOutputDir = new Path(tmpDir, "mail-archives-out-mr");
-    Configuration configuration = new Configuration();
+    Configuration configuration = getConfiguration();
     FileSystem fs = FileSystem.get(configuration);
 
     File expectedInputFile = new File(inputDir.toString());
 
     String[] args = {
+      "-Dhadoop.tmp.dir=" + configuration.get("hadoop.tmp.dir"),
       "--input", expectedInputFile.getAbsolutePath(),
       "--output", mrOutputDir.toString(),
       "--charset", "UTF-8",

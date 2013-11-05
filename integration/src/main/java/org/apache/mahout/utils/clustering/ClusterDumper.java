@@ -24,8 +24,8 @@ import java.io.Writer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
+import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -63,6 +63,7 @@ public final class ClusterDumper extends AbstractJob {
     TEXT,
     CSV,
     GRAPH_ML,
+    JSON,
   }
 
   public static final String DICTIONARY_TYPE_OPTION = "dictionaryType";
@@ -104,7 +105,7 @@ public final class ClusterDumper extends AbstractJob {
   public int run(String[] args) throws Exception {
     addInputOption();
     addOutputOption();
-    addOption(OUTPUT_FORMAT_OPT, "of", "The optional output format for the results.  Options: TEXT, CSV or GRAPH_ML",
+    addOption(OUTPUT_FORMAT_OPT, "of", "The optional output format for the results.  Options: TEXT, CSV, JSON or GRAPH_ML",
         "TEXT");
     addOption(SUBSTRING_OPTION, "b", "The number of chars of the asFormatString() to print");
     addOption(NUM_WORDS_OPTION, "n", "The number of top terms to print");
@@ -239,10 +240,20 @@ public final class ClusterDumper extends AbstractJob {
       case GRAPH_ML:
         result = new GraphMLClusterWriter(writer, clusterIdToPoints, measure, numTopFeatures, dictionary, subString);
         break;
+      case JSON:
+        result = new JsonClusterWriter(writer, clusterIdToPoints, measure, numTopFeatures, dictionary);
+        break;
       default:
         throw new IllegalStateException("Unknown outputformat: " + outputFormat);
     }
     return result;
+  }
+
+  /**
+   * Convenience function to set the output format during testing.
+   */
+  public void setOutputFormat(OUTPUT_FORMAT of) {
+    outputFormat = of;
   }
 
   private void init() {
@@ -295,7 +306,7 @@ public final class ClusterDumper extends AbstractJob {
 
   public static Map<Integer, List<WeightedVectorWritable>> readPoints(Path pointsPathDir, long maxPointsPerCluster,
       Configuration conf) {
-    Map<Integer, List<WeightedVectorWritable>> result = new TreeMap<Integer, List<WeightedVectorWritable>>();
+    Map<Integer, List<WeightedVectorWritable>> result = Maps.newTreeMap();
     for (Pair<IntWritable, WeightedVectorWritable> record
         : new SequenceFileDirIterable<IntWritable, WeightedVectorWritable>(pointsPathDir, PathType.LIST,
             PathFilters.logsCRCFilter(), conf)) {
