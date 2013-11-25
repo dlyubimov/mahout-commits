@@ -17,8 +17,8 @@
 
 package org.apache.mahout.sparkbindings.drm
 
-import mahout.math._
-import mahout.math.RLikeOps._
+import org.apache.mahout.math.scalabindings._
+import RLikeOps._
 import org.scalatest.FunSuite
 import org.apache.log4j.{Level, Logger, BasicConfigurator}
 import java.io.File

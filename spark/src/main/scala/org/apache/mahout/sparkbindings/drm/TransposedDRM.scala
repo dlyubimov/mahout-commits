@@ -17,7 +17,7 @@
 
 package org.apache.mahout.sparkbindings.drm
 
-import mahout.math.RLikeOps._
+import org.apache.mahout.math.scalabindings.RLikeOps._
 import org.apache.spark.rdd.RDD
 import org.apache.mahout.math.{DenseVector, RandomAccessSparseVector, Vector}
 import scala.collection.JavaConversions._
@@ -36,7 +36,7 @@ import org.apache.spark.SparkContext._
  * expect it to be quite faster than element-based messages.
  *
  */
-private[sparkbindings] class TransposedDRM(val transposee: BaseDRM[Int], withCombiners: Boolean = false) extends BaseDRM[Int] {
+private[sparkbindings] class TransposedDRM(val transposee: DRM[Int], withCombiners: Boolean = false) extends BaseDRM[Int] {
 
   // transposeAlg2 (with combiners) which, cpu-wise, seems to run longer,
   // most likely because of lack of much of aggregation effect and serialization overhead,

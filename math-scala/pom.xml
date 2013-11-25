@@ -168,6 +168,12 @@
       <version>${pom.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.mahout</groupId>
+      <artifactId>mahout-math-scala</artifactId>
+      <version>${pom.version}</version>
+    </dependency>
+
 
     <!--  3rd-party -->
 

@@ -23,10 +23,10 @@ package org.apache.mahout.sparkbindings.drm
  *
  * @author dmitriy
  */
-class IntIndexedRowsDRMOps(val drm: BaseDRM[Int]) {
+class IntIndexedRowsDRMOps(val drm: DRM[Int]) {
 
 
-  def t: BaseDRM[Int] =
+  def t: DRM[Int] =
     if (drm.isInstanceOf[TransposedDRM])
       // (A')' == A
       drm.asInstanceOf[TransposedDRM].transposee

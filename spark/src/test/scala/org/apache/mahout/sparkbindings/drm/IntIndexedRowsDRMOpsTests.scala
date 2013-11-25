@@ -18,8 +18,8 @@
 package org.apache.mahout.sparkbindings.drm
 
 import org.scalatest.FunSuite
-import mahout.math._
-import mahout.math.RLikeOps._
+import org.apache.mahout.math.scalabindings._
+import RLikeOps._
 import org.apache.log4j.{Level, Logger, BasicConfigurator}
 import java.io.File
 import scala.util.Random

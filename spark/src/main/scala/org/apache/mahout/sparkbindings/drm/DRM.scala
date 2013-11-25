@@ -18,13 +18,11 @@
 package org.apache.mahout.sparkbindings.drm
 
 import org.apache.mahout.math.{Matrix, Vector}
+import org.apache.spark.rdd.RDD
 
 /**
  *
  * Basic spark DRM trait.
- *
- * Since we already call the package "sparkbindings", I will not use stem "spark" with classes in
- * this package. Spark backing is already implied.
  *
  */
 trait DRM[K] {
@@ -66,4 +64,11 @@ trait DRM[K] {
    * @param path
    */
   def writeDRM(path: String)
+
+  /**
+   * Internal RDD backing
+   *
+   * @return
+   */
+  private[sparkbindings] def getRDD: RDD[(K, Vector)]
 }

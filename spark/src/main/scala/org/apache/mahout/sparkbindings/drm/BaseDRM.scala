@@ -19,8 +19,8 @@ package org.apache.mahout.sparkbindings.drm
 
 import org.apache.mahout.math.{SparseMatrix, DenseMatrix, Matrix, Vector}
 import scala.math._
-import mahout.math._
-import mahout.math.RLikeOps._
+import org.apache.mahout.math.scalabindings._
+import org.apache.mahout.math.scalabindings.RLikeOps._
 import scala.collection.JavaConversions._
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.rdd.RDD

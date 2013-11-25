@@ -19,18 +19,19 @@ package org.apache.mahout.sparkbindings.als
 
 import org.apache.log4j.Logger
 import org.apache.mahout.sparkbindings.drm.{BaseDRM, VectorMessage, DRM}
-import org.apache.mahout.math._
 import org.apache.spark.bagel.Bagel
-import org.apache.mahout.math._
-import org.apache.mahout.math.RLikeOps._
+import org.apache.mahout.math.scalabindings._
+import org.apache.mahout.math.scalabindings.RLikeOps._
+import org.apache.mahout.sparkbindings.drm._
 import collection.mutable
 import scala.collection.JavaConversions._
 import org.apache.spark.storage.StorageLevel
-import scala.math._
 import org.apache.spark.SparkContext._
 import collection.mutable.ArrayBuffer
 import scala.util.Random
 import org.apache.spark.rdd.RDD
+import math._
+import org.apache.mahout.math.{RandomAccessSparseVector, DenseVector, SparseColumnMatrix}
 
 /**
  *
@@ -132,7 +133,7 @@ object WeightedALSWR {
 
     println("V(%d,%d)".format(drmV.nrow, drmV.ncol))
 
-    val inCoreVtV = drmV.t_sq()
+    val inCoreVtV = drmV.t_sq_slim()
 
     // look at the rank. if we don't have full rank here,
     // the system is singular and we would have trouble with our fitting.

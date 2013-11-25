@@ -20,8 +20,9 @@ package org.apache.mahout.sparkbindings.als
 import org.scalatest.FunSuite
 import org.apache.mahout.math.{SparseMatrix, DenseMatrix, Matrix}
 import util.Random
-import mahout.math._
-import mahout.math.RLikeOps._
+import org.apache.mahout.math.scalabindings._
+import org.apache.mahout.math.scalabindings.RLikeOps._
+import org.apache.mahout.sparkbindings.drm._
 import org.apache.log4j.BasicConfigurator
 
 /**

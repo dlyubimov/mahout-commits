@@ -20,8 +20,8 @@ package org.apache.mahout.sparkbindings.drm
 import org.apache.mahout.math._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
-import mahout.math._
-import mahout.math.RLikeOps._
+import org.apache.mahout.math.scalabindings._
+import org.apache.mahout.math.scalabindings.RLikeOps._
 import collection.JavaConversions._
 import org.apache.hadoop.io.Writable
 
@@ -30,7 +30,7 @@ import org.apache.hadoop.io.Writable
  * the DRMBase once they stabilize.
  *
  */
-class ExtendedDRMOps[K <% Writable : ClassManifest](val drm: BaseDRM[K]) {
+class ExtendedDRMOps[K <% Writable : ClassManifest](val drm: DRM[K]) {
 
   /**
    * Reorganize every partition into a single in-core matrix

@@ -20,7 +20,7 @@ package org.apache.mahout.sparkbindings
 import org.apache.mahout.math._
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
-import mahout.math._
+import scalabindings._
 import scala.collection.JavaConversions._
 import org.apache.hadoop.io.{LongWritable, Text, IntWritable, Writable}
 import java.io._
@@ -33,10 +33,10 @@ package object drm {
 
   final val s_log = Logger.getLogger("mahout.spark.drm");
 
-  implicit def drm2drmOps[K <% Writable : ClassManifest](drm: BaseDRM[K]): ExtendedDRMOps[K] =
+  implicit def drm2drmOps[K <% Writable : ClassManifest](drm: DRM[K]): ExtendedDRMOps[K] =
     new ExtendedDRMOps[K](drm)
 
-  implicit def drm2IntDrmOps(drm: BaseDRM[Int]): IntIndexedRowsDRMOps = new IntIndexedRowsDRMOps(drm)
+  implicit def drm2IntDrmOps(drm: DRM[Int]): IntIndexedRowsDRMOps = new IntIndexedRowsDRMOps(drm)
 
   implicit def v2drmvops(v: Vector): DRMVectorOps = new DRMVectorOps(v)
 
@@ -95,7 +95,7 @@ package object drm {
       (implicit sc: SparkContext)
   : BaseDRM[Int] = {
 
-    import mahout.math.RLikeOps._
+    import RLikeOps._
 
     val p = (0 until m.nrow).map(i => i -> m(i, ::))
     new BaseDRM(sc.parallelize(p, numPartitions))
@@ -106,7 +106,7 @@ package object drm {
       (implicit sc: SparkContext)
   : BaseDRM[String] = {
 
-    import mahout.math.RLikeOps._
+    import RLikeOps._
 
     // In spark 0.8, I have patched ability to parallelize kryo objects directly, so no need to
     // wrap that into byte array anymore
