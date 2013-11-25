@@ -22,6 +22,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
@@ -92,6 +93,7 @@ import java.util.regex.Pattern;
 public final class RecommenderJob extends AbstractJob {
 
   public static final String BOOLEAN_DATA = "booleanData";
+  public static final String DEFAULT_PREPARE_PATH = "preparePreferenceMatrix";
 
   private static final int DEFAULT_MAX_SIMILARITIES_PER_ITEM = 100;
   private static final int DEFAULT_MAX_PREFS = 500;
@@ -125,6 +127,7 @@ public final class RecommenderJob extends AbstractJob {
     addOption("outputPathForSimilarityMatrix", "opfsm", "write the item similarity matrix to this path (optional)",
         false);
     addOption("randomSeed", null, "use this seed for sampling", false);
+    addFlag("sequencefileOutput", null, "write the output into a SequenceFile instead of a text file");
 
     Map<String, List<String>> parsedArgs = parseArguments(args);
     if (parsedArgs == null) {
@@ -148,7 +151,7 @@ public final class RecommenderJob extends AbstractJob {
         ? Long.parseLong(getOption("randomSeed")) : RowSimilarityJob.NO_FIXED_RANDOM_SEED;
 
 
-    Path prepPath = getTempPath("preparePreferenceMatrix");
+    Path prepPath = getTempPath(DEFAULT_PREPARE_PATH);
     Path similarityMatrixPath = getTempPath("similarityMatrix");
     Path explicitFilterPath = getTempPath("explicitFilterPath");
     Path partialMultiplyPath = getTempPath("partialMultiply");
@@ -258,12 +261,16 @@ public final class RecommenderJob extends AbstractJob {
       if (filterFile != null) {
         aggregateAndRecommendInput += "," + explicitFilterPath;
       }
+
+      Class<? extends OutputFormat> outputFormat = parsedArgs.containsKey("--sequencefileOutput")
+          ? SequenceFileOutputFormat.class : TextOutputFormat.class;
+
       //extract out the recommendations
       Job aggregateAndRecommend = prepareJob(
               new Path(aggregateAndRecommendInput), outputPath, SequenceFileInputFormat.class,
               PartialMultiplyMapper.class, VarLongWritable.class, PrefAndSimilarityColumnWritable.class,
               AggregateAndRecommendReducer.class, VarLongWritable.class, RecommendedItemsWritable.class,
-              TextOutputFormat.class);
+              outputFormat);
       Configuration aggregateAndRecommendConf = aggregateAndRecommend.getConfiguration();
       if (itemsFile != null) {
         aggregateAndRecommendConf.set(AggregateAndRecommendReducer.ITEMS_FILE, itemsFile);

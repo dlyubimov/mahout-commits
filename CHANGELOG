@@ -2,11 +2,27 @@ Mahout Change Log
 
 Release 0.9 - unreleased
 
+  MAHOUT-1362: Remove examples/bin/build-reuters.sh (smarthi)
+
+  MAHOUT-1361: Online algorithm for computing accurate Quantiles using 1-D clustering (tdunning)
+
+  MAHOUT-1358: StreamingKMeansThread throws IllegalArgumentException when REDUCE_STREAMING_KMEANS is set to true (smarthi)
+
+  MAHOUT-1355: InteractionValueEncoder produces wrong traceDictionary entries (Johannes Schulte via smarthi)
+
+  MAHOUT-1351: Adding DenseVector support to AbstractCluster (David DeBarr via smarthi)
+
   MAHOUT-1343: JSON output format support in cluster dumper (Telvis Calhoun via sslavic)
 
   MAHOUT-1333: Fixed examples bin directory permissions in distribution archives (Mike Percy via sslavic)
 
+  MAHOUT-1317: Clarify some of the messages in Preconditions.checkArgument (Nikolai Grinko, smarthi)
+
+  MAHOUT-1314: StreamingKMeansReducer throws NullPointerException when REDUCE_STREAMING_KMEANS is set to true (smarthi)
+
   MAHOUT-1313: Fixed unwanted integral division bug in RowSimilarityJob downsampling code where precision should have been retained (sslavic) 
+
+  MAHOUT-1308: Cannot extend CandidateItemsStrategy due to restricted visibility (David Geiger, smarthi)
 
   MAHOUT-1301: toString() method of SequentialAccessSparseVector has excess comma at the end (Alexander Senov, smarthi)
 
@@ -17,6 +33,8 @@ Release 0.9 - unreleased
   MAHOUT-1294: Cleanup previously installed artifacts from CI server local repository (sslavic)
 
   MAHOUT-1293: Source distribution tar.gz archive cannot be unpacked on Linux (sslavic)
+
+  MAHOUT-1292: lucene2seq should validate the 'id' field (Frank Scholten via smarthi)
 
   MAHOUT-1291: MahoutDriver yields cosmetically suboptimal exception when bin/mahout runs without args, on some Hadoop versions (srowen)
 
