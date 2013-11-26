@@ -1,0 +1,1539 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\begin_preamble
+\usepackage{fullpage}
+\usepackage{multicol,caption}
+
+\setlength{\columnseprule}{0.4pt}
+\renewcommand\columnseprulecolor{\color{black!10}}
+\setlength{\columnsep}{28.0pt}
+
+\usepackage{wrapfig}
+
+\usepackage{amsthm}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{problem}{Problem}
+\theoremstyle{remark}
+\newtheorem{observation}{Observation}
+
+
+\usepackage{tikz}
+\usetikzlibrary{positioning,shadings,fadings,automata,matrix,shapes,arrows,backgrounds}
+
+\tikzstyle{every picture}=[execute at end picture=
+{
+\begin{pgfonlayer}{background}
+\path[fill=red!10!green!4,rounded corners]
+(current bounding box.south west) rectangle
+(current bounding box.north east);
+\end{pgfonlayer}
+}]
+
+\definecolor{tentative}{rgb}{0.4,0.6,0.7}
+\definecolor{comment}{rgb}{0.7,0.4,0.4}
+\definecolor{Turquoise}{rgb}{0,0.81,0.85}
+\definecolor{Violet}{rgb}{0.93,0.5,0.93}
+
+\newenvironment{Figure}
+  {\par\medskip\noindent\minipage{\linewidth}\centering\vspace{20pt}}
+  {\endminipage\par\medskip\vspace{20pt}}
+
+
+
+
+\newbox\mybox
+
+% \renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\end_preamble
+\use_default_options true
+\begin_modules
+knitr
+\end_modules
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman lmodern
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks false
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation skip
+\defskip medskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<<knitrInit,results='hide',echo=F,warning=F,message=F,cache=F>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+opts_chunk$set(echo=F,warning=F,message=F,cache=F,self.contained=F, fig.show
+ = "hold")
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Part*
+ALS-WR for preferences with confidence 
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{multicols}{2}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Notation.
+\end_layout
+
+\begin_layout Standard
+element of vector vs.
+ 
+\begin_inset Formula $i$
+\end_inset
+
+-th vector in a vector set:
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{u}^{\left(k\right)}$
+\end_inset
+
+ 
+\begin_inset Formula $k$
+\end_inset
+
+-th vector in implied set of vectors 
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{u}_{i}$
+\end_inset
+
+ 
+\begin_inset Formula $i$
+\end_inset
+
+-th element of vector 
+\begin_inset Formula $\mathbf{u}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Similarly for matrices.
+\end_layout
+
+\begin_layout Standard
+User subscript is denoted by 
+\begin_inset Formula $u$
+\end_inset
+
+ and item's subscript is denoted by 
+\begin_inset Formula $i$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{problem}
+\end_layout
+
+\end_inset
+
+(User-Item preferences): Given:
+\end_layout
+
+\begin_layout Itemize
+user-item preference 
+\begin_inset Formula $p_{u,i}\in\left\{ 0,1\right\} $
+\end_inset
+
+ , total matrix 
+\begin_inset Formula $\mathbf{P}\in\mathbb{R}^{m\times n}$
+\end_inset
+
+ (
+\begin_inset Formula $m$
+\end_inset
+
+ is number of users, 
+\begin_inset Formula $n$
+\end_inset
+
+ is number of items)
+\end_layout
+
+\begin_layout Itemize
+user-item confidence matrix 
+\begin_inset Formula $\mathbf{C}$
+\end_inset
+
+ consists of some weights 
+\begin_inset Formula $c_{u,i}$
+\end_inset
+
+.
+ This can be sparse where confidence is 0
+\end_layout
+
+\begin_layout Standard
+We are solving matrix completion for 
+\begin_inset Formula $\mathbf{P}\approx\mathbf{U}^{\top}\mathbf{V}$
+\end_inset
+
+ by finding 
+\begin_inset Formula $\mathbf{U}\in\mathbb{R}^{m\times k}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{V}\in\mathbb{R}^{n\times k}$
+\end_inset
+
+.
+\begin_inset Formula $\blacksquare$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{problem}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Solution.
+\end_layout
+
+\begin_layout Standard
+Denote row-vector 
+\begin_inset Formula $\mathbf{u}^{\left(u\right)}=\mathbf{U}_{u,*}^{\top}$
+\end_inset
+
+, 
+\begin_inset Formula $\mathbf{v}^{\left(i\right)}=\mathbf{V}_{i,*}^{\top}$
+\end_inset
+
+, 
+\begin_inset Formula $\mathbf{p}^{\left(u\right)}=\mathbf{P}_{u,*}^{\top}$
+\end_inset
+
+, 
+\begin_inset Formula $\mathbf{p}'^{\left(i\right)}=\mathbf{P}_{*,i}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Preference predictor 
+\begin_inset Formula 
+\begin{equation}
+\hat{p}^{\left(u,i\right)}=\mathbf{u}^{\left(u\right)\top}\mathbf{v}^{\left(i\right)},
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+or simply the whole prediction matrix 
+\begin_inset Formula 
+\begin{equation}
+\hat{\mathbf{P}}=\mathbf{U}\mathbf{V}^{\top}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Minimizing cost with L2 reguralization
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sum_{u,i}\left[c_{u,i}\left(p_{ui}-\mathbf{u}^{\left(u\right)\top}\mathbf{v}^{\left(i\right)}\right)^{2}\right]+
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{equation}
++\lambda\left(\sum_{u}n_{u}\left\Vert \mathbf{u}^{\left(u\right)}\right\Vert ^{2}+\sum_{i}n'_{i}\left\Vert \mathbf{v}^{\left(i\right)}\right\Vert ^{2}\right)\label{eq:cost}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+via alternating updates:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\forall u\in1..m\Rightarrow$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\mathbf{u}_{u}=\left(\mathbf{V}^{\top}\mathbf{D}^{\left(u\right)}\mathbf{V}+n\lambda\mathbf{I}\right)^{-1}\mathbf{V}^{\top}\mathbf{D}^{\left(u\right)}\mathbf{p}^{\left(u\right)}\label{eq:user-update}
+\end{equation}
+
+\end_inset
+
+ where 
+\begin_inset Formula $\mathbf{D}^{\left(u\right)}$
+\end_inset
+
+ is 
+\begin_inset Formula $n\times n$
+\end_inset
+
+ diagonal matrix such that 
+\begin_inset Formula $\mathbf{D}_{i,i}^{\left(u\right)}=c_{u,i}$
+\end_inset
+
+ and 
+\begin_inset Formula $n_{u}$
+\end_inset
+
+ is the number of measurements for user 
+\begin_inset Formula $u$
+\end_inset
+
+ such that 
+\begin_inset Formula $c_{ui}\neq0$
+\end_inset
+
+;
+\end_layout
+
+\begin_layout Standard
+and 
+\begin_inset Formula $\forall i\in1..n\Rightarrow$
+\end_inset
+
+ 
+\begin_inset Formula 
+\begin{equation}
+\mathbf{v}_{i}=\left(\mathbf{U}^{\top}\mathbf{D}{}^{\left(i\right)}\mathbf{U}+n{}_{i}\lambda\mathbf{I}\right)^{-1}\mathbf{U}^{\top}\mathbf{D}{}^{\left(i\right)}\mathbf{p}{}^{\left(i\right)}\label{eq:item-update}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $\mathbf{D}^{\left(i\right)}$
+\end_inset
+
+ is 
+\begin_inset Formula $m\times m$
+\end_inset
+
+ diagonal matrix such that 
+\begin_inset Formula $\mathbf{D}_{u,u}^{\left(i\right)}=c_{u,i}$
+\end_inset
+
+ and 
+\begin_inset Formula $n{}_{i}$
+\end_inset
+
+ is the number of measurements for item 
+\begin_inset Formula $i$
+\end_inset
+
+ such that 
+\begin_inset Formula $c_{ui}\neq0$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The algorithm seeds 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ with small random numbers out of say 
+\begin_inset Formula $U\left(0,0.01\right)-0.005$
+\end_inset
+
+ and then sequentially applies updates 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:user-update"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:item-update"
+
+\end_inset
+
+ to them until convergence.
+ 
+\begin_inset Formula $\blacksquare$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Another thing to notice is that perhaps 
+\begin_inset Formula $n_{u}\ll n$
+\end_inset
+
+ and 
+\begin_inset Formula $n'_{i}\ll m$
+\end_inset
+
+ for many 
+\begin_inset Formula $u$
+\end_inset
+
+ and 
+\begin_inset Formula $i$
+\end_inset
+
+ and and therefore the equations can be efficiently blockified to throw
+ away rows for which there's no observation, i.e.
+ 
+\begin_inset Formula $c_{u,i}=0$
+\end_inset
+
+.
+ Hence, dimensionality of these equations will typically be significantly
+ reduced (as defined in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "ALS-WR"
+
+\end_inset
+
+)
+\end_layout
+
+\begin_layout Paragraph
+Minimum confidence in unobserved preference.
+\end_layout
+
+\begin_layout Standard
+Variation presented in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Koren-Volinsky"
+
+\end_inset
+
+ mostly differs in that it never assumes 
+\begin_inset Formula $c_{u,i}=0$
+\end_inset
+
+ (in fact, it assumes 
+\begin_inset Formula $c_{u,i}=1$
+\end_inset
+
+ and 
+\begin_inset Formula $p_{u,i}=0$
+\end_inset
+
+ whenever there's no observation at all to reflect the fact that there's
+ a standardized tiny belief that no observation may mean lack of interest
+ of the user in an item).
+ This approach can be made computationally equivalent to the sparse observations
+ (see details in the 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Koren-Volinsky"
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+In our situation it is especially important because we only observe clicks
+ (
+\begin_inset Formula $p_{click}=1,\, c_{click}>c_{0}$
+\end_inset
+
+), add-to-cart (
+\begin_inset Formula $p_{cart}=1,\, c_{cart}>c_{0}$
+\end_inset
+
+) and conversions 
+\begin_inset Formula $\left(p_{conv}=1,\, c_{conv}>c_{click}\right)$
+\end_inset
+
+ but we never directly observe ignored recommendation, i.e.
+ we only observe 
+\begin_inset Formula $p=1$
+\end_inset
+
+ values but never 
+\begin_inset Formula $p=0$
+\end_inset
+
+.
+ Assuming 
+\begin_inset Formula $c_{0}=0$
+\end_inset
+
+ will likely lead to undersired effects in the linear system.
+\end_layout
+
+\begin_layout Standard
+To generalize, we will assume minimum confidence for any directly unobserved
+ preference 
+\begin_inset Formula $p_{0}$
+\end_inset
+
+ being some constant 
+\begin_inset Formula $c_{0}$
+\end_inset
+
+ and increment any actual observed confidence with it: 
+\begin_inset Formula 
+\[
+c_{u,i}^{*}=c_{0}+c_{u,i}.
+\]
+
+\end_inset
+
+ Substituting 
+\begin_inset Formula $\mathbf{D}^{*\left(u\right)}=\mathbf{D}^{\left(u\right)}-c_{0}\mathbf{I}$
+\end_inset
+
+, we modify 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:user-update"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:item-update"
+
+\end_inset
+
+ as
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{u}_{u}=\left(c_{0}\mathbf{V}^{\top}\mathbf{V}+\mathbf{V}^{\top}\mathbf{D}^{*\left(u\right)}\mathbf{V}+n_{u}\lambda\mathbf{I}\right)^{-1}\times
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{equation}
+\times\mathbf{V}^{\top}\left(c_{0}\mathbf{I}+\mathbf{D}^{*\left(u\right)}\right)\mathbf{p}^{\left(u\right)}\label{eq:user-update-c0}
+\end{equation}
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\forall u\in1..m;\,\mbox{and}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{v}_{i}=\left(c_{0}\mathbf{U}^{\top}\mathbf{U}+\mathbf{U}^{\top}\mathbf{D}{}^{*\left(i\right)}\mathbf{U}+n{}_{i}\lambda\mathbf{I}\right)^{-1}\times
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\times\mathbf{U}^{\top}\left(c_{0}\mathbf{I}+\mathbf{D}{}^{*\left(i\right)}\right)\mathbf{p}{}^{\left(i\right)}\label{eq:item-update-c0}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\forall i\in1..n.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here, 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $c_{0}\mathbf{V}^{\top}\mathbf{V}$
+\end_inset
+
+ is precomputed once for all 
+\begin_inset Formula $u$
+\end_inset
+
+ per iteration; 
+\begin_inset Formula $\mathbf{V}^{\top}\mathbf{D}^{*\left(u\right)}\mathbf{V}$
+\end_inset
+
+ is still sparse as before; and 
+\begin_inset Formula $\mathbf{p}^{\left(u\right)}$
+\end_inset
+
+ keeps the part 
+\begin_inset Formula $\mathbf{V}^{\top}\left(c_{0}\mathbf{I}+\mathbf{D}^{*\left(u\right)}\right)\mathbf{p}^{\left(u\right)}$
+\end_inset
+
+ still sparse (as we assume 
+\begin_inset Formula $\mathbf{P}_{u,i}=0$
+\end_inset
+
+ for any interaction we don't have data for).
+\end_layout
+
+\begin_layout Paragraph
+Sparse data fold-in
+\end_layout
+
+\begin_layout Standard
+Also important thing to notice that sometimes the matrix under 
+\begin_inset Formula $\left(\cdot\right)^{-1}$
+\end_inset
+
+ in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:user-update"
+
+\end_inset
+
+ or 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:item-update"
+
+\end_inset
+
+ becomes singular and solution for that user or item is subsequently not
+ possible.
+ In particular, it is always the case whenever 
+\begin_inset Formula $n_{u}<k$
+\end_inset
+
+ or 
+\begin_inset Formula $n'_{i}<k$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+When this happens, we don't attempt to compute shortened vector for the
+ user or item by using, for example, 
+\begin_inset Formula $n_{u}$
+\end_inset
+
+ top principal columns of 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+In that situation we still could use 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:user-update-c0"
+
+\end_inset
+
+ to update the reduced-rank user vector by assuming 
+\begin_inset Formula $\mathbf{V}_{\mathrm{princ}}^{\left(u\right)}$
+\end_inset
+
+ instead of 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ where 
+\begin_inset Formula $\mathbf{V}_{\mathrm{princ}}^{\left(u\right)}\in\mathbb{R}^{n\times\tilde{n}_{u}}$
+\end_inset
+
+ is a vertical block of 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ containing top 
+\begin_inset Formula $n_{u}$
+\end_inset
+
+ most principal components of decomposition.
+
+\series bold
+ 
+\end_layout
+
+\begin_layout Standard
+However, due to nature of the algorithm, we don't investigate emerging principal
+ components during training and only reveal them at the end of the algorithm
+ by reording correspondent columns in accorance to order of the set of values
+ 
+\begin_inset Formula $\left\{ s_{i}=\left\Vert \mathbf{U}_{*,i}\right\Vert \cdot\left\Vert \mathbf{V}_{*,i}\right\Vert \right\} $
+\end_inset
+
+ (
+\begin_inset Formula $\forall i=1..k\mbox{ }$
+\end_inset
+
+).
+ Therefore, we cannot figure 
+\begin_inset Formula $\bar{\mathbf{V}}$
+\end_inset
+
+ in the course of algorithm.
+ But at the end of the training cycle and figuring out principal vectors,
+ 
+\begin_inset Formula 
+\[
+\mathbf{V}_{\mathrm{princ}}^{\left(u\right)}=\mathbf{V}\left(:,1:n_{u}\right).
+\]
+
+\end_inset
+
+After that, any new observation for a new user 
+\begin_inset Formula $u$
+\end_inset
+
+ will look like 
+\begin_inset Formula 
+\begin{eqnarray*}
+\mathbf{\tilde{u}}_{u} & = & \left[c_{0}\left(\mathbf{V}_{\mathrm{princ}}^{\left(u\right)}\right)^{\top}\mathbf{V}_{\mathrm{princ}}^{\left(u\right)}+\right.\\
+ & + & \left.\left(\mathbf{V}_{\mathrm{princ}}^{\left(u\right)}\right)^{\top}\mathbf{\tilde{D}}^{\left(u\right)}\mathbf{\mathbf{V}}_{\mathrm{princ}}^{\left(u\right)}+\tilde{n}_{u}\lambda\mathbf{I}\right]^{-1}\times
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\times\left(\mathbf{V}_{\mathrm{princ}}^{\left(u\right)}\right)^{\top}\left(c_{0}\mathbf{I}+\tilde{\mathbf{D}}^{\left(u\right)}\right)\mathbf{\tilde{p}}_{u}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $\tilde{x}$
+\end_inset
+
+ denotes anything related to a new observation of a new user.
+ We denote matrix of results of all fold-in users as 
+\begin_inset Formula 
+\begin{equation}
+\tilde{\mathbf{U}}=\left(\begin{matrix}\tilde{\mathbf{u}}_{1}^{\top}\\
+\tilde{\mathbf{u}}_{2}^{\top}\\
+\vdots\\
+\tilde{\mathbf{u}}_{m_{1}}^{\top}
+\end{matrix}\right)\in\mathbb{R}^{\tilde{m}\times n}.
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This process can be applied symmetrically, if necessary, to fold-in items
+ as well and obtain 
+\begin_inset Formula $\tilde{\mathbf{V}}\in\mathbb{R}^{m\times\tilde{n}}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{multicols}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section*
+Spark mapping notes.
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection*
+Precompute steps.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+
+\series default
+ and 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ initialized with random small numbers and presented as Spark-based DRM.
+\end_layout
+
+\begin_layout Itemize
+Next, every row in 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+ (
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+) is connected with corresponded sparse vectors 
+\begin_inset Formula $\mathbf{c}^{\left(u\right)}=\mathbf{C}_{u,*}$
+\end_inset
+
+ (
+\begin_inset Formula $\mathbf{c}^{\left(i\right)}=\mathbf{C}_{*,i}$
+\end_inset
+
+) and 
+\begin_inset Formula $\mathbf{p}^{\left(u\right)}=\mathbf{P}_{u,*}$
+\end_inset
+
+ (
+\begin_inset Formula $\mathbf{p}^{\left(i\right)}=\mathbf{P}_{*,i}$
+\end_inset
+
+).
+ So what we have in the end are two spark RDDs of Bagel vertices containing
+ (id=
+\begin_inset Formula $u|i$
+\end_inset
+
+, 
+\begin_inset Formula $\mathbf{U}_{u,*}|\mathbf{V}_{*,i}$
+\end_inset
+
+ , 
+\begin_inset Formula $\mathbf{c}^{\left(u\right)}|\mathbf{c}^{\left(i\right)}$
+\end_inset
+
+, 
+\series bold
+
+\begin_inset Formula $\mathbf{p}^{\left(u\right)}|\mathbf{p}^{\left(i\right)}$
+\end_inset
+
+
+\series default
+).
+\end_layout
+
+\begin_layout Subsection*
+Iteration steps.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\mathbf{V}^{\top}\mathbf{V}$
+\end_inset
+
+ precomputed in distributed way for each iteration and broadcast.
+ Since this matrix gas tiny 
+\begin_inset Formula $k\times k$
+\end_inset
+
+ geometry, collecting and broadcasting it should not be a problem.
+\end_layout
+
+\begin_layout Itemize
+Form Bagel messages from current 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ side : 
+\begin_inset Formula $\mathbf{V}_{i}\mbox{ }$
+\end_inset
+
+ is sent to two sets of user vertices: (1) users for which 
+\begin_inset Formula $c_{u,i}\neq0$
+\end_inset
+
+; (2) users for which 
+\begin_inset Formula $p_{u,i}\neq0$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Itemize
+During Bagel's compute(), group (1) is used to compute 
+\begin_inset Formula $\mathbf{V}^{\top}\mathbf{D}^{*\left(u\right)}\mathbf{V}$
+\end_inset
+
+; group (2) is used to compute 
+\begin_inset Formula $\mathbf{V}^{\top}\mathbf{p}^{\left(u\right)}$
+\end_inset
+
+.
+ Update 
+\begin_inset Formula $\mathbf{U}_{u,*}$
+\end_inset
+
+ per 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:user-update-c0"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Use Cholesky to solve 
+\begin_inset Formula $\mathbf{AX=B}$
+\end_inset
+
+ by applying 
+\begin_inset Formula $\mathbf{A}=\mathbf{L}\mathbf{L}^{\top}\Rightarrow\mathbf{X}=\left(\mathbf{L}^{\top}\right)^{-1}\mathbf{L}^{-1}\mathbf{B}$
+\end_inset
+
+ which is 
+\begin_inset Newline newline
+\end_inset
+
+
+\family typewriter
+chol(
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+).solveRight(
+\begin_inset Formula $\mathbf{I}$
+\end_inset
+
+) %*% chol(
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+).solveRight(
+\begin_inset Formula $\mathbf{B}$
+\end_inset
+
+).
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+Iteration updating 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ should be symmetrical.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section*
+Training with a Multilevel Regression Hierarchy
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{multicols}{2}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+There are several levels of multilevel regression schemes.
+ We consider a simple intercept-based scheme.
+\end_layout
+
+\begin_layout Standard
+First level is trained with intercepts.
+ Denote vector of all user intercepts as 
+\begin_inset Formula $\mathbf{b}$
+\end_inset
+
+ and item intercepts as 
+\begin_inset Formula $\mathbf{b}'$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Paragraph
+First level.
+\end_layout
+
+\begin_layout Standard
+The prediction first level looks like 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\hat{\mathbf{P}}_{u,i}=\mathbf{b}_{u}+\mathbf{b}'_{i}+\mathbf{u}^{\left(u\right)\top}\mathbf{v}^{\left(i\right)}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We fit the first level first with behavior-rich users.
+ 
+\end_layout
+
+\begin_layout Paragraph
+Second level.
+ 
+\end_layout
+
+\begin_layout Standard
+Suppose all users have a handful of features 
+\begin_inset Formula $\mathbf{x}$
+\end_inset
+
+, and all items have a handful of features 
+\begin_inset Formula $\mathbf{z}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Second level models fit biases: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\hat{\mathbf{b}}_{u}=\mathbf{w}^{\top}\mathbf{x}^{\left(u\right)},
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\mathbf{b}'_{i}=\mathbf{w'}^{\top}\mathbf{z}^{\left(i\right)}.
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+Todo: 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Agarwal-1"
+
+\end_inset
+
+ actually regress every user/item latent variable in the second stage, not
+ just intercept (bias).
+ Which should be fairly trivial to implement.
+ The main difficulty is weighted fitting of the first-stage model.
+\end_layout
+
+\begin_layout Standard
+The idea is that for users with poor history we make predictions via 
+\begin_inset Formula 
+\begin{equation}
+\hat{\mathbf{P}}_{u,i}=\mathbf{w}^{\top}\mathbf{x}^{\left(u\right)}+\mathbf{b}'_{i}.\label{eq:new-rich}
+\end{equation}
+
+\end_inset
+
+ (since 
+\begin_inset Formula $\mathbf{x}^{\left(u\right)}$
+\end_inset
+
+ is always available).
+ Similarly, for new items we use 
+\begin_inset Formula 
+\begin{equation}
+\hat{\mathbf{P}}_{u,i}=\mathbf{w}'^{\top}\mathbf{z}+\mathbf{b}_{u}.\label{eq:rich-new}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In situations where both user and item are new, we 
+\emph on
+can 
+\emph default
+use 
+\begin_inset Formula 
+\begin{equation}
+\hat{\mathbf{P}}_{u,i}=\mathbf{w}^{\top}\mathbf{x}+\mathbf{w}'^{\top}\mathbf{z}.\label{eq:new-new}
+\end{equation}
+
+\end_inset
+
+ but probably may want to boost it with off-the-shelf logistic regression
+ on user and item predictors 
+\begin_inset Formula $\left(\begin{matrix}\mathbf{x}\\
+\mathbf{z}
+\end{matrix}\right)$
+\end_inset
+
+ and their interactions.
+\end_layout
+
+\begin_layout Standard
+Cases 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:rich-new"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:rich-new"
+
+\end_inset
+
+ still use part of collaborative inference based on the neighborhood of
+ the item/user.
+ (
+\emph on
+Todo: Add Koren's paper reference as well as Multilvevel model texts bibliograph
+y
+\emph default
+).
+\end_layout
+
+\begin_layout Paragraph
+Fitting first stage via ALS.
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula 
+\begin{equation}
+\bar{\mathbf{U}}=\left(\begin{matrix}\begin{matrix}1\\
+1\\
+\vdots\\
+1
+\end{matrix} & \mathbf{U}\end{matrix}\right),
+\end{equation}
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{equation}
+\bar{\mathbf{V}}=\left(\begin{matrix}\begin{matrix}1\\
+1\\
+\vdots\\
+1
+\end{matrix} & \mathbf{V}\end{matrix}\right).
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Alternating updates
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\left(\begin{matrix}\mathbf{b}_{u}\\
+\mathbf{u}^{\left(u\right)}
+\end{matrix}\right)\leftarrow\left(c_{0}\bar{\mathbf{V}}^{\top}\bar{\mathbf{V}}+\bar{\mathbf{V}}^{\top}\mathbf{C}^{\left(u\right)}\bar{\mathbf{V}}+\lambda n_{u}\mathbf{I}\right)^{-1}\times
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\times\mathbf{\bar{V}}^{\top}\mathbf{C}^{\left(u\right)}\left(\mathbf{p}^{\left(u\right)}-\mathbf{b}'\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\left(\begin{matrix}\mathbf{b}'_{i}\\
+\mathbf{v}^{\left(i\right)}
+\end{matrix}\right)\leftarrow\left(c_{0}\bar{\mathbf{U}}^{\top}\bar{\mathbf{U}}+\bar{\mathbf{U}}^{\top}\mathbf{C}^{\left(i\right)}\bar{\mathbf{U}}+\lambda n_{u}\mathbf{I}\right)^{-1}\times
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\times\mathbf{\bar{U}}^{\top}\mathbf{C}^{\left(i\right)}\left(\mathbf{p}^{\left(i\right)}-\mathbf{b}\right).
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Fitting second stage.
+\end_layout
+
+\begin_layout Standard
+For the second stage, we take off-the-shelf ridge regression with cross-validati
+on for its own regularization parameter.
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{multicols}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "Koren-1"
+key "Koren-Volinsky"
+
+\end_inset
+
+ Y.
+ Koren, et.al.
+ Collaborative Filtering for Implicit Feedback Datasets 
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "Zhou-1"
+key "ALS-WR"
+
+\end_inset
+
+Y.
+ Zhou, et.
+ al.
+ Large-scale Parallel Collaborative Filtering for the Netflix Prize 
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "Agarwal-1"
+key "Agarwal-1"
+
+\end_inset
+
+Agarwal, et.
+ al.
+ Regression-based Latent Factor Models
+\end_layout
+
+\end_body
+\end_document
