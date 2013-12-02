@@ -18,7 +18,6 @@
 package org.apache.mahout.sparkbindings.als
 
 import org.apache.log4j.Logger
-import org.apache.mahout.sparkbindings.drm.{BaseDRM, VectorMessage, DRM}
 import org.apache.spark.bagel.Bagel
 import org.apache.mahout.math.scalabindings._
 import org.apache.mahout.math.scalabindings.RLikeOps._
@@ -26,7 +25,6 @@ import org.apache.mahout.sparkbindings.drm._
 import collection.mutable
 import scala.collection.JavaConversions._
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.SparkContext._
 import collection.mutable.ArrayBuffer
 import scala.util.Random
 import org.apache.spark.rdd.RDD
@@ -47,7 +45,7 @@ object WeightedALSWR {
   /**
    * Weighted ALS-WR
    * @param P preference matrix (1 or 0's)
-   * @param C confidence matrix C' = C-C_0
+   * @param C confidence matrix C' = C-C_0 where C_0 is matrix of base confidence for no observation
    * @param k desired decomposition rank
    * @param lambda L2 regularization rate
    * @param niter maximum number of iterations
@@ -90,11 +88,11 @@ object WeightedALSWR {
         t
       }), nitems, uverts, nusers, k, lambda)
 
-      iterRmse+=rmse(vverts)
+      iterRmse += rmse(vverts)
 
     }
 
-    printf("rmse=%s\n",iterRmse)
+    printf("rmse=%s\n", iterRmse)
 
     (verts2DRM(uverts, nusers, k), verts2DRM(vverts, nitems, k))
 
@@ -106,11 +104,11 @@ object WeightedALSWR {
 
   /**
    * This assumes that every user has a fairly sparse usage history.
-   * If the matrix becomes fairly close to dense, this ALS-WR approach will becomes obviously
-   * fairly inefficient (approaching dense matrix multiplication behavior).
+   * If the matrix becomes fairly close to dense, this ALS-WR approach will becomes obviously fairly
+   * inefficient (approaching dense matrix multiplication behavior).
    *
-   * Therefore it is recommended to purge user histories for abnormally active history.
-   * It is likely it is not typical user anyway, plus it might hamper computations.
+   * Therefore it is recommended to purge user histories for abnormally active history. It is likely
+   * it is not typical user anyway, plus it might hamper computations.
    *
    * @param uverts
    * @param nurows
@@ -121,11 +119,11 @@ object WeightedALSWR {
    * @return
    */
   private def alswrIter(uverts: RDD[(Int, ALSWRCVertex)],
-                        nurows: Int,
-                        vverts: RDD[(Int, ALSWRCVertex)],
-                        nvrows: Int,
-                        k: Int,
-                        lambda: Double):
+      nurows: Int,
+      vverts: RDD[(Int, ALSWRCVertex)],
+      nvrows: Int,
+      k: Int,
+      lambda: Double):
   RDD[(Int, ALSWRCVertex)] = {
 
     implicit val sc = uverts.context
@@ -135,16 +133,16 @@ object WeightedALSWR {
 
     val inCoreVtV = drmV.t_sq_slim()
 
-    // look at the rank. if we don't have full rank here,
-    // the system is singular and we would have trouble with our fitting.
+    // Look at the rank of V'V product. If we don't have full rank here, the system is singular and
+    // we would have trouble with our fitting.
     if (!inCoreVtV.isFullRank)
       throw new IllegalArgumentException(
         "The input doesn't have enough information for k-rank ALS. " +
-          "Try to reduce k for more meaningful results.")
+            "Try to reduce k for more meaningful results.")
 
-    // double-check, really in theory not needed, since we already checked for rank,
-    // but i just want to make sure Cholesky does what it needs to, here. If everything ok
-    // i may remove this double-verification later.
+    // Double-check, really in theory not needed, since we already checked for rank, but i just want
+    // to make sure Cholesky does what it needs to, here. If everything ok i may remove this double-
+    // verification later.
     val l = chol(inCoreVtV).getL
     val good = (for (row <- 0 until l.nrow; col <- 0 to row) yield l(row, col)).forall(abs(_) > 1e-13)
 
@@ -176,7 +174,7 @@ object WeightedALSWR {
 
       /* populate out msgs to include rows mentioned for confidence */
       vert.c.nonZeroes().foreach(el => outMsgs += (el.index ->
-        new ALSVectorMsg(srcId, el.index(), vert.factorVec)))
+          new ALSVectorMsg(srcId, el.index(), vert.factorVec)))
 
       /* populate out msgs to include rows mentioned for preferences */
       vert.p.nonZeroes().foreach(el => if (!outMsgs.contains(el.index))
@@ -198,10 +196,10 @@ object WeightedALSWR {
         val icVtV = vtv.value
 
         // ideally, we might want to form vBlock directly as a full-cardinality SparseColMatrix.
-        // unfortunately this will not work very well with the way currently SparseCol/RowMatrices are
-        // structured in Mahout. I am submitting a few patches that should lift that concern
-        // and make this code much more accessible thru use of sparse matrix blocking rather than dense
-        // blocking with a level of index indirection.
+        // unfortunately this will not work very well with the way currently SparseCol/RowMatrices
+        // are structured in Mahout. I am submitting a few patches that should lift that concern
+        // and make this code much more accessible thru use of sparse matrix blocking rather than
+        // dense blocking with a level of index indirection.
 
         val msgMap = msgs.toTraversable.flatMap(_.view.map(msg => ((msg.sourceId -> msg.v)))).toMap
 
@@ -221,9 +219,8 @@ object WeightedALSWR {
 
           if n_u = 0 then the only thing here to have is V'V
 
-          Note that we sparsify V'DV operation by picking only row vectors
-          from V that have corresponding nonzero diagonal element in D (and thus we throw
-          zero diagonal elements from D as well).
+          Note that we sparsify V'DV operation by picking only row vectors from V that have corresponding
+          nonzero diagonal element in D (and thus we throw zero diagonal elements from D as well).
          */
 
         val cholArg =
@@ -247,31 +244,32 @@ object WeightedALSWR {
         val urow = ch.solveRight(eye(k)) %*% ch.solveLeft(b)
 
         if (s_log.isDebugEnabled) {
-          // Generally, this is not supposed to be happening for full-rank
-          // matrices. We've asserted full rank vor V'V before broadcasting it,
-          // so with a very great probability Cholesky argument is full rank here.
-          // unless we screwed with computations, in which case it also may cause
+          // Generally, this is not supposed to be happening for full-rank matrices. We've asserted
+          // full rank vor V'V before broadcasting it, so with a very great probability Cholesky argument
+          // is full rank here. Unless we screwed with computations, in which case it also may cause
           // non-positive definite input as well.
           val err = (cholArg %*% urow - b).norm
           assert(err <= 1e-10,
             "Cholesky linear system solution failed, residual norm = %.4f.".format(err))
         }
 
-        // residual computation
-        // we assume that that data we *know* is the one identified by non-zero indices of confidences vert.c.
-        // for each such indices we compute dot-product of newU and corresponding v-row vector.
-        // we can see that these values are represented by values of the vector (vBlockForC %*% newU).
-        // therefore (vert.p remapped to cIndices -  (vBlockForC %*% newU)) will represent a vector of residuals
+        // Residual computation
+
+        // We assume that that data we *know* is the one identified by non-zero indices of confidences
+        // vert.c. For each such indices we compute dot-product of newU and corresponding v-row vector.
+        // We can see that these values are represented by values of the vector (vBlockForC %*% newU).
+        // Therefore (vert.p remapped to cIndices -  (vBlockForC %*% newU)) will represent a vector
+        // of residuals.
 
         vert.residual = if (n_u > 0) {
           val pForC = dvec(cIndices.map(vert.p(_)))
 
           val residVec = pForC - (vBlockForC %*% urow)(::, 0)
 
-          // square each item in the vector of residuals to obtain partial mse.
-          // we don't explicitly save num of items because they could be obtained
-          // as n_u = vert.c.getNumNondefaultElements per above at any given moment.
-          (residVec *= residVec) sum
+          // Square each item in the vector of residuals to obtain partial mse. We don't explicitly
+          // save num of items because they could be obtained as n_u = vert.c.getNumNondefaultElements
+          // per above at any given moment.
+          (residVec *= residVec).sum
 
         } else 0.0
 
@@ -289,7 +287,6 @@ object WeightedALSWR {
 
       vert.active = false
 
-
       (vert, Array())
     })
 
@@ -298,8 +295,16 @@ object WeightedALSWR {
   }
 
   private def rmse(verts: RDD[(Int, ALSWRCVertex)]) = {
+
+    // RMSE is computed by taking residuals for existing observations only (which are represented
+    // by non-zero element of confidence vector c^*). Store the tuple (sum(residuals), sum(numNonZeroC^*entries))
+    // of every vertex  to t:
     val t = verts.map(t => (t._2.c.getNumNondefaultElements.toLong, t._2.residual))
-      .fold(0L, 0.0)((t1, t2) => (t1._1 + t2._1, t1._2 + t2._2))
+        .fold(0L, 0.0)((t1, t2) => (t1._1 + t2._1, t1._2 + t2._2))
+
+    // If number of tests >0 return sqrt(sum(resid)/numTestCases) otherwise return 0 (no tests). The
+    // 0 case really means we don't have observations at all so it should not really occur for any
+    // non-degenerate problem.
     if (t._1 == 0L) 0.0 else sqrt(t._2 / t._1)
   }
 
