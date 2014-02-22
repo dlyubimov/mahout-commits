@@ -203,10 +203,6 @@ In this work we are trying to bring semantic explicitness to Mahout's in-core
 \end_inset
 
 
-\begin_inset Newline newline
-\end_inset
-
-
 \end_layout
 
 \begin_layout Standard
@@ -225,16 +221,16 @@ begin{multicols}{2}
 
 \end_layout
 
-\begin_layout Section
+\begin_layout Section*
 Overview
 \end_layout
 
 \begin_layout Standard
-The manual is mostly organized giving DSL features by example.
- That means that capabilities are wider than necessarily given here, and
- may change behind the scenes as the work develops.
- However, the author tries to facilitate and ecourage particular style given
- in this document as most explicit.
+The manual is mostly origanised by giving DSL features by example.
+ That means that capabilities are wider than those shown, and may change
+ behind the scenes as the work develops.
+ However, the authors try to facilitate and ecourage particular style given,
+ and retain behind-the-scenes compatibility with the examples given.
  
 \end_layout
 
@@ -243,6 +239,29 @@ If a matrix or a vector are denoted by a single Latin letter, I use capital
  letters to denote matrices, and small letters to denote vectors, thus diverging
  somewhat from accepted camel case for reference variables in these few
  cases.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
@@ -276,7 +295,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -290,7 +308,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -304,7 +321,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -318,7 +334,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -332,7 +347,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -346,7 +360,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -360,7 +373,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -378,7 +390,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -1065,6 +1076,10 @@ Just to illustrate semantic clarity, we will adduce a source for in-core
 
 \begin_layout LyX-Code
         "k cannot be greater than smaller of m,n")
+\begin_inset Newline newline
+\end_inset
+
+
 \end_layout
 
 \begin_layout LyX-Code
@@ -1081,6 +1096,10 @@ Just to illustrate semantic clarity, we will adduce a source for in-core
 
 \begin_layout LyX-Code
     val rnd = RandomUtils.getRandom
+\begin_inset Newline newline
+\end_inset
+
+
 \end_layout
 
 \begin_layout LyX-Code
@@ -1105,9 +1124,9 @@ Just to illustrate semantic clarity, we will adduce a source for in-core
 
 \begin_layout LyX-Code
     var bt = ch.solveRight(at %*% y)
-\end_layout
+\begin_inset Newline newline
+\end_inset
 
-\begin_layout LyX-Code
 
 \end_layout
 
@@ -1137,9 +1156,9 @@ Just to illustrate semantic clarity, we will adduce a source for in-core
 
 \begin_layout LyX-Code
     }
-\end_layout
+\begin_inset Newline newline
+\end_inset
 
-\begin_layout LyX-Code
 
 \end_layout
 
@@ -1320,7 +1339,7 @@ Loading DRM off HDFS.
 \end_layout
 
 \begin_layout LyX-Code
-    val A = drmFromHDFS(path = hdfsPath) 
+val A = drmFromHDFS(path = hdfsPath) 
 \end_layout
 
 \begin_layout Paragraph
