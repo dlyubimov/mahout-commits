@@ -158,8 +158,892 @@ dlyubimov at apache dot org
 
 \end_layout
 
+\begin_layout Abstract
+In recent years significant effort was spent to produce semantically friendly
+ environments for linear algebra.
+ Working with vector, matrix and tensor data structures as a single data
+ type offers essential qualities necessary for rapid prototyping of algebraicall
+y defined mathematical problems.
+ The other side of the coin is convenience of the same environment as a
+ programming language.
+ Yet another one is doing things at scale.
+ Yet another highly desirable capability of the same environment is plotting
+ and visualization.
+ Without bringing any detailing review of existing environments here, the
+ author however offers an opinion that while a lot of environments succeed
+ in one or more of these aspects, however none of them adequately addresses
+ all of them at the same time and at reasonable cost.
+ 
+\end_layout
+
+\begin_layout Abstract
+Unlike many other environments, Mahout model was targeting both dense and
+ sparse data structures from the very beginning both in type modeling and
+ cost-based optimized computations.
+\end_layout
+
+\begin_layout Abstract
+In this work we are trying to bring semantic explicitness to Mahout's in-core
+ and out-of-core linear algebra subroutines, while adding benefits of strong
+ programming environments of scala, and extending great scalability benefits
+ of Spark and GraphX.
+ 
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+%
+\backslash
+begin{multicols}{2}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Overview
+\end_layout
+
+\begin_layout Standard
+The manual is mostly organized giving DSL features by example.
+ That means that capabilities are wider than necessarily given here, and
+ may change behind the scenes as the work develops.
+ However, the author tries to facilitate and ecourage particular style given
+ in this document as most explicit.
+ 
+\end_layout
+
+\begin_layout Standard
+If a matrix or a vector are denoted by a single Latin letter, I use capital
+ letters to denote matrices, and small letters to denote vectors, thus diverging
+ somewhat from accepted camel case for reference variables in these few
+ cases.
+\end_layout
+
+\begin_layout Section
+Mahout in-core Algebra Scala Bindings
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+See link: 
+\begin_inset CommandInset href
+LatexCommand href
+name "original proposal."
+target "http://weatheringthrutechdays.blogspot.com/2013/07/scala-dsl-for-mahout-in-core-linear.html"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In-core DSL is hardly much more than just a syntactic sugar over 
+\family typewriter
+org.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+apa
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+che.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+ma
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+hout.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+math.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Mat
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+rix
+\family default
+(
+\family typewriter
+Vec
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+tor
+\family default
+) trait implementations.
+ As such, all originally implemented operation signatures of Mahout are
+ also retained.
+\end_layout
+
+\begin_layout Subsection
+Imports
+\end_layout
+
+\begin_layout Standard
+The following two scala imports are typically used to enable Mahout Scala
+ DSL bindings for Linear Algebra:
+\end_layout
+
+\begin_layout LyX-Code
+import org.apache.mahout.math.scalabindings._
+\end_layout
+
+\begin_layout LyX-Code
+import RLikeOps._
+\end_layout
+
+\begin_layout Standard
+Another option is to use 
+\begin_inset Quotes eld
+\end_inset
+
+matlab like
+\begin_inset Quotes erd
+\end_inset
+
+ dialect by doing 
+\end_layout
+
+\begin_layout LyX-Code
+import MatlabLikeOps._
+\end_layout
+
+\begin_layout Standard
+However, Matlab-like DSL dialect adherence to original Matlab dialect is
+ far less optimal that R dialect due to the specifics of operator support
+ in scala, so we just will limit ourselves to R-like dialect here.
+\end_layout
+
+\begin_layout Subsection
+Inline initialization
+\end_layout
+
+\begin_layout Standard
+Dense vectors 
+\end_layout
+
+\begin_layout LyX-Code
+val denseVec1: Vector = (1.0, 1.1, 1.2)
+\end_layout
+
+\begin_layout LyX-Code
+val denseVec2 = dvec(1, 0, 1.1, 1.2)
+\end_layout
+
+\begin_layout Standard
+Sparse vectors
+\end_layout
+
+\begin_layout LyX-Code
+val sparseVec = svec((5 -> 1) :: (10 -> 2.0) :: Nil)
+\end_layout
+
+\begin_layout LyX-Code
+val sparseVec2: Vector = (5 -> 1.0) :: (10 -> 2.0) :: Nil
+\end_layout
+
+\begin_layout Standard
+matrix inline initialization, either dense or sparse, is always row-wise:
+\end_layout
+
+\begin_layout Standard
+dense matrices : 
+\end_layout
+
+\begin_layout LyX-Code
+val A = dense((1, 2, 3), (3, 4, 5))
+\end_layout
+
+\begin_layout Standard
+sparse matrices 
+\end_layout
+
+\begin_layout LyX-Code
+val A = sparse(
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+(1, 3) :: Nil,
+\end_layout
+
+\begin_layout LyX-Code
+(0, 2) :: (1, 2.5) :: Nil
+\end_layout
+
+\end_deeper
+\begin_layout LyX-Code
+)
+\end_layout
+
+\begin_layout Standard
+diagonal matrix with constant diagonal elements
+\end_layout
+
+\begin_layout LyX-Code
+diag(10, 3.5) 
+\end_layout
+
+\begin_layout Standard
+diagonal matrix with main diagonal backed by a vector 
+\end_layout
+
+\begin_layout LyX-Code
+diagv((1, 2, 3, 4, 5))
+\end_layout
+
+\begin_layout Standard
+Identity matrix 
+\end_layout
+
+\begin_layout LyX-Code
+eye(10)
+\end_layout
+
+\begin_layout Standard
+Obviously, direct initialization of any vector or matrix type in Mahout
+ is still available with regular oeration 
+\family typewriter
+new
+\family default
+.
+\end_layout
+
+\begin_layout Subsection
+Slicing and Assigning
+\end_layout
+
+\begin_layout Standard
+geting vector element 
+\end_layout
+
+\begin_layout LyX-Code
+val d = vec(5)
+\end_layout
+
+\begin_layout Standard
+setting vector element 
+\end_layout
+
+\begin_layout LyX-Code
+vec(5) = 3.0
+\end_layout
+
+\begin_layout Standard
+getting matrix element 
+\end_layout
+
+\begin_layout LyX-Code
+val d = m(3,5)
+\end_layout
+
+\begin_layout Standard
+setting matrix element (setQuick() behind the scenes) 
+\end_layout
+
+\begin_layout LyX-Code
+M(3,5) = 3.0
+\end_layout
+
+\begin_layout Standard
+Getting matrix row or column
+\end_layout
+
+\begin_layout LyX-Code
+val rowVec = M(3, ::) 
+\end_layout
+
+\begin_layout LyX-Code
+val colVec = M(::, 3) 
+\end_layout
+
+\begin_layout Standard
+Setting matrix row or column 
+\end_layout
+
+\begin_layout LyX-Code
+M(3, ::) = (1, 2, 3)
+\end_layout
+
+\begin_layout LyX-Code
+M(::, 3) = (1, 2, 3)
+\end_layout
+
+\begin_layout Standard
+thru vector assignment also works 
+\end_layout
+
+\begin_layout LyX-Code
+M(3, ::) := (1, 2, 3)
+\end_layout
+
+\begin_layout LyX-Code
+M(::, 3) := (1, 2, 3)
+\end_layout
+
+\begin_layout Standard
+subslices of row or vector work too 
+\end_layout
+
+\begin_layout LyX-Code
+a(0, 0 to 1) = (3, 5)
+\end_layout
+
+\begin_layout Standard
+or with vector assignment
+\end_layout
+
+\begin_layout LyX-Code
+a(0, 0 to 1) := (3, 5)
+\end_layout
+
+\begin_layout Standard
+matrix contiguous block as matrix, with assignment 
+\end_layout
+
+\begin_layout Standard
+// block
+\end_layout
+
+\begin_layout LyX-Code
+val B = A(2 to 3, 3 to 4) 
+\end_layout
+
+\begin_layout Standard
+// asignment to a block
+\end_layout
+
+\begin_layout LyX-Code
+A(0 to 1, 1 to 2) = dense((3, 2), (2, 3))
+\end_layout
+
+\begin_layout Standard
+or thru the matrix assignment operator 
+\end_layout
+
+\begin_layout LyX-Code
+A(0 to 1, 1 to 2) := dense((3, 2), (2, 3))
+\end_layout
+
+\begin_layout Standard
+Assignment operator by copying between vectors or matrix 
+\end_layout
+
+\begin_layout LyX-Code
+vec1 := vec2 
+\end_layout
+
+\begin_layout LyX-Code
+M1 := M2 
+\end_layout
+
+\begin_layout Standard
+also works for matrix subindexing notations as per above
+\end_layout
+
+\begin_layout Standard
+Assignment thru a function literal (matrix)
+\end_layout
+
+\begin_layout LyX-Code
+M := ((row, col, x) => if (row == col) 1 else 0)
+\end_layout
+
+\begin_layout Standard
+for a vector, the same:
+\end_layout
+
+\begin_layout LyX-Code
+vec := ((index, x) => sqrt(x))
+\end_layout
+
+\begin_layout Subsection
+BLAS-like operations
+\end_layout
+
+\begin_layout Standard
+plus/minus, either vector or matrix or numeric, with assignment or not
+\end_layout
+
+\begin_layout LyX-Code
+a + b
+\end_layout
+
+\begin_layout LyX-Code
+a - b
+\end_layout
+
+\begin_layout LyX-Code
+a + 5.0
+\end_layout
+
+\begin_layout LyX-Code
+a - 5.0
+\end_layout
+
+\begin_layout Standard
+Hadamard (elementwise) product, either vector or matrix or numeric operands
+\end_layout
+
+\begin_layout LyX-Code
+a * b
+\end_layout
+
+\begin_layout LyX-Code
+a * 5
+\end_layout
+
+\begin_layout Standard
+same things with assignment, matrix, vector or numeric operands 
+\end_layout
+
+\begin_layout LyX-Code
+a += b
+\end_layout
+
+\begin_layout LyX-Code
+a -= b
+\end_layout
+
+\begin_layout LyX-Code
+a += 5.0
+\end_layout
+
+\begin_layout LyX-Code
+a -= 5.0 
+\end_layout
+
+\begin_layout LyX-Code
+a *= b
+\end_layout
+
+\begin_layout LyX-Code
+a *= 5
+\end_layout
+
+\begin_layout Standard
+One nuance here is associativity rules in scala.
+ E.g.
+ 
+\family typewriter
+1/x
+\family default
+ in R (where x is vector or matrix) is elementwise inverse operation and
+ in scala realm would be expressed as
+\end_layout
+
+\begin_layout LyX-Code
+val xInv = 1 /: x
+\end_layout
+
+\begin_layout Standard
+and R's 
+\family typewriter
+5.0 - x
+\family default
+ would be
+\end_layout
+
+\begin_layout LyX-Code
+val x1 = 5.0 -: x
+\end_layout
+
+\begin_layout Standard
+Even trickier and really probably not so obvious stuff :
+\end_layout
+
+\begin_layout LyX-Code
+a -=: b
+\end_layout
+
+\begin_layout Standard
+assigns 
+\family typewriter
+a - b
+\family default
+ to 
+\family typewriter
+b
+\family default
+ (in-place) and returns 
+\family typewriter
+b
+\family default
+.
+ Similarly for 
+\family typewriter
+a /=: b
+\family default
+ or 
+\family typewriter
+1 /=: v
+\family default
+.
+\end_layout
+
+\begin_layout Standard
+(all assignment operations, including :=, return the assignee argument just
+ like in C++)
+\end_layout
+
+\begin_layout Standard
+dot product (vector operands) 
+\end_layout
+
+\begin_layout LyX-Code
+a dot b 
+\end_layout
+
+\begin_layout Standard
+matrix /vector equivalency (or non-equivalency).
+ Dangerous, exact equivalence is rarely useful, better use norm comparisons
+ with admission of small errors 
+\end_layout
+
+\begin_layout LyX-Code
+a === b
+\end_layout
+
+\begin_layout LyX-Code
+a !== b
+\end_layout
+
+\begin_layout Standard
+Matrix multiplication (matrix operands)
+\end_layout
+
+\begin_layout LyX-Code
+a %*% b
+\end_layout
+
+\begin_layout Standard
+for matrices that explicitly support optimized right and left muliply (currently
+, diagonal matrices)
+\end_layout
+
+\begin_layout Standard
+right-multiply (for symmetry, in fact same as %*%) 
+\end_layout
+
+\begin_layout LyX-Code
+diag(5,5) :%*% b 
+\end_layout
+
+\begin_layout Standard
+optimized left multiply with a diagonal matrix:
+\end_layout
+
+\begin_layout LyX-Code
+A %*%: diag(5,5) # i.e.
+ same as (diag(5,5) :%*% A.t) t
+\end_layout
+
+\begin_layout Standard
+Second norm, vector or matrix argument:
+\end_layout
+
+\begin_layout LyX-Code
+a.norm
+\end_layout
+
+\begin_layout Standard
+Finally, transpose 
+\end_layout
+
+\begin_layout LyX-Code
+val Mt = M.t
+\end_layout
+
+\begin_layout Standard
+Note: Transposition currently is handled via 
+\emph on
+view
+\emph default
+, i.e.
+ updating a transposed matrix will be updating the original.
+ Also computing something like 
+\begin_inset Formula $\mathbf{X}^{\top}\mathbf{X}$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout LyX-Code
+val XtX = X.t %*% X
+\end_layout
+
+\begin_layout Standard
+will not therefore incur any additional data copying.
+\end_layout
+
+\begin_layout Subsection
+Decompositions
+\end_layout
+
+\begin_layout Standard
+All arguments in the following are matrices.
+\end_layout
+
+\begin_layout Paragraph
+Cholesky decompositon
+\end_layout
+
+\begin_layout Standard
+(as an object of a CholeskyDecomposition class with all its operations)
+\end_layout
+
+\begin_layout LyX-Code
+val ch = chol(M)
+\end_layout
+
+\begin_layout Paragraph
+SVD
+\end_layout
+
+\begin_layout LyX-Code
+val (U, V, s) = svd(M)
+\end_layout
+
+\begin_layout Paragraph
+EigenDecomposition
+\end_layout
+
+\begin_layout LyX-Code
+val (V, d) = eigen(M)
+\end_layout
+
+\begin_layout Paragraph
+QR decomposition
+\end_layout
+
+\begin_layout LyX-Code
+val (Q, R) = qr(M)
+\end_layout
+
+\begin_layout Paragraph
+Rank
+\end_layout
+
+\begin_layout Standard
+Check for rank deficiency (runs rank-revealing QR)
+\end_layout
+
+\begin_layout LyX-Code
+M.isFullRank
+\end_layout
+
+\begin_layout Paragraph
+In-core SSVD
+\end_layout
+
+\begin_layout LyX-Code
+val (U, V, s) = ssvd(A, k=50, p=15, q=1)
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout Subsection
+Misc
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout Standard
+vector cardinality 
+\end_layout
+
+\begin_layout LyX-Code
+a.length
+\end_layout
+
+\begin_layout Standard
+matrix cardinality 
+\end_layout
+
+\begin_layout LyX-Code
+m.nrow
+\end_layout
+
+\begin_layout LyX-Code
+m.ncol
+\end_layout
+
+\begin_layout Standard
+a copy-by-value (vector or matrix ) 
+\end_layout
+
+\begin_layout LyX-Code
+val b = a cloned 
+\end_layout
+
+\begin_layout Subsection
+Pitfalls 
+\end_layout
+
+\begin_layout Standard
+This one the people who are accustomed to writing R linear algebra will
+ probably find quite easy to fall into.
+ R has a nice property, a copy-on-write, so all variables actually appear
+ to act as no-side-effects scalar-like values and all assignment appear
+ to be by value.
+ Since scala always assigns by reference (except for AnyVal types which
+ are assigned by value), it is easy to fall prey to the following side effect
+ modifications
+\end_layout
+
+\begin_layout LyX-Code
+val m1 = m 
+\end_layout
+
+\begin_layout LyX-Code
+m1 += 5.0 // modifies m as well
+\end_layout
+
+\begin_layout Standard
+A fix is as follows: 
+\end_layout
+
+\begin_layout LyX-Code
+val m1 = m cloned 
+\end_layout
+
+\begin_layout LyX-Code
+m1 += 5.0 // now m is intact
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
 \begin_layout Section
 MAHOUT-1346: Spark Bindings (DRM)
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+%
+\backslash
+end{multicols}
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \end_body
