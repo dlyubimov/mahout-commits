@@ -205,22 +205,6 @@ In this work we are trying to bring semantic explicitness to Mahout's in-core
 
 \end_layout
 
-\begin_layout Standard
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-%
-\backslash
-begin{multicols}{2}
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
 \begin_layout Section*
 Overview
 \end_layout
@@ -1229,12 +1213,27 @@ val m1 = m cloned
 m1 += 5.0 // now m is intact
 \end_layout
 
-\begin_layout LyX-Code
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
 
 \end_layout
 
 \begin_layout Section
-Mahout out-of-core algebraic Spark/Scala bindings
+Out-of-core linalg bindings
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -1331,19 +1330,19 @@ Note that as of the time of this writing Spark sessions cannot coexist in
 \end_layout
 
 \begin_layout Subsection
-Loading DRM
+DRM Persistence operators
 \end_layout
 
-\begin_layout Paragraph
-Loading DRM off HDFS.
+\begin_layout Subsubsection
+Loading DRM off HDFS
 \end_layout
 
 \begin_layout LyX-Code
 val A = drmFromHDFS(path = hdfsPath) 
 \end_layout
 
-\begin_layout Paragraph
-Parallelizing from an in-core matrix.
+\begin_layout Subsubsection
+Parallelizing from an in-core matrix
 \end_layout
 
 \begin_layout LyX-Code
@@ -1354,28 +1353,24 @@ val inCoreA = dense((1, 2, 3), (3, 4, 5))
 val A = drmParallelize(inCoreA)
 \end_layout
 
-\begin_layout Paragraph
-Empty DRM.
+\begin_layout Subsubsection
+Empty DRM
 \end_layout
 
 \begin_layout LyX-Code
 val A = drmParallelizeEmpty(100, 50)
 \end_layout
 
-\begin_layout Subsection
-Collecting a DRM
-\end_layout
-
-\begin_layout Paragraph
-Collecting to driver's jvm in-core.
+\begin_layout Subsubsection
+Collecting to driver's jvm in-core
 \end_layout
 
 \begin_layout LyX-Code
 val inCoreA = A.collect()
 \end_layout
 
-\begin_layout Paragraph
-Collecting to HDFS.
+\begin_layout Subsubsection
+Collecting to HDFS
 \end_layout
 
 \begin_layout Standard
@@ -1386,15 +1381,476 @@ Collect Spark-backed DRM to HDFS in Mahout's DRM format files:
 A.writeDRM(path = hdfsPath)
 \end_layout
 
+\begin_layout Subsection
+Logical algebraic operators on DRM matrices
+\end_layout
+
+\begin_layout Standard
+We will define a logical set of operators that are familiar to users of
+ environments such as R, which are elementwise +, -, *, / as well as matrix
+ multiplication %*% and transposition.
+\end_layout
+
+\begin_layout Standard
+Logical operators comprised into expression do not however mean that concrete
+ physical plan is materialized until the expression is 
+\begin_inset Quotes eld
+\end_inset
+
+checkpointed
+\begin_inset Quotes erd
+\end_inset
+
+ -- directly or indirectly.
+ In terms of Spark, this is called 
+\begin_inset Quotes eld
+\end_inset
+
+action
+\begin_inset Quotes erd
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Unlike with Spark, we want to discern two types of 
+\begin_inset Quotes eld
+\end_inset
+
+actions
+\begin_inset Quotes erd
+\end_inset
+
+: optimizer action and computational action.
+ 
+\end_layout
+
+\begin_layout Standard
+Optimizer action triggers materialization of a physical plan (concrete RDD
+ graph with result marked for Spark caching), backed by CheckpointedDRM.
+ CheckpointedDRM servies as a cut-off boundary for optmizer action.
+ Optimizer action does not trigger actual computation of result data set.
+ Right now optimizer action is triggered explicitly by DRMLike#checkpoint().
+\end_layout
+
+\begin_layout Standard
+On the other hand, computational action leads to result being computed and
+ (optionally?) placed into Spark cache.
+ Such actions will also lazily and implicitly trigger linalg optimizer checkpoin
+ting.
+ Currently, computational actions include writeDrm(), collect(), blockify()
+ 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
+and sometimes could also be triggered implicitly by optimizer activity beyond
+ current checkpoint cut-off (if checkpointed but not computed and cached
+ yet) to run some cost estimates necessary for the optimizer beyond checkpointin
+g
+, potentially future actions associated with DRM sub-blocking
+\lang english
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+All these rules follow the same patterns as for the in-core arguments.
+\end_layout
+
+\begin_layout Subsubsection
+Transposition
+\end_layout
+
+\begin_layout LyX-Code
+A.t
+\end_layout
+
+\begin_layout Subsubsection
+Elementwise +, -, *, /
+\end_layout
+
+\begin_layout Standard
+All this operations require identical geometry of operands and row keying
+ types that will be asserted at optmizer checkpointing time.
+\end_layout
+
+\begin_layout LyX-Code
+A + B
+\end_layout
+
+\begin_layout LyX-Code
+A - B
+\end_layout
+
+\begin_layout LyX-Code
+A * B
+\end_layout
+
+\begin_layout LyX-Code
+A / B
+\end_layout
+
+\begin_layout Standard
+Binary operators involving in-core argument (only on int-keyed DRMs)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{M}=\mathbf{A}+\mathbf{B}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{M}=\mathbf{A}-\mathbf{B}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{M}=\mathbf{A}\circ\mathbf{B}\,\,\,\mathrm{(Hadamard)}
+\]
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{M}=\left(\begin{matrix}\frac{a_{11}}{b_{11}} & \frac{a_{12}}{b_{12}} & \cdots & \frac{a_{1n}}{b_{1n}}\\
+\vdots & \vdots & \ddots & \vdots\\
+\frac{a_{m1}}{b_{m1}} & \frac{a_{m2}}{b_{m2}} & \cdots & \frac{a_{mn}}{b_{mn}}
+\end{matrix}\right)\,\,\,\mathrm{(elementwise\, deletion)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout LyX-Code
+A + inCoreB
+\end_layout
+
+\begin_layout LyX-Code
+A - inCoreB
+\end_layout
+
+\begin_layout LyX-Code
+A * inCoreB
+\end_layout
+
+\begin_layout LyX-Code
+A :/ inCoreB
+\end_layout
+
+\begin_layout LyX-Code
+A :+ inCoreB
+\end_layout
+
+\begin_layout LyX-Code
+A :- inCoreB
+\end_layout
+
+\begin_layout LyX-Code
+A :* inCoreB
+\end_layout
+
+\begin_layout LyX-Code
+A :/ inCoreB
+\end_layout
+
+\begin_layout LyX-Code
+inCoreA +: B
+\end_layout
+
+\begin_layout LyX-Code
+inCoreA -: B
+\end_layout
+
+\begin_layout LyX-Code
+inCoreA *: B
+\end_layout
+
+\begin_layout LyX-Code
+inCoreA /: B
+\end_layout
+
+\begin_layout Standard
+Note spark associativity change (e.g.
+ inCoreA +: B means B.leftMultiply(A), just like with both in-core arguments).
+ Important thing here is that whenever operator arguments include both in-core
+ and out-of-core arguments, operator can only be associated with the out-of-core
+ argument to support distributed implementation.
+\end_layout
+
+\begin_layout Subsubsection
+Matrix multiplication 
+\family typewriter
+%*%
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\mathbf{M}=\mathbf{A}\mathbf{B}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout LyX-Code
+A %*% B
+\end_layout
+
+\begin_layout LyX-Code
+A %*% inCoreB
+\end_layout
+
+\begin_layout LyX-Code
+A :%*% inCoreB
+\end_layout
+
+\begin_layout LyX-Code
+inCoreA %*%: B
+\end_layout
+
+\begin_layout Standard
+Same as above, when both in-core and out-of-core argumetns used, associativity
+ of operation must follow the out-of-core (DRM) argument in the expression.
+\end_layout
+
+\begin_layout Subsubsection
+Matrix-vector multiplication
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{M}=\mathbf{A}\mathbf{x}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathbf{M}=\mathbf{x}\mathbf{A}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout LyX-Code
+A %*% x
+\end_layout
+
+\begin_layout LyX-Code
+A :%*% x
+\end_layout
+
+\begin_layout LyX-Code
+x %*%: A
+\end_layout
+
+\begin_layout Standard
+Since vector argument is always in-core, the associativity must follow the
+ DRM argument.
+\end_layout
+
+\begin_layout Subsubsection
+Matrix-real +,-,*,/
+\end_layout
+
+\begin_layout Standard
+In this context, matrix-scalar operations mean element-wise operatios of
+ every matrix element and a scalar.
+\end_layout
+
+\begin_layout LyX-Code
+A + 5.0
+\end_layout
+
+\begin_layout LyX-Code
+A :+ 5.0
+\end_layout
+
+\begin_layout LyX-Code
+5.0 +: A
+\end_layout
+
+\begin_layout LyX-Code
+A - 5.0
+\end_layout
+
+\begin_layout LyX-Code
+A :- 5.0
+\end_layout
+
+\begin_layout LyX-Code
+5.0 -: A  
+\end_layout
+
+\begin_layout LyX-Code
+A * 5.0
+\end_layout
+
+\begin_layout LyX-Code
+A :* 5.0
+\end_layout
+
+\begin_layout LyX-Code
+5.0 *: A
+\end_layout
+
+\begin_layout LyX-Code
+A / 5.0
+\end_layout
+
+\begin_layout LyX-Code
+A :/ 5.0
+\end_layout
+
+\begin_layout LyX-Code
+5.0 /: A
+\end_layout
+
+\begin_layout Standard
+Note that 
+\family typewriter
+5.0 -: A
+\family default
+ means 
+\begin_inset Formula $m_{ij}=5-a_{ij}$
+\end_inset
+
+ and 
+\family typewriter
+5.0 /: A
+\family default
+ means 
+\begin_inset Formula $m_{ij}=\frac{5}{a_{ij}}$
+\end_inset
+
+ for all elements of the result.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Notations
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Standard
 \begin_inset ERT
 status open
 
 \begin_layout Plain Layout
 
-%
+{
 \backslash
-end{multicols}
+color{comment}
+\end_layout
+
+\end_inset
+
+
+\noun on
+comment
+\noun default
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
+
+\noun on
+tentative
+\noun default
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
 \end_layout
 
 \end_inset
