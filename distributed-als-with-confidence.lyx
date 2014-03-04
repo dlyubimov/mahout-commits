@@ -160,8 +160,26 @@ opts_chunk$set(echo=F,warning=F,message=F,cache=F,self.contained=F, fig.show
 
 \end_layout
 
-\begin_layout Part*
+\begin_layout Title
 ALS-WR for preferences with confidence 
+\end_layout
+
+\begin_layout Author
+Dmitriy Lyubimov
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+dlyubimov at apache dot org
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section*
+Method 
 \end_layout
 
 \begin_layout Standard
@@ -603,37 +621,6 @@ key "Koren-Volinsky"
 \end_layout
 
 \begin_layout Standard
-In our situation it is especially important because we only observe clicks
- (
-\begin_inset Formula $p_{click}=1,\, c_{click}>c_{0}$
-\end_inset
-
-), add-to-cart (
-\begin_inset Formula $p_{cart}=1,\, c_{cart}>c_{0}$
-\end_inset
-
-) and conversions 
-\begin_inset Formula $\left(p_{conv}=1,\, c_{conv}>c_{click}\right)$
-\end_inset
-
- but we never directly observe ignored recommendation, i.e.
- we only observe 
-\begin_inset Formula $p=1$
-\end_inset
-
- values but never 
-\begin_inset Formula $p=0$
-\end_inset
-
-.
- Assuming 
-\begin_inset Formula $c_{0}=0$
-\end_inset
-
- will likely lead to undersired effects in the linear system.
-\end_layout
-
-\begin_layout Standard
 To generalize, we will assume minimum confidence for any directly unobserved
  preference 
 \begin_inset Formula $p_{0}$
@@ -646,16 +633,73 @@ To generalize, we will assume minimum confidence for any directly unobserved
  and increment any actual observed confidence with it: 
 \begin_inset Formula 
 \[
-c_{u,i}^{*}=c_{0}+c_{u,i}.
+c_{u,i}=c_{0}+c_{u,i}^{*}.
 \]
 
 \end_inset
 
- Substituting 
-\begin_inset Formula $\mathbf{D}^{*\left(u\right)}=\mathbf{D}^{\left(u\right)}-c_{0}\mathbf{I}$
+
+\end_layout
+
+\begin_layout Standard
+Thus, we can rewrite original problem as having input of 
+\begin_inset Formula $\mathbf{C}^{*}$
 \end_inset
 
-, we modify 
+ and 
+\begin_inset Formula $c_{0}$
+\end_inset
+
+ to keep confidence input sparse (implying actual confidence matrix by 
+\begin_inset Formula $\mathbf{C}_{u,i}=c_{0}+\mathbf{C}_{u,i}^{*}$
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+We construct diagonal matrix 
+\begin_inset Formula $\mathbf{D}^{*\left(u\right)}$
+\end_inset
+
+ similarly to construction of 
+\series bold
+
+\begin_inset Formula $\mathbf{D}^{\left(u\right)}$
+\end_inset
+
+
+\series default
+, but using 
+\begin_inset Formula $\mathbf{C}^{*}$
+\end_inset
+
+ as a source.
+ Obviously, since users of 
+\begin_inset Formula $\mathbf{C}^{*}$
+\end_inset
+
+ will have very few non-zero elements (in fact, only those items that were
+ ever attempted to be consumed will have any, which in real world normally
+ is just a fraction of all available items), the diagonal of 
+\begin_inset Formula $\mathbf{D}^{*}$
+\end_inset
+
+ can be expected to be super sparse.
+ 
+\end_layout
+
+\begin_layout Standard
+By construction, 
+\begin_inset Formula $\mathbf{D}^{\left(u\right)}=\mathbf{D}^{*\left(u\right)}+c_{0}\mathbf{I}$
+\end_inset
+
+.
+ Subsituting 
+\begin_inset Formula $\mathbf{D}^{\left(u\right)}$
+\end_inset
+
+ into 
 \begin_inset CommandInset ref
 LatexCommand eqref
 reference "eq:user-update"
@@ -669,7 +713,7 @@ reference "eq:item-update"
 
 \end_inset
 
- as
+, we get 
 \end_layout
 
 \begin_layout Standard
@@ -753,11 +797,15 @@ Here,
 \begin_inset Formula $u$
 \end_inset
 
- per iteration; 
+ per iteration; product 
 \begin_inset Formula $\mathbf{V}^{\top}\mathbf{D}^{*\left(u\right)}\mathbf{V}$
 \end_inset
 
- is still sparse as before; and 
+ is sparse because diagonal of 
+\begin_inset Formula $\mathbf{D}^{*\left(u\right)}$
+\end_inset
+
+ is sparse; and 
 \begin_inset Formula $\mathbf{p}^{\left(u\right)}$
 \end_inset
 
@@ -765,177 +813,111 @@ Here,
 \begin_inset Formula $\mathbf{V}^{\top}\left(c_{0}\mathbf{I}+\mathbf{D}^{*\left(u\right)}\right)\mathbf{p}^{\left(u\right)}$
 \end_inset
 
- still sparse (as we assume 
+ still sparse (as we usually construct our problem by assuming preference
+ 
 \begin_inset Formula $\mathbf{P}_{u,i}=0$
 \end_inset
 
- for any interaction we don't have data for).
+ for any interaction we don't have an observation for).
 \end_layout
 
 \begin_layout Paragraph
-Sparse data fold-in
+Note 1.
 \end_layout
 
 \begin_layout Standard
-Also important thing to notice that sometimes the matrix under 
-\begin_inset Formula $\left(\cdot\right)^{-1}$
+\begin_inset Formula $c_{0}$
 \end_inset
 
- in 
-\begin_inset CommandInset ref
-LatexCommand eqref
-reference "eq:user-update"
+ usually does not require crossvalidation; instead, parameters that consruct
+ 
+\begin_inset Formula $c_{u,i}^{*}\neq0$
+\end_inset
+
+, do (e.g.
+ see 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Koren-Volinsky"
 
 \end_inset
 
- or 
-\begin_inset CommandInset ref
-LatexCommand eqref
-reference "eq:item-update"
-
+ for an example of confidence encoding scheme for a fraction of a consumed
+ item).
+ In reality it is quite possible that more than one parameter constructing
+ confidence would require search by crossvalidation.
+ Therefore, it is totally ok to assume 
+\begin_inset Formula $c_{0}=1$
 \end_inset
 
- becomes singular and solution for that user or item is subsequently not
- possible.
- In particular, it is always the case whenever 
-\begin_inset Formula $n_{u}<k$
-\end_inset
-
- or 
-\begin_inset Formula $n'_{i}<k$
-\end_inset
-
-.
+ in majority of cases and focus on search for other confidence encoding
+ parameters instead.
  
 \end_layout
 
-\begin_layout Standard
-When this happens, we don't attempt to compute shortened vector for the
- user or item by using, for example, 
-\begin_inset Formula $n_{u}$
-\end_inset
-
- top principal columns of 
-\begin_inset Formula $\mathbf{U}$
-\end_inset
-
-.
- 
+\begin_layout Paragraph
+Note 2.
 \end_layout
 
 \begin_layout Standard
-In that situation we still could use 
+And corollary to note 1, 
+\begin_inset Formula $\lambda$
+\end_inset
+
+ is the only parameter of the training api itself that should be subject
+ to crossvalidation.
+\end_layout
+
+\begin_layout Paragraph
+Note 3.
+\end_layout
+
+\begin_layout Standard
+The equations 
 \begin_inset CommandInset ref
-LatexCommand ref
+LatexCommand eqref
 reference "eq:user-update-c0"
 
 \end_inset
 
- to update the reduced-rank user vector by assuming 
-\begin_inset Formula $\mathbf{V}_{\mathrm{princ}}^{\left(u\right)}$
+ and 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:item-update-c0"
+
 \end_inset
 
- instead of 
-\begin_inset Formula $\mathbf{V}$
+ represent weighted regularization example.
+ I failed to fiind any theoretical justification for weighted regularization
+ in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "ALS-WR"
+
 \end_inset
 
- where 
-\begin_inset Formula $\mathbf{V}_{\mathrm{princ}}^{\left(u\right)}\in\mathbb{R}^{n\times\tilde{n}_{u}}$
+ , only a statement of better results based on empirical evidence obtained
+ by the authors.
+ Anyhow, non-WR option of the training is easily achieved by dropping 
+\begin_inset Formula $n_{i}$
 \end_inset
 
- is a vertical block of 
-\begin_inset Formula $\mathbf{V}$
-\end_inset
-
- containing top 
+ and 
 \begin_inset Formula $n_{u}$
 \end_inset
 
- most principal components of decomposition.
-
-\series bold
- 
-\end_layout
-
-\begin_layout Standard
-However, due to nature of the algorithm, we don't investigate emerging principal
- components during training and only reveal them at the end of the algorithm
- by reording correspondent columns in accorance to order of the set of values
- 
-\begin_inset Formula $\left\{ s_{i}=\left\Vert \mathbf{U}_{*,i}\right\Vert \cdot\left\Vert \mathbf{V}_{*,i}\right\Vert \right\} $
-\end_inset
-
- (
-\begin_inset Formula $\forall i=1..k\mbox{ }$
-\end_inset
-
-).
- Therefore, we cannot figure 
-\begin_inset Formula $\bar{\mathbf{V}}$
-\end_inset
-
- in the course of algorithm.
- But at the end of the training cycle and figuring out principal vectors,
- 
-\begin_inset Formula 
-\[
-\mathbf{V}_{\mathrm{princ}}^{\left(u\right)}=\mathbf{V}\left(:,1:n_{u}\right).
-\]
+ factors from 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:user-update-c0"
 
 \end_inset
 
-After that, any new observation for a new user 
-\begin_inset Formula $u$
-\end_inset
+, 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:item-update-c0"
 
- will look like 
-\begin_inset Formula 
-\begin{eqnarray*}
-\mathbf{\tilde{u}}_{u} & = & \left[c_{0}\left(\mathbf{V}_{\mathrm{princ}}^{\left(u\right)}\right)^{\top}\mathbf{V}_{\mathrm{princ}}^{\left(u\right)}+\right.\\
- & + & \left.\left(\mathbf{V}_{\mathrm{princ}}^{\left(u\right)}\right)^{\top}\mathbf{\tilde{D}}^{\left(u\right)}\mathbf{\mathbf{V}}_{\mathrm{princ}}^{\left(u\right)}+\tilde{n}_{u}\lambda\mathbf{I}\right]^{-1}\times
-\end{eqnarray*}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\begin{equation}
-\times\left(\mathbf{V}_{\mathrm{princ}}^{\left(u\right)}\right)^{\top}\left(c_{0}\mathbf{I}+\tilde{\mathbf{D}}^{\left(u\right)}\right)\mathbf{\tilde{p}}_{u}
-\end{equation}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-where 
-\begin_inset Formula $\tilde{x}$
-\end_inset
-
- denotes anything related to a new observation of a new user.
- We denote matrix of results of all fold-in users as 
-\begin_inset Formula 
-\begin{equation}
-\tilde{\mathbf{U}}=\left(\begin{matrix}\tilde{\mathbf{u}}_{1}^{\top}\\
-\tilde{\mathbf{u}}_{2}^{\top}\\
-\vdots\\
-\tilde{\mathbf{u}}_{m_{1}}^{\top}
-\end{matrix}\right)\in\mathbb{R}^{\tilde{m}\times n}.
-\end{equation}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-This process can be applied symmetrically, if necessary, to fold-in items
- as well and obtain 
-\begin_inset Formula $\tilde{\mathbf{V}}\in\mathbb{R}^{m\times\tilde{n}}$
 \end_inset
 
 .
@@ -1009,11 +991,11 @@ Next, every row in
 \end_inset
 
 ) is connected with corresponded sparse vectors 
-\begin_inset Formula $\mathbf{c}^{\left(u\right)}=\mathbf{C}_{u,*}$
+\begin_inset Formula $\mathbf{c}^{\left(u\right)}=\mathbf{C}_{u,*}^{*}$
 \end_inset
 
  (
-\begin_inset Formula $\mathbf{c}^{\left(i\right)}=\mathbf{C}_{*,i}$
+\begin_inset Formula $\mathbf{c}^{\left(i\right)}=\mathbf{C}_{*,i}^{*}$
 \end_inset
 
 ) and 
@@ -1058,7 +1040,7 @@ Iteration steps.
 \end_inset
 
  precomputed in distributed way for each iteration and broadcast.
- Since this matrix gas tiny 
+ Since this matrix has tiny 
 \begin_inset Formula $k\times k$
 \end_inset
 
@@ -1070,7 +1052,7 @@ Form Bagel messages from current
 \begin_inset Formula $\mathbf{V}$
 \end_inset
 
- side : 
+ side : each vector 
 \begin_inset Formula $\mathbf{V}_{i}\mbox{ }$
 \end_inset
 
@@ -1083,15 +1065,21 @@ Form Bagel messages from current
 \end_inset
 
 .
+ (obviously if group 1 and group 2 share a vertex, no need to send row of
  
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ twice to that vertex).
 \end_layout
 
 \begin_layout Itemize
-During Bagel's compute(), group (1) is used to compute 
+During Bagel's compute() it can be seen that rows sent as group (1) is essential
+ to compute 
 \begin_inset Formula $\mathbf{V}^{\top}\mathbf{D}^{*\left(u\right)}\mathbf{V}$
 \end_inset
 
-; group (2) is used to compute 
+; group (2) is essential to compute 
 \begin_inset Formula $\mathbf{V}^{\top}\mathbf{p}^{\left(u\right)}$
 \end_inset
 
@@ -1151,337 +1139,13 @@ Iteration updating
 \begin_inset Formula $\mathbf{V}$
 \end_inset
 
- should be symmetrical.
+ is symmetrical.
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \[
 \]
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Newpage pagebreak
-\end_inset
-
-
-\end_layout
-
-\begin_layout Section*
-Training with a Multilevel Regression Hierarchy
-\end_layout
-
-\begin_layout Standard
-\begin_inset CommandInset line
-LatexCommand rule
-offset "0.5ex"
-width "100col%"
-height "1pt"
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-
-\backslash
-begin{multicols}{2}
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-There are several levels of multilevel regression schemes.
- We consider a simple intercept-based scheme.
-\end_layout
-
-\begin_layout Standard
-First level is trained with intercepts.
- Denote vector of all user intercepts as 
-\begin_inset Formula $\mathbf{b}$
-\end_inset
-
- and item intercepts as 
-\begin_inset Formula $\mathbf{b}'$
-\end_inset
-
-.
- 
-\end_layout
-
-\begin_layout Paragraph
-First level.
-\end_layout
-
-\begin_layout Standard
-The prediction first level looks like 
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\begin{equation}
-\hat{\mathbf{P}}_{u,i}=\mathbf{b}_{u}+\mathbf{b}'_{i}+\mathbf{u}^{\left(u\right)\top}\mathbf{v}^{\left(i\right)}
-\end{equation}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-We fit the first level first with behavior-rich users.
- 
-\end_layout
-
-\begin_layout Paragraph
-Second level.
- 
-\end_layout
-
-\begin_layout Standard
-Suppose all users have a handful of features 
-\begin_inset Formula $\mathbf{x}$
-\end_inset
-
-, and all items have a handful of features 
-\begin_inset Formula $\mathbf{z}$
-\end_inset
-
-.
- 
-\end_layout
-
-\begin_layout Standard
-Second level models fit biases: 
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\begin{equation}
-\hat{\mathbf{b}}_{u}=\mathbf{w}^{\top}\mathbf{x}^{\left(u\right)},
-\end{equation}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\begin{equation}
-\mathbf{b}'_{i}=\mathbf{w'}^{\top}\mathbf{z}^{\left(i\right)}.
-\end{equation}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-
-\emph on
-Todo: 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Agarwal-1"
-
-\end_inset
-
- actually regress every user/item latent variable in the second stage, not
- just intercept (bias).
- Which should be fairly trivial to implement.
- The main difficulty is weighted fitting of the first-stage model.
-\end_layout
-
-\begin_layout Standard
-The idea is that for users with poor history we make predictions via 
-\begin_inset Formula 
-\begin{equation}
-\hat{\mathbf{P}}_{u,i}=\mathbf{w}^{\top}\mathbf{x}^{\left(u\right)}+\mathbf{b}'_{i}.\label{eq:new-rich}
-\end{equation}
-
-\end_inset
-
- (since 
-\begin_inset Formula $\mathbf{x}^{\left(u\right)}$
-\end_inset
-
- is always available).
- Similarly, for new items we use 
-\begin_inset Formula 
-\begin{equation}
-\hat{\mathbf{P}}_{u,i}=\mathbf{w}'^{\top}\mathbf{z}+\mathbf{b}_{u}.\label{eq:rich-new}
-\end{equation}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-In situations where both user and item are new, we 
-\emph on
-can 
-\emph default
-use 
-\begin_inset Formula 
-\begin{equation}
-\hat{\mathbf{P}}_{u,i}=\mathbf{w}^{\top}\mathbf{x}+\mathbf{w}'^{\top}\mathbf{z}.\label{eq:new-new}
-\end{equation}
-
-\end_inset
-
- but probably may want to boost it with off-the-shelf logistic regression
- on user and item predictors 
-\begin_inset Formula $\left(\begin{matrix}\mathbf{x}\\
-\mathbf{z}
-\end{matrix}\right)$
-\end_inset
-
- and their interactions.
-\end_layout
-
-\begin_layout Standard
-Cases 
-\begin_inset CommandInset ref
-LatexCommand eqref
-reference "eq:rich-new"
-
-\end_inset
-
- and 
-\begin_inset CommandInset ref
-LatexCommand eqref
-reference "eq:rich-new"
-
-\end_inset
-
- still use part of collaborative inference based on the neighborhood of
- the item/user.
- (
-\emph on
-Todo: Add Koren's paper reference as well as Multilvevel model texts bibliograph
-y
-\emph default
-).
-\end_layout
-
-\begin_layout Paragraph
-Fitting first stage via ALS.
-\end_layout
-
-\begin_layout Standard
-Let 
-\begin_inset Formula 
-\begin{equation}
-\bar{\mathbf{U}}=\left(\begin{matrix}\begin{matrix}1\\
-1\\
-\vdots\\
-1
-\end{matrix} & \mathbf{U}\end{matrix}\right),
-\end{equation}
-
-\end_inset
-
-
-\begin_inset Formula 
-\begin{equation}
-\bar{\mathbf{V}}=\left(\begin{matrix}\begin{matrix}1\\
-1\\
-\vdots\\
-1
-\end{matrix} & \mathbf{V}\end{matrix}\right).
-\end{equation}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Alternating updates
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\[
-\left(\begin{matrix}\mathbf{b}_{u}\\
-\mathbf{u}^{\left(u\right)}
-\end{matrix}\right)\leftarrow\left(c_{0}\bar{\mathbf{V}}^{\top}\bar{\mathbf{V}}+\bar{\mathbf{V}}^{\top}\mathbf{C}^{\left(u\right)}\bar{\mathbf{V}}+\lambda n_{u}\mathbf{I}\right)^{-1}\times
-\]
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\begin{equation}
-\times\mathbf{\bar{V}}^{\top}\mathbf{C}^{\left(u\right)}\left(\mathbf{p}^{\left(u\right)}-\mathbf{b}'\right)
-\end{equation}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\[
-\left(\begin{matrix}\mathbf{b}'_{i}\\
-\mathbf{v}^{\left(i\right)}
-\end{matrix}\right)\leftarrow\left(c_{0}\bar{\mathbf{U}}^{\top}\bar{\mathbf{U}}+\bar{\mathbf{U}}^{\top}\mathbf{C}^{\left(i\right)}\bar{\mathbf{U}}+\lambda n_{u}\mathbf{I}\right)^{-1}\times
-\]
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\begin{equation}
-\times\mathbf{\bar{U}}^{\top}\mathbf{C}^{\left(i\right)}\left(\mathbf{p}^{\left(i\right)}-\mathbf{b}\right).
-\end{equation}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Paragraph
-Fitting second stage.
-\end_layout
-
-\begin_layout Standard
-For the second stage, we take off-the-shelf ridge regression with cross-validati
-on for its own regularization parameter.
-\end_layout
-
-\begin_layout Standard
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-
-\backslash
-end{multicols}
-\end_layout
 
 \end_inset
 
@@ -1520,19 +1184,6 @@ Y.
  Zhou, et.
  al.
  Large-scale Parallel Collaborative Filtering for the Netflix Prize 
-\end_layout
-
-\begin_layout Bibliography
-\begin_inset CommandInset bibitem
-LatexCommand bibitem
-label "Agarwal-1"
-key "Agarwal-1"
-
-\end_inset
-
-Agarwal, et.
- al.
- Regression-based Latent Factor Models
 \end_layout
 
 \end_body

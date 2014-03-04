@@ -1256,14 +1256,6 @@ inCoreA
 \end_layout
 
 \begin_layout Subsection
-Imports
-\end_layout
-
-\begin_layout LyX-Code
-org.apache.mahout.sparkbindings._
-\end_layout
-
-\begin_layout Subsection
 Initializing Mahout/Spark context
 \end_layout
 
@@ -1277,6 +1269,14 @@ Many (if not all) operations will require a Spark context.
 \begin_layout Standard
 To initialize Mahout/Spark session, just create an implicit value of a specifica
 lly prepped Spark context: 
+\end_layout
+
+\begin_layout LyX-Code
+import org.apache.mahout.sparkbindings._
+\end_layout
+
+\begin_layout LyX-Code
+
 \end_layout
 
 \begin_layout LyX-Code
@@ -1331,6 +1331,14 @@ Note that as of the time of this writing Spark sessions cannot coexist in
 
 \begin_layout Subsection
 DRM Persistence operators
+\end_layout
+
+\begin_layout LyX-Code
+import org.apache.mahout.sparkbindings.drm._
+\end_layout
+
+\begin_layout LyX-Code
+import RLikeDrmOps._
 \end_layout
 
 \begin_layout Subsubsection
@@ -1389,6 +1397,16 @@ Logical algebraic operators on DRM matrices
 We will define a logical set of operators that are familiar to users of
  environments such as R, which are elementwise +, -, *, / as well as matrix
  multiplication %*% and transposition.
+ General rule is that we try to do a subset of those enabled for in-core
+ DSL.
+ In particular, since all distributed matrices are immutable, there are
+ no assignment versions (e.g.
+ 
+\family typewriter
+A += B
+\family default
+).
+ We also probably will have trouble to do efficient slicing.
 \end_layout
 
 \begin_layout Standard
@@ -1457,10 +1475,7 @@ color{tentative}
 and sometimes could also be triggered implicitly by optimizer activity beyond
  current checkpoint cut-off (if checkpointed but not computed and cached
  yet) to run some cost estimates necessary for the optimizer beyond checkpointin
-g
-, potentially future actions associated with DRM sub-blocking
-\lang english
-
+g, potentially future actions associated with DRM sub-blocking
 \begin_inset ERT
 status open
 
@@ -1575,7 +1590,7 @@ A * inCoreB
 \end_layout
 
 \begin_layout LyX-Code
-A :/ inCoreB
+A / inCoreB
 \end_layout
 
 \begin_layout LyX-Code
@@ -1696,7 +1711,7 @@ Since vector argument is always in-core, the associativity must follow the
 \end_layout
 
 \begin_layout Subsubsection
-Matrix-real +,-,*,/
+Matrix-scalar +,-,*,/
 \end_layout
 
 \begin_layout Standard
@@ -1706,14 +1721,6 @@ In this context, matrix-scalar operations mean element-wise operatios of
 
 \begin_layout LyX-Code
 A + 5.0
-\end_layout
-
-\begin_layout LyX-Code
-A :+ 5.0
-\end_layout
-
-\begin_layout LyX-Code
-5.0 +: A
 \end_layout
 
 \begin_layout LyX-Code
@@ -1733,19 +1740,7 @@ A * 5.0
 \end_layout
 
 \begin_layout LyX-Code
-A :* 5.0
-\end_layout
-
-\begin_layout LyX-Code
-5.0 *: A
-\end_layout
-
-\begin_layout LyX-Code
 A / 5.0
-\end_layout
-
-\begin_layout LyX-Code
-A :/ 5.0
 \end_layout
 
 \begin_layout LyX-Code
