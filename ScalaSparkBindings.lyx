@@ -180,10 +180,10 @@ y defined mathematical problems.
  Yet another one is doing things at scale.
  Yet another highly desirable capability of the same environment is plotting
  and visualization.
- Without bringing any detailing review of existing environments here, the
+ Without bringing any detailed review of existing environments here, the
  author however offers an opinion that while a lot of environments succeed
- in one or more of these aspects, however none of them adequately addresses
- all of them at the same time and at reasonable cost.
+ in one or more of these aspects, none of them however adequately addresses
+ all of them at the same time and at a reasonable cost.
  
 \end_layout
 
@@ -196,8 +196,8 @@ Unlike many other environments, Mahout model was targeting both dense and
 \begin_layout Abstract
 In this work we are trying to bring semantic explicitness to Mahout's in-core
  and out-of-core linear algebra subroutines, while adding benefits of strong
- programming environments of scala, and extending great scalability benefits
- of Spark and GraphX.
+ programming environment of scala, and captializing on great scalability
+ benefits of Spark and GraphX.
  
 \begin_inset Newline newline
 \end_inset
@@ -1679,31 +1679,6 @@ Elementwise +, -, *, /
 \end_layout
 
 \begin_layout Standard
-All this operations require identical geometry of operands and row keying
- types that will be asserted at optmizer checkpointing time.
-\end_layout
-
-\begin_layout LyX-Code
-A + B
-\end_layout
-
-\begin_layout LyX-Code
-A - B
-\end_layout
-
-\begin_layout LyX-Code
-A * B
-\end_layout
-
-\begin_layout LyX-Code
-A / B
-\end_layout
-
-\begin_layout Standard
-Binary operators involving in-core argument (only on int-keyed DRMs)
-\end_layout
-
-\begin_layout Standard
 \begin_inset Formula 
 \[
 \mathbf{M}=\mathbf{A}+\mathbf{B}
@@ -1748,6 +1723,31 @@ Binary operators involving in-core argument (only on int-keyed DRMs)
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+All this operations require identical geometry of operands and row keying
+ types that will be asserted at optmizer checkpointing time.
+\end_layout
+
+\begin_layout LyX-Code
+A + B
+\end_layout
+
+\begin_layout LyX-Code
+A - B
+\end_layout
+
+\begin_layout LyX-Code
+A * B
+\end_layout
+
+\begin_layout LyX-Code
+A / B
+\end_layout
+
+\begin_layout Standard
+Binary operators involving in-core argument (only on int-keyed DRMs)
 \end_layout
 
 \begin_layout LyX-Code
@@ -1980,7 +1980,7 @@ Pretty often there's a need to do something with the matrix expressed as
 BlockifiedDrmTuple
 \family default
  blocks whenever first physical operator requiring blocking is encountered.
- After that, any row-wise physical operators work on row vectors 
+ After that, any row-wise physical operators work on row vector 
 \emph on
 views
 \emph default
@@ -2104,6 +2104,243 @@ Another note is that it is ok to return a reference to a modified same in-core
 +=
 \family default
  operator in the example) to avoid matrix copying.
+\end_layout
+
+\begin_layout Subsection
+Doing something completely custom
+\end_layout
+
+\begin_layout Standard
+If flexibility of Drm api is not enough, it is always possible to exit out
+ of opimizer-based algebra pipeline into pure spark RDD environment.
+ The exit is possible at optimizer checkpoints, which are presented by 
+\family typewriter
+Check
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+pointed
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Drm
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Base[K]
+\family default
+ trait.
+ This trait has an 
+\family typewriter
+rdd:DrmRdd[K]
+\family default
+ method, which returns a row-wise RDD of 
+\family typewriter
+Drm
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Tuple[K]
+\family default
+ type.
+ 
+\end_layout
+
+\begin_layout Standard
+The row-wise tuple types and RDDs are defined as following:
+\end_layout
+
+\begin_layout LyX-Code
+  /** Drm row-wise tuple */
+\end_layout
+
+\begin_layout LyX-Code
+  type DrmTuple[K] = (K, Vector)
+\end_layout
+
+\begin_layout LyX-Code
+  /** Row-wise organized DRM rdd type */
+\end_layout
+
+\begin_layout LyX-Code
+  type DrmRdd[K] = RDD[DrmTuple[K]]
+\end_layout
+
+\begin_layout Standard
+(type 
+\family typewriter
+Vector
+\family default
+ here is 
+\family typewriter
+org.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+apache.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+ma
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+hout.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+math.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Vec
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+tor
+\family default
+).
+\end_layout
+
+\begin_layout Standard
+E.g.: 
+\end_layout
+
+\begin_layout LyX-Code
+val myRdd = (A %*% B).checkpoint.rdd
+\end_layout
+
+\begin_layout LyX-Code
+...
+\end_layout
+
+\begin_layout Standard
+Similarly, an Rdd conforming to a type of DrmRdd, can be re-wrapped into
+ optimizer checkpoint via
+\end_layout
+
+\begin_layout LyX-Code
+val rdd:DrmRdd[K] = ...
+ // 
+\end_layout
+
+\begin_layout LyX-Code
+val A = drmWrap(rdd = rdd, nrow = 50000, ncol = 100)
+\end_layout
+
+\begin_layout LyX-Code
+...
+ // use A in a DRM pipeline
+\end_layout
+
+\begin_layout Standard
+Parameters ncol and nrow (geometry) are optional.
+ If not supplied, they will be recomputed off cached dataset.
+ But if supplied, they 
+\emph on
+must
+\emph default
+ be accurate!
 \end_layout
 
 \begin_layout LyX-Code
