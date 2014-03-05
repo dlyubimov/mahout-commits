@@ -2343,6 +2343,20 @@ must
  be accurate!
 \end_layout
 
+\begin_layout Standard
+A note about serialization: the Spark bindings for Mahout support serialization
+ of Vector and Matrix types (including their views and slices) via Kryo
+ serialization.
+ Hence, Spark context for Mahout is initialized with kryo serializer for
+ all objects.
+ This is something to keep in mind (Vector and Matrix objects can be broadcasted
+/collected, but there's no way to revert to java-serialized-only support
+ in spark session and use Mahout objects at the same time).
+ This generally should not be a problem in Spark 0.9 since there's a kryo
+ serialization back for practically anything of interest in the twitter/chill
+ that is used by Spark since 0.8.
+\end_layout
+
 \begin_layout LyX-Code
 
 \end_layout
