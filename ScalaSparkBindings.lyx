@@ -1445,6 +1445,10 @@ actions
  
 \end_layout
 
+\begin_layout Paragraph
+Optimizer actions.
+\end_layout
+
 \begin_layout Standard
 Optimizer action triggers materialization of a physical plan (concrete RDD
  graph with result marked for Spark caching), backed by CheckpointedDRM.
@@ -1454,8 +1458,155 @@ Optimizer action triggers materialization of a physical plan (concrete RDD
 \end_layout
 
 \begin_layout Standard
-On the other hand, computational action leads to result being computed and
- (optionally?) placed into Spark cache.
+Let consider two examples:
+\end_layout
+
+\begin_layout LyX-Code
+val A = drmParallelize (...)
+\end_layout
+
+\begin_layout LyX-Code
+val B = drmParallelize (...)
+\end_layout
+
+\begin_layout LyX-Code
+val C = A %*% B
+\end_layout
+
+\begin_layout LyX-Code
+val D = C.t 
+\end_layout
+
+\begin_layout LyX-Code
+val E = C.t %*% C
+\end_layout
+
+\begin_layout Standard
+In this example, optimizer optimizes separately 2 pipelines: 
+\begin_inset Formula $\mathbf{D}=\mathbf{A}\mathbf{B}^{\top}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{E}=\left(\mathbf{AB}^{\top}\right)^{\top}\left(\mathbf{AB}^{\top}\right)$
+\end_inset
+
+ using same matrices 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{B}$
+\end_inset
+
+ as root of both computations.
+ Now let's consider the following modified example: 
+\end_layout
+
+\begin_layout LyX-Code
+val A = drmParallelize (...)
+\end_layout
+
+\begin_layout LyX-Code
+val B = drmParallelize (...)
+\end_layout
+
+\begin_layout LyX-Code
+val C = (A %*% B).checkpoint
+\end_layout
+
+\begin_layout LyX-Code
+val D = C.t 
+\end_layout
+
+\begin_layout LyX-Code
+val E = C.t %*% C
+\end_layout
+
+\begin_layout Standard
+In this case, optimizer considers 3 separate pipelines: 
+\begin_inset Formula $\mathbf{C}=\mathbf{AB}$
+\end_inset
+
+, 
+\begin_inset Formula $\mathbf{D}=\mathbf{C}^{\top}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{E}=\mathbf{C}^{\top}\mathbf{C}$
+\end_inset
+
+ while caching optimized plan and intermediate result for 
+\begin_inset Formula $\mathbf{C}$
+\end_inset
+
+ into the Spark cache.
+ Introducing checkpoints may improve 
+\begin_inset Quotes eld
+\end_inset
+
+wall time
+\begin_inset Quotes erd
+\end_inset
+
+ (since matrices 
+\series bold
+D 
+\series default
+and 
+\series bold
+E
+\series default
+ will be triggered for action at different time and optimizer wouldn't be
+ able to consider computational graph that includes both at the same time).
+ However, in this particular case the checkpoint might be better considered
+ for 
+\begin_inset Formula $\mathbf{A}\mathbf{B}^{\top}$
+\end_inset
+
+ since at this point optimizer doesn't compute 
+\begin_inset Formula $\mathbf{A}\mathbf{B}$
+\end_inset
+
+ directly but rather as 
+\begin_inset Formula $\mathbf{A}\left(\mathbf{B}^{\top}\right)^{\top}$
+\end_inset
+
+, i.e.
+ this is an example when checkpointing will result in one extra transposition
+ of arguments.
+ However, even in the first example optimizer will be able to figure to
+ optimize 
+\begin_inset Formula $\mathbf{E}=\left(\mathbf{AB}^{\top}\right)^{\top}\left(\mathbf{AB}^{\top}\right)$
+\end_inset
+
+ as 
+\begin_inset Formula $\mathrm{t\_square}\left(\mathrm{product}\left(\mathbf{A},\mathbf{B}^{\top}\right)\right)$
+\end_inset
+
+ pipeline, i.e.
+ into only two sequential physical operators.
+\end_layout
+
+\begin_layout Standard
+In either of the examples, nothing happens in the backend until a computational
+ action is triggered for either of 
+\begin_inset Formula $\mathbf{E}$
+\end_inset
+
+ or 
+\begin_inset Formula $\mathbf{D}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Paragraph
+Computational actions.
+\end_layout
+
+\begin_layout Standard
+Computational action leads to result being computed and (optionally?) placed
+ into Spark cache.
  Such actions will also lazily and implicitly trigger linalg optimizer checkpoin
 ting.
  Currently, computational actions include writeDrm(), collect(), blockify()
@@ -1484,6 +1635,28 @@ status open
 }
 \end_layout
 
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+E.g.
+ in the second example, running 
+\end_layout
+
+\begin_layout LyX-Code
+E.writeDrm(path)
+\end_layout
+
+\begin_layout Standard
+will trigger computational actions for 
+\begin_inset Formula $\mathbf{E}$
+\end_inset
+
+ and, implicitly, for 
+\begin_inset Formula $\mathbf{C}$
 \end_inset
 
 .
@@ -1634,7 +1807,7 @@ Note spark associativity change (e.g.
 \end_layout
 
 \begin_layout Subsubsection
-Matrix multiplication 
+Matrix-matrix multiplication 
 \family typewriter
 %*%
 \end_layout
@@ -1665,49 +1838,6 @@ inCoreA %*%: B
 \begin_layout Standard
 Same as above, when both in-core and out-of-core argumetns used, associativity
  of operation must follow the out-of-core (DRM) argument in the expression.
-\end_layout
-
-\begin_layout Subsubsection
-Matrix-vector multiplication
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\[
-\mathbf{M}=\mathbf{A}\mathbf{x}
-\]
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\[
-\mathbf{M}=\mathbf{x}\mathbf{A}
-\]
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout LyX-Code
-A %*% x
-\end_layout
-
-\begin_layout LyX-Code
-A :%*% x
-\end_layout
-
-\begin_layout LyX-Code
-x %*%: A
-\end_layout
-
-\begin_layout Standard
-Since vector argument is always in-core, the associativity must follow the
- DRM argument.
 \end_layout
 
 \begin_layout Subsubsection
@@ -1766,6 +1896,218 @@ Note that
 
  for all elements of the result.
  
+\end_layout
+
+\begin_layout Subsection
+Slicing
+\end_layout
+
+\begin_layout Standard
+Slicing (without assigning) is supported mostly identically to in-core slicing.
+ Slicing row or range is of 
+\family typewriter
+Range
+\family default
+ scala type, which typically can be inlined as 
+\family typewriter
+x to y
+\family default
+ or 
+\family typewriter
+x until y
+\family default
+.
+ All-range is given by 
+\family typewriter
+::
+\family default
+.
+\end_layout
+
+\begin_layout Standard
+General slice 
+\end_layout
+
+\begin_layout LyX-Code
+A(100 to 200, 100 to 200)
+\end_layout
+
+\begin_layout Standard
+Vertical block
+\end_layout
+
+\begin_layout LyX-Code
+A(::, 100 to 200)
+\end_layout
+
+\begin_layout Standard
+Horizontal block
+\end_layout
+
+\begin_layout LyX-Code
+A(100 to 200, ::)
+\end_layout
+
+\begin_layout Standard
+Note: if row range is not all-range (
+\family typewriter
+::
+\family default
+) then the DRM must be 
+\family typewriter
+Int
+\family default
+-keyed.
+ Row slicing in general case is not supported for key types other than 
+\family typewriter
+Int
+\family default
+.
+\end_layout
+
+\begin_layout Subsection
+Custom pipelines on blocks
+\end_layout
+
+\begin_layout Standard
+Pretty often there's a need to do something with the matrix expressed as
+ blocks.
+ Some physical operators are also more effective once working with matrix
+ blocks rather than individual rows.
+ Internally, Mahout's matrix pipeline (lazily) blockifies every data partition
+ into 
+\family typewriter
+BlockifiedDrmTuple
+\family default
+ blocks whenever first physical operator requiring blocking is encountered.
+ After that, any row-wise physical operators work on row vectors 
+\emph on
+views
+\emph default
+ of the blocks.
+ 
+\end_layout
+
+\begin_layout Standard
+Here is definition for DRM block tuple type: 
+\end_layout
+
+\begin_layout LyX-Code
+  /** Drm block-wise tuple: 
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+Array of row keys and the matrix block.
+ */
+\end_layout
+
+\end_deeper
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout LyX-Code
+  type BlockifiedDrmTuple[K] = (Array[K], _ <: Matrix)
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout Standard
+DRM operator 
+\family typewriter
+mapBlock
+\family default
+ provides transformational access to the vertical blockified tuples of the
+ matrix.
+ (Current implementation also guarantees that there's exactly one block
+ per map task).
+ 
+\end_layout
+
+\begin_layout Standard
+Here is unit test that demonstrates use of 
+\family typewriter
+mapBlock
+\family default
+ operator by producing A + 1.0:
+\end_layout
+
+\begin_layout LyX-Code
+    val inCoreA = dense((1, 2, 3), (2, 3, 4), (3, 4, 5), (4, 5, 6))
+\end_layout
+
+\begin_layout LyX-Code
+    val A = drmParallelize(m = inCoreA, numPartitions = 2)
+\end_layout
+
+\begin_layout LyX-Code
+    val B = A.mapBlock(/* Inherit width */)({
+\end_layout
+
+\begin_layout LyX-Code
+      case (keys, block) => keys -> (block += 1.0)
+\end_layout
+
+\begin_layout LyX-Code
+    })
+\end_layout
+
+\begin_layout LyX-Code
+    val inCoreB = B.collect
+\end_layout
+
+\begin_layout LyX-Code
+    val inCoreBControl = inCoreA + 1.0
+\end_layout
+
+\begin_layout LyX-Code
+    println(inCoreB)
+\end_layout
+
+\begin_layout LyX-Code
+    // Assert they are the same
+\end_layout
+
+\begin_layout LyX-Code
+    (inCoreB - inCoreBControl).norm should be < 1E-10
+\end_layout
+
+\begin_layout Standard
+The constrain is that operator mapBlock should not attempt to change the
+ height of the block, in order to provide correct total matrix row count
+ estimate to optimizer after application of the operator.
+ MapBlock operator may change 
+\emph on
+width
+\emph default
+ (i.e.
+ column count) of the matrix; if it does so, it needs to supply it to first
+ 
+\family typewriter
+ncol 
+\family default
+parameter of the mapBlock call.
+ Otherwise, it is assumed operator has inherited the width of the original
+ matrix.
+ The geometry of the block returned is asserted at run time, as geometry
+ is vitally important for the coherence of linear operators.
+\end_layout
+
+\begin_layout Standard
+Another note is that it is ok to return a reference to a modified same in-core
+ block.
+ This is actually recommended whenever possible (note the 
+\family typewriter
++=
+\family default
+ operator in the example) to avoid matrix copying.
+\end_layout
+
+\begin_layout LyX-Code
+
 \end_layout
 
 \begin_layout Standard
