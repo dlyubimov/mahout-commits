@@ -1383,10 +1383,32 @@ Collecting to HDFS
 
 \begin_layout Standard
 Collect Spark-backed DRM to HDFS in Mahout's DRM format files:
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+if you see an error here along the lines 
+\begin_inset Quotes eld
+\end_inset
+
+no implicit view available from A => org.apache.hadoop.io.Writable
+\begin_inset Quotes erd
+\end_inset
+
+ most likely you need just to import SparkContext._.
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout LyX-Code
 A.writeDRM(path = hdfsPath)
+\end_layout
+
+\begin_layout LyX-Code
+
 \end_layout
 
 \begin_layout Subsection
@@ -2121,7 +2143,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -2135,7 +2156,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -2149,7 +2169,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -2172,7 +2191,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -2219,7 +2237,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -2233,7 +2250,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -2247,7 +2263,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -2261,7 +2276,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -2275,7 +2289,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -2289,7 +2302,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -2307,7 +2319,7 @@ E.g.:
 \end_layout
 
 \begin_layout LyX-Code
-val myRdd = (A %*% B).checkpoint.rdd
+val myRdd = (A %*% B).checkpoint().rdd
 \end_layout
 
 \begin_layout LyX-Code
@@ -2355,6 +2367,123 @@ A note about serialization: the Spark bindings for Mahout support serialization
  This generally should not be a problem in Spark 0.9 since there's a kryo
  serialization back for practically anything of interest in the twitter/chill
  that is used by Spark since 0.8.
+\end_layout
+
+\begin_layout Subsection
+Distributed Decompositions
+\end_layout
+
+\begin_layout Subsubsection
+Distributed thin QR.
+ 
+\end_layout
+
+\begin_layout Standard
+For the classic QR decomposition of the form 
+\begin_inset Formula $\mathbf{A}=\mathbf{Q}\mathbf{R}$
+\end_inset
+
+, 
+\begin_inset Formula $\mathbf{A}\in\mathbb{R}^{m\times n}$
+\end_inset
+
+, a distributed version is fairly easily achieved if 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ is tall and thin such that 
+\begin_inset Formula $\mathbf{A}^{\top}\mathbf{A}$
+\end_inset
+
+ fits in memory, i.e.
+ 
+\begin_inset Formula $m$
+\end_inset
+
+ is large, but 
+\begin_inset Formula $n\leq\sim5000$
+\end_inset
+
+.
+ Under such circumstances, only 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+ are distributed matrices, and 
+\begin_inset Formula $\mathbf{A}^{\top}\mathbf{A}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{R}$
+\end_inset
+
+ are in-core products.
+ We just compute in-core version of Cholesky decomposition in the form of
+ 
+\begin_inset Formula $\mathbf{LL}^{\top}=\mathbf{A}^{\top}\mathbf{A}$
+\end_inset
+
+.
+ After that we take 
+\begin_inset Formula $\mathbf{R}=\mathbf{L}^{\top}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{Q}=\mathbf{A}\left(\mathbf{L}^{\top}\right)^{-1}.$
+\end_inset
+
+ The latter is easily achieved by multiplying each vertical block of 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ by 
+\begin_inset Formula $\left(\mathbf{L}^{\top}\right)^{-1}$
+\end_inset
+
+.
+ (There's no actual matrix inversion happening).
+\end_layout
+
+\begin_layout Standard
+Corollary to this design are two facts: (1) rows of 
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+ retain the same indexing type as rows of 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ (not necessarily int-keyed); and (2) 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+ are identically partitioned.
+ Therefore, 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+ subsequently be trivially zipped together if join of rows is needed (used
+ in d-ssvd).
+\end_layout
+
+\begin_layout LyX-Code
+val (drmQ, inCoreR) = dqrThin(drmA)
+\end_layout
+
+\begin_layout LyX-Code
+
 \end_layout
 
 \begin_layout LyX-Code
