@@ -2474,12 +2474,102 @@ Corollary to this design are two facts: (1) rows of
 \begin_inset Formula $\mathbf{Q}$
 \end_inset
 
- subsequently be trivially zipped together if join of rows is needed (used
- in d-ssvd).
+ subsequently can be trivially zipped together if join of rows is needed
+ (used in d-ssvd).
 \end_layout
 
 \begin_layout LyX-Code
 val (drmQ, inCoreR) = dqrThin(drmA)
+\end_layout
+
+\begin_layout Standard
+The source of this method as of the time of this writing is extremely simple
+ (probably too simple):
+\end_layout
+
+\begin_layout LyX-Code
+  def dqrThin[K: ClassTag](A: DrmLike[K], checkRankDeficiency: Boolean =
+ true): 
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+(DrmLike[K], Matrix) = {
+\end_layout
+
+\end_deeper
+\begin_layout LyX-Code
+    if (A.ncol > 5000)
+\end_layout
+
+\begin_layout LyX-Code
+      s_log.warn("A is too fat.
+ A'A must fit in memory and easily broadcasted.")
+\end_layout
+
+\begin_layout LyX-Code
+    val AtA = (A.t %*% A).checkpoint()
+\end_layout
+
+\begin_layout LyX-Code
+    val inCoreAtA = AtA.collect
+\end_layout
+
+\begin_layout LyX-Code
+    implicit val sc = AtA.rdd.sparkContext
+\end_layout
+
+\begin_layout LyX-Code
+    val ch = chol(inCoreAtA)
+\end_layout
+
+\begin_layout LyX-Code
+    val inCoreR = (ch.getL cloned) t
+\end_layout
+
+\begin_layout LyX-Code
+    if (checkRankDeficiency && !ch.isPositiveDefinite)
+\end_layout
+
+\begin_layout LyX-Code
+      throw new IllegalArgumentException("R is rank-deficient.")
+\end_layout
+
+\begin_layout LyX-Code
+    val bcastAtA = sc.broadcast(inCoreAtA)
+\end_layout
+
+\begin_layout LyX-Code
+    // Compute Q = A*inv(L') -- we can do it blockwise.
+\end_layout
+
+\begin_layout LyX-Code
+    val Q = A.mapBlock()({
+\end_layout
+
+\begin_layout LyX-Code
+      case (keys, block) => keys -> chol(bcastAtA).solveRight(block)
+\end_layout
+
+\begin_layout LyX-Code
+    })
+\end_layout
+
+\begin_layout LyX-Code
+    Q -> inCoreR
+\end_layout
+
+\begin_layout LyX-Code
+  }
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout Standard
+Since we see that is navigated twice, it is recommended that it is checkpointed
+ before calling this method, to avoid recomputation.
 \end_layout
 
 \begin_layout LyX-Code
