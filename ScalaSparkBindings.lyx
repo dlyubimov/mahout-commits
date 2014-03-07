@@ -1622,6 +1622,12 @@ In either of the examples, nothing happens in the backend until a computational
 .
 \end_layout
 
+\begin_layout Standard
+It doesn't matter how many times checkpointing is called on a logical operator,
+ same logical operator will be optimized and set for caching policy only
+ once.
+\end_layout
+
 \begin_layout Paragraph
 Computational actions.
 \end_layout
@@ -2569,15 +2575,385 @@ The source of this method as of the time of this writing is extremely simple
 
 \begin_layout Standard
 Since we see that is navigated twice, it is recommended that it is checkpointed
- before calling this method, to avoid recomputation.
+ before calling this method to avoid recomputation.
+\end_layout
+
+\begin_layout Subsubsection
+Distributed Stochastic SVD.
+\end_layout
+
+\begin_layout Standard
+Usage example:
 \end_layout
 
 \begin_layout LyX-Code
+val (drmU, drmV, s) = dssvd(drmA, k = 40, q = 1) 
+\end_layout
 
+\begin_layout Standard
+As a side effect of checkpointing, U and V values returned as logical operators
+ (i.e they are neither checkpointed nor computed).
+ Therefore, there's no physical work actually done to compute final 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+ or 
+\series bold
+
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ 
+\series default
+until they are actually used in a subsequent expression.
+ So unlike the SSVDSolver, this does not require additional parameters to
+ configure which set of product combinations is actually computed in the
+ end.
+ Neat, isn't it.
+\end_layout
+
+\begin_layout Standard
+Source (for those who likes counting lines):
 \end_layout
 
 \begin_layout LyX-Code
+  /**
+\end_layout
 
+\begin_layout LyX-Code
+   * Distributed Stochastic Singular Value decomposition algorithm.
+\end_layout
+
+\begin_layout LyX-Code
+   *
+\end_layout
+
+\begin_layout LyX-Code
+   * @param A input matrix A
+\end_layout
+
+\begin_layout LyX-Code
+   * @param k request SSVD rank
+\end_layout
+
+\begin_layout LyX-Code
+   * @param p oversampling parameter
+\end_layout
+
+\begin_layout LyX-Code
+   * @param q number of power iterations
+\end_layout
+
+\begin_layout LyX-Code
+   * @return (U,V,s).
+ Note that U, V are non-checkpointed matrices 
+\end_layout
+
+\begin_layout LyX-Code
+             (i.e.
+ one needs to actually use them
+\end_layout
+
+\begin_layout LyX-Code
+   *         e.g.
+ save them to hdfs in order to trigger their computation.
+\end_layout
+
+\begin_layout LyX-Code
+   */
+\end_layout
+
+\begin_layout LyX-Code
+  def dssvd[K: ClassTag](A: DrmLike[K], k: Int, p: Int = 15, q: Int = 0):
+\end_layout
+
+\begin_layout LyX-Code
+  (DrmLike[K], DrmLike[Int], Vector) = {
+\end_layout
+
+\begin_layout LyX-Code
+    val drmA = A.checkpoint()
+\end_layout
+
+\begin_layout LyX-Code
+    val m = drmA.nrow
+\end_layout
+
+\begin_layout LyX-Code
+    val n = drmA.ncol
+\end_layout
+
+\begin_layout LyX-Code
+    assert(k <= (m min n), "k cannot be greater than smaller of m, n.")
+\end_layout
+
+\begin_layout LyX-Code
+    val pfxed = safeToNonNegInt((m min n) - k min p)
+\end_layout
+
+\begin_layout LyX-Code
+    // Actual decomposition rank
+\end_layout
+
+\begin_layout LyX-Code
+    val r = k + pfxed
+\end_layout
+
+\begin_layout LyX-Code
+    // We represent Omega by its seed.
+\end_layout
+
+\begin_layout LyX-Code
+    val omegaSeed = Random.nextInt()
+\end_layout
+
+\begin_layout LyX-Code
+    // Compute Y = A*Omega.
+ 
+\end_layout
+
+\begin_layout LyX-Code
+    var drmY = drmA.mapBlock(ncol = r)({
+\end_layout
+
+\begin_layout LyX-Code
+      case (keys, blockA) =>
+\end_layout
+
+\begin_layout LyX-Code
+        val blockY = blockA %*% Matrices.symmetricUniformView(blockA.ncol,
+ r, omegaSeed)
+\end_layout
+
+\begin_layout LyX-Code
+        keys -> blockY
+\end_layout
+
+\begin_layout LyX-Code
+    })
+\end_layout
+
+\begin_layout LyX-Code
+    var drmQ = dqrThin(drmY.checkpoint())._1
+\end_layout
+
+\begin_layout LyX-Code
+    // Checkpoint Q if last iteration
+\end_layout
+
+\begin_layout LyX-Code
+    if (q==0) drmQ = drmQ.checkpoint()
+\end_layout
+
+\begin_layout LyX-Code
+    // This actually is optimized as identically 
+\end_layout
+
+\begin_layout LyX-Code
+    // partitioned map-side A'B since A and Q should
+\end_layout
+
+\begin_layout LyX-Code
+    // still be identically partitioned.
+\end_layout
+
+\begin_layout LyX-Code
+    var drmBt = drmA.t %*% drmQ
+\end_layout
+
+\begin_layout LyX-Code
+    // Checkpoint B' if last iteration
+\end_layout
+
+\begin_layout LyX-Code
+    if (q==0) drmBt = drmBt.checkpoint()
+\end_layout
+
+\begin_layout LyX-Code
+    for (i <- 1 to q) {
+\end_layout
+
+\begin_layout LyX-Code
+      drmY = drmA %*% drmBt
+\end_layout
+
+\begin_layout LyX-Code
+      drmQ = dqrThin(drmY.checkpoint())._1
+\end_layout
+
+\begin_layout LyX-Code
+      // Checkpoint Q if last iteration
+\end_layout
+
+\begin_layout LyX-Code
+      if ( i == q) drmQ = drmQ.checkpoint()
+\end_layout
+
+\begin_layout LyX-Code
+      drmBt = drmA.t %*% drmQ
+\end_layout
+
+\begin_layout LyX-Code
+      // Checkpoint B' if last iteration
+\end_layout
+
+\begin_layout LyX-Code
+      if ( i == q) drmBt = drmBt.checkpoint()
+\end_layout
+
+\begin_layout LyX-Code
+    }
+\end_layout
+
+\begin_layout LyX-Code
+    val inCoreBBt = (drmBt.t %*% drmBt).checkpoint(StorageLevel.NONE).collect
+\end_layout
+
+\begin_layout LyX-Code
+    val (inCoreUHat, d) = eigen(inCoreBBt)
+\end_layout
+
+\begin_layout LyX-Code
+    val s = d.sqrt
+\end_layout
+
+\begin_layout LyX-Code
+    val drmU = drmQ %*% inCoreUHat
+\end_layout
+
+\begin_layout LyX-Code
+    val drmV = drmBt %*% (inCoreUHat %*%: diagv(1 /: s))
+\end_layout
+
+\begin_layout LyX-Code
+    (drmU(::, 0 until k), drmV(::, 0 until k), s(0 until k))
+\end_layout
+
+\begin_layout LyX-Code
+  }
+\end_layout
+
+\begin_layout Standard
+Done!
+\end_layout
+
+\begin_layout Section
+Optimizer notes
+\end_layout
+
+\begin_layout Subsection
+Physical operators 
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{A}\mathbf{B}^{\top}$
+\end_inset
+
+ This is using cartesian combination of vertical blocks of both sides.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{A}^{\top}\mathbf{B}$
+\end_inset
+
+ There are two implementations for this.
+ If 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{B}$
+\end_inset
+
+ are identically partitioned (which is tracked by optimizer throughout),
+ then this is computed by zip+combine.
+ If not, then inner join+combine is used.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{A}^{\top}$
+\end_inset
+
+ This requires int-keyed input only.
+ A direct transposition operator.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{A}^{\top}\mathbf{A}$
+\end_inset
+
+ This operator compiles squared matrix with arbitrary row keys.
+ Result is always int-keyed.
+ There are two different implementations here depending on whether 
+\begin_inset Formula $n\times n$
+\end_inset
+
+ upper triangular matrix fits in memory.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{A}\mathbf{B}$
+\end_inset
+
+ right-multiply where 
+\begin_inset Formula $\mathbf{B}$
+\end_inset
+
+ is in-core.
+ Broadcast for B is used in this map-block implementation.
+\end_layout
+
+\begin_layout Description
+...
+ and some more less important.
+ No time to list all.
+\end_layout
+
+\begin_layout Subsection
+Tracking the partitioning
+\end_layout
+
+\begin_layout Standard
+Optimizer tracks identicity of partitioning of products.
+ E.g.
+ in SSVD for 
+\begin_inset Formula $\mathbf{B}^{\top}=\mathbf{A}^{\top}\mathbf{Q}$
+\end_inset
+
+ the optimizer figures 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{Q}$
+\end_inset
+
+ are identically partitioned in 0-th iteration, whereas in power iterations
+ they are not, so it picks different physical operators in these cases.
+ 
+\end_layout
+
+\begin_layout Subsection
+Tracking of DRM row key values and their types
+\end_layout
+
+\begin_layout Standard
+Optimizer automatically tracks non-integral row keys thoughout expression.
+ E.g.
+ dssvd's 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+ rows are keys identically to rows of 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ even if they are non-integers; whereas rows of 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ are automatically granted with Int keys due to logical transformations
+ of expression by the optimizer.
 \end_layout
 
 \begin_layout Standard
