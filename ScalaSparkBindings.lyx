@@ -1239,7 +1239,56 @@ height "1pt"
 \begin_layout Standard
 The subject of this section are solely operations applicable to Mahout's
  DRM (distributed row matrix).
- Once loaded into spark, DRM is represented by Spark partitions initially
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+\bar under
+Spark Binding's DRM persistence to HDFS is compatible with all Mahout's
+ MR algorithms using DRM such as ssvd or seq2sparse.
+ 
+\series default
+\bar default
+
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{comment}
+\end_layout
+
+\end_inset
+
+This statement needs comprehensive QA throughout; but intent is true.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Once loaded into spark, DRM is represented by Spark partitions initially
  consisting of handful of row vectors.
 \end_layout
 
@@ -1272,7 +1321,13 @@ lly prepped Spark context:
 \end_layout
 
 \begin_layout LyX-Code
+
+\series bold
 import org.apache.mahout.sparkbindings._
+\end_layout
+
+\begin_layout LyX-Code
+
 \end_layout
 
 \begin_layout LyX-Code
@@ -1325,20 +1380,74 @@ Note that as of the time of this writing Spark sessions cannot coexist in
  requests from more than one thread.
 \end_layout
 
-\begin_layout LyX-Code
-
-\end_layout
-
 \begin_layout Subsection
-DRM Persistence operators
+Recommended imports for Scala & Spark Bindings
+\end_layout
+
+\begin_layout Standard
+
+\bar under
+Always do
+\bar default
+ for seamless in-core, out-of-core DSL:
 \end_layout
 
 \begin_layout LyX-Code
+// Mahout context stuff:
+\end_layout
+
+\begin_layout LyX-Code
+
+\series bold
+import org.apache.mahout.sparkbindings._
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout LyX-Code
+// Spark Bindings DRM linalg:
+\end_layout
+
+\begin_layout LyX-Code
+
+\series bold
 import org.apache.mahout.sparkbindings.drm._
 \end_layout
 
 \begin_layout LyX-Code
+
+\series bold
 import RLikeDrmOps._
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout LyX-Code
+// Scala Bindings DRM linalg:
+\end_layout
+
+\begin_layout LyX-Code
+
+\series bold
+import org.apache.mahout.math.scalabindings._
+\end_layout
+
+\begin_layout LyX-Code
+
+\series bold
+import RLikeOps._
+\end_layout
+
+\begin_layout Standard
+All subsequent snippets assume the relevant packages are imported.
+\end_layout
+
+\begin_layout Subsection
+DRM Persistence operators
 \end_layout
 
 \begin_layout Subsubsection
@@ -1472,8 +1581,12 @@ Optimizer actions.
 \end_layout
 
 \begin_layout Standard
-Optimizer action triggers materialization of a physical plan (concrete RDD
- graph with result marked for Spark caching), backed by CheckpointedDRM.
+
+\emph on
+Optimizer action
+\emph default
+ triggers materialization of a physical plan (concrete RDD graph with result
+ marked for Spark caching), backed by CheckpointedDRM.
  CheckpointedDRM servies as a cut-off boundary for optmizer action.
  Optimizer action does not trigger actual computation of result data set.
  Right now optimizer action is triggered explicitly by DRMLike#checkpoint().
@@ -1633,8 +1746,11 @@ Computational actions.
 \end_layout
 
 \begin_layout Standard
-Computational action leads to result being computed and (optionally?) placed
- into Spark cache.
+
+\emph on
+Computational action
+\emph default
+ leads to result being computed and (optionally?) placed into Spark cache.
  Such actions will also lazily and implicitly trigger linalg optimizer checkpoin
 ting.
  Currently, computational actions include writeDrm(), collect(), blockify()
@@ -1692,6 +1808,74 @@ will trigger computational actions for
 
 \begin_layout Standard
 All these rules follow the same patterns as for the in-core arguments.
+\end_layout
+
+\begin_layout Paragraph
+Caching in Spark's Block Manager.
+\end_layout
+
+\begin_layout Standard
+Every checkpoint can be, and by default, is, pushed into Spark's memory
+ block manager.
+ Default policy is MEMORY_ONLY, but storage level can be specified explicitly
+ as a parameter to checkpoint() call.
+ Actual push of data to memory block manager happens no sooner that actual
+ partition computation occurs for the first time (i.e.
+ at the first occurrence of a 
+\emph on
+computational action 
+\emph default
+of the pipeline involving the result in question).
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+See Spark manual to understand interaction with Block Manager and storage
+ levels in detail.
+\end_layout
+
+\end_inset
+
+ Checkpointed DRMs may later be explicitly uncached from block manager (asynchro
+nously) if desired, e.g.: 
+\end_layout
+
+\begin_layout LyX-Code
+val drmA = (/*..drm expression..*/).checkpoint(StorageLevel.MEMORY_AND_DISK)
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout LyX-Code
+...
+ some computational actions involving drmA
+\end_layout
+
+\begin_layout LyX-Code
+...
+ drmA is not needed anymore
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout LyX-Code
+drmA.uncache()
+\end_layout
+
+\begin_layout Standard
+If argument is not cached by the time the 
+\family typewriter
+uncache()
+\family default
+ call has occurred, nothing of substance happens.
+\end_layout
+
+\begin_layout LyX-Code
+
 \end_layout
 
 \begin_layout Subsubsection
@@ -1866,6 +2050,28 @@ inCoreA %*%: B
 \begin_layout Standard
 Same as above, when both in-core and out-of-core argumetns used, associativity
  of operation must follow the out-of-core (DRM) argument in the expression.
+\end_layout
+
+\begin_layout Subsubsection
+Matrix-vector multiplication %*%
+\end_layout
+
+\begin_layout Standard
+Currently, we support a right-multiply product of a DRM and a in-core Vector
+ (
+\begin_inset Formula $\mathbf{Ax}$
+\end_inset
+
+), resulting in a distributed single-column DRM, which then of course could
+ be collected in front (usually that's the desired outcome):
+\end_layout
+
+\begin_layout LyX-Code
+val Ax = A %*% x
+\end_layout
+
+\begin_layout LyX-Code
+val inCoreX = Ax.collect(::,0)
 \end_layout
 
 \begin_layout Subsubsection
@@ -2072,7 +2278,7 @@ mapBlock
 \end_layout
 
 \begin_layout LyX-Code
-    val B = A.mapBlock(/* Inherit width */)({
+    val B = A.mapBlock(/* Inherit width */) {
 \end_layout
 
 \begin_layout LyX-Code
@@ -2080,7 +2286,7 @@ mapBlock
 \end_layout
 
 \begin_layout LyX-Code
-    })
+    }
 \end_layout
 
 \begin_layout LyX-Code
@@ -2117,7 +2323,7 @@ width
 \family typewriter
 ncol 
 \family default
-parameter of the mapBlock call.
+parameter of the mapBlock(newNCol) call.
  Otherwise, it is assumed operator has inherited the width of the original
  matrix.
  The geometry of the block returned is asserted at run time, as geometry
@@ -2376,6 +2582,215 @@ A note about serialization: the Spark bindings for Mahout support serialization
 \end_layout
 
 \begin_layout Subsection
+Broadcasting vectors and matrices to closures.
+ 
+\end_layout
+
+\begin_layout Standard
+Generally, one can create and use one-way closure attributes and use them
+ at backend, e.g we can implement scalar matrix multiplication by a variable
+ 
+\emph on
+factor
+\emph default
+ the following way: 
+\end_layout
+
+\begin_layout LyX-Code
+val factor:Int = ...
+ 
+\end_layout
+
+\begin_layout LyX-Code
+val drm2 = drm1.mapBlock() {
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+case( keys, block) => block *= factor
+\end_layout
+
+\begin_layout LyX-Code
+keys -> block
+\end_layout
+
+\end_deeper
+\begin_layout LyX-Code
+}
+\end_layout
+
+\begin_layout Standard
+As we can see, even though factor is initialized in front end, it can be
+ easily used at backend closures running on every matrix vertical block
+ in parallel.
+ Very easy and elegant.
+\end_layout
+
+\begin_layout Standard
+A slight wrinkle with that is, closure attributes must be java-serializable.
+ This is, as it stands, not currently the case with in-core matrices and
+ vectors.
+ And even if they were, java serialization would be less compact on the
+ wire than a custom serialization that Mahout in-core matrices use.
+ E.g.
+ the following fragment, implementing a vector subtraction from every matrix
+ row, will fail with 
+\emph on
+NotSerializableException
+\emph default
+:
+\end_layout
+
+\begin_layout LyX-Code
+val v:Int = ...
+ 
+\end_layout
+
+\begin_layout LyX-Code
+val drm2 = drm1.mapBlock() {
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+case (keys, block) => block -= v
+\end_layout
+
+\begin_layout LyX-Code
+keys -> block
+\end_layout
+
+\end_deeper
+\begin_layout LyX-Code
+}
+\end_layout
+
+\begin_layout Standard
+Spark and similar execution backends supports 
+\begin_inset Quotes eld
+\end_inset
+
+broadcast
+\begin_inset Quotes erd
+\end_inset
+
+ feature which ensures that a broadcast variable is available to all backend
+ running code.
+ We abstract that away too.
+ The fix to the previous fragment would be: 
+\end_layout
+
+\begin_layout LyX-Code
+val v:Int = ...
+ 
+\end_layout
+
+\begin_layout LyX-Code
+val bcastV = drmBroadcast(v)
+\end_layout
+
+\begin_layout LyX-Code
+val drm2 = drm1.mapBlock() {
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+case (keys, block) => block -= bcastV
+\end_layout
+
+\begin_layout LyX-Code
+keys -> block
+\end_layout
+
+\end_deeper
+\begin_layout LyX-Code
+}
+\end_layout
+
+\begin_layout Subsection
+Computations providing ad-hoc summaries
+\end_layout
+
+\begin_layout Standard
+There's a number of operators that do not return a new distributed matrix.
+ As such, some of them may or will trigger computational action.
+ This is something to keep in mind.
+\end_layout
+
+\begin_layout Subsubsection
+nrow, ncol
+\end_layout
+
+\begin_layout Standard
+For example, matrix geometry properties (nrow, ncol) will trigger a summary
+ computation if the geometry is not already inferred thru optimizer.
+ If they do, they will checkpoint with storage level MEMORY_ONLY automatically.
+\end_layout
+
+\begin_layout Subsubsection
+colSums, colMeans
+\end_layout
+
+\begin_layout LyX-Code
+val acs = A.colSums
+\end_layout
+
+\begin_layout LyX-Code
+val amean = A.colMeans
+\end_layout
+
+\begin_layout Standard
+Those will 
+\emph on
+always
+\emph default
+ trigger a 
+\emph on
+computational action.
+
+\emph default
+ There's no lazy behavior for these (vector properties are considered to
+ be too bulky to be a lazy property).
+ I.e.
+ if one calls colSums() n times, then back end will actually recompute colMeans
+ n times.
+\end_layout
+
+\begin_layout Subsubsection
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
+rowMeans, rowSums
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout Subsection
 Distributed Decompositions
 \end_layout
 
@@ -2550,7 +2965,7 @@ The source of this method as of the time of this writing is extremely simple
 \end_layout
 
 \begin_layout LyX-Code
-    val Q = A.mapBlock()({
+    val Q = A.mapBlock() {
 \end_layout
 
 \begin_layout LyX-Code
@@ -2558,7 +2973,7 @@ The source of this method as of the time of this writing is extremely simple
 \end_layout
 
 \begin_layout LyX-Code
-    })
+    }
 \end_layout
 
 \begin_layout LyX-Code
@@ -2713,7 +3128,7 @@ Source (for those who likes counting lines):
 \end_layout
 
 \begin_layout LyX-Code
-    var drmY = drmA.mapBlock(ncol = r)({
+    var drmY = drmA.mapBlock(ncol = r) {
 \end_layout
 
 \begin_layout LyX-Code
@@ -2730,7 +3145,7 @@ Source (for those who likes counting lines):
 \end_layout
 
 \begin_layout LyX-Code
-    })
+    }
 \end_layout
 
 \begin_layout LyX-Code
@@ -3027,6 +3442,10 @@ color{tentative}
 \noun on
 tentative
 \noun default
+ or 
+\noun on
+not yet implemented
+\noun default
 
 \begin_inset ERT
 status open
@@ -3038,7 +3457,7 @@ status open
 
 \end_inset
 
-
+ 
 \end_layout
 
 \end_body
