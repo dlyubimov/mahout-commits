@@ -986,6 +986,26 @@ m.ncol
 \end_layout
 
 \begin_layout Standard
+means and sums
+\end_layout
+
+\begin_layout LyX-Code
+m.colSums
+\end_layout
+
+\begin_layout LyX-Code
+m.colMeans
+\end_layout
+
+\begin_layout LyX-Code
+m.rowSums
+\end_layout
+
+\begin_layout LyX-Code
+m.rowMeans
+\end_layout
+
+\begin_layout Standard
 a copy-by-value (vector or matrix ) 
 \end_layout
 
@@ -1172,6 +1192,145 @@ Just to illustrate semantic clarity, we will adduce a source for in-core
 
 \begin_layout LyX-Code
   }
+\end_layout
+
+\begin_layout Subsection
+Stochastic PCA
+\end_layout
+
+\begin_layout LyX-Code
+ 
+\size footnotesize
+ /**
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * PCA based on SSVD that runs without forming an always-dense A-(colMeans(A))
+ input for SVD.
+ This
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * follows the solution outlined in MAHOUT-817.
+ For in-core version it, for most part, is supposed
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * to save some memory for sparse inputs by removing direct mean subtraction.<P
+>
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   *
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * Hint: Usually one wants to use AV which is approsimately USigma, i.e.<code>u
+ %*%: diagv(s)</code>.
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * If retaining distances and orignal scaled variances not that important,
+ the normalized PCA space
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * is just U.
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   *
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * Important: data points are considered to be rows.
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   *
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * @param a input matrix A
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * @param k request SSVD rank
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * @param p oversampling parameter
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * @param q number of power iterations
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * @return (U,V,s)
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   */
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+  def spca(a:Matrix, k: Int, p: Int = 15, q: Int = 0) 
+\end_layout
+
+\begin_layout Standard
+Stochastic PCA is a re-flow of MAHOUT-817 for in-core DSL.
+ One usually needs output 
+\begin_inset Formula $\mathbf{AV}\approx\mathbf{U}\boldsymbol{\Sigma}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout LyX-Code
+val (inCoreU, _, s) = spca(a = input, k = 30, q = 1)
+\end_layout
+
+\begin_layout LyX-Code
+val uSigma = inCoreU %*%: diagv(s)
+\end_layout
+
+\begin_layout LyX-Code
+
 \end_layout
 
 \begin_layout LyX-Code
@@ -2040,6 +2199,11 @@ A %*% inCoreB
 \end_layout
 
 \begin_layout LyX-Code
+A %*% inCoreDiagonal (i.e.
+ things like A %*% diagv(d))
+\end_layout
+
+\begin_layout LyX-Code
 A :%*% inCoreB
 \end_layout
 
@@ -2072,6 +2236,19 @@ val Ax = A %*% x
 
 \begin_layout LyX-Code
 val inCoreX = Ax.collect(::,0)
+\end_layout
+
+\begin_layout Standard
+There are 2 physical operators associated with this: 
+\begin_inset Formula $\mathbf{Ax}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{A}^{\top}\mathbf{x}$
+\end_inset
+
+.
+ 
 \end_layout
 
 \begin_layout Subsubsection
@@ -2795,8 +2972,7 @@ Distributed Decompositions
 \end_layout
 
 \begin_layout Subsubsection
-Distributed thin QR.
- 
+Distributed thin QR
 \end_layout
 
 \begin_layout Standard
@@ -2994,7 +3170,7 @@ Since we see that is navigated twice, it is recommended that it is checkpointed
 \end_layout
 
 \begin_layout Subsubsection
-Distributed Stochastic SVD.
+Distributed Stochastic SVD
 \end_layout
 
 \begin_layout Standard
@@ -3250,6 +3426,117 @@ Source (for those who likes counting lines):
 
 \begin_layout Standard
 Done!
+\end_layout
+
+\begin_layout Subsubsection
+Distributed Stochastic PCA
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+  /**
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * Distributed Stochastic PCA decomposition algorithm.
+ A logical reflow of the "SSVD-PCA options.pdf"
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * document of the MAHOUT-817.
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   *
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * @param A input matrix A
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * @param k request SSVD rank
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * @param p oversampling parameter
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * @param q number of power iterations (hint: use either 0 or 1)
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   * @return (U,V,s).
+ Note that U, V are non-checkpointed matrices (i.e.
+ one needs to actually use them
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   *         e.g.
+ save them to hdfs in order to trigger their computation.
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+   */
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+  def dspca[K: ClassTag](A: DrmLike[K], k: Int, p: Int = 15, q: Int = 0):
+\end_layout
+
+\begin_layout LyX-Code
+
+\size footnotesize
+  (DrmLike[K], DrmLike[Int], Vector) = <...>
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout Standard
+Stochastic PCA is a re-flow of MAHOUT-817 for sparkbindings algebra.
+ One usually needs output 
+\begin_inset Formula $\mathbf{AV}\approx\mathbf{U}\boldsymbol{\Sigma}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout LyX-Code
+val (drmU, _, s) = dspca(a = drmA, k = 30, q = 1)
+\end_layout
+
+\begin_layout LyX-Code
+val drmUSigma = drmU %*% diagv(s)
+\end_layout
+
+\begin_layout LyX-Code
+...
 \end_layout
 
 \begin_layout Section
