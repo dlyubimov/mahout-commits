@@ -175,8 +175,8 @@ In recent years significant effort was spent to produce semantically friendly
  Working with vector, matrix and tensor data structures as a single data
  type offers essential qualities necessary for rapid prototyping of algebraicall
 y defined mathematical problems.
- The other side of the coin is convenience of the same environment as a
- programming language.
+ The other wanted quality is the convenience of the same environment as
+ a programming language.
  Yet another one is doing things at scale.
  Yet another highly desirable capability of the same environment is plotting
  and visualization.
@@ -210,19 +210,70 @@ Overview
 \end_layout
 
 \begin_layout Standard
-The manual is mostly origanised by giving DSL features by example.
+Mahout Scala and Spark Bindings is a package aiming to provide a R-like
+ look and feel to Mahout's in-core and out-of-core Spark-backed linear algebra.
+ It is built in the image of R's base package.
+ So if you are familiar with basic R matrix primitives, you should feel
+ right at home.
+\end_layout
+
+\begin_layout Standard
+There are, at the moment, 3 major types to be operated on: in-core vectors,
+ in-core matrices (including numerous specialized types), and distributed
+ row matrices (DRM).
+ SparkBindings expressions can mix in all three types of things.
+\end_layout
+
+\begin_layout Standard
+The manual is organised by giving DSL features by example.
  That means that capabilities are wider than those shown, and may change
  behind the scenes as the work develops.
  However, the authors try to facilitate and ecourage particular style given,
  and retain behind-the-scenes compatibility with the examples given.
  
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+S
 \end_layout
 
-\begin_layout Standard
-If a matrix or a vector are denoted by a single Latin letter, I use capital
- letters to denote matrices, and small letters to denote vectors, thus diverging
- somewhat from accepted camel case for reference variables in these few
- cases.
+\end_inset
+
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:Mahout-in-core-algebraic"
+
+\end_inset
+
+ enumerates in-core DSL operators only.
+ 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+S
+\end_layout
+
+\end_inset
+
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:Out-of-core-linalg-bindings"
+
+\end_inset
+
+ describes operators involving combinations of DRM, in-core vectors or matrices
+ requiring out-of-core optimization and processing, as well conceptual notes
+ about checkpointing, caching, broadcasting and behind-the-scenes optimizing.
 \end_layout
 
 \begin_layout Standard
@@ -249,6 +300,12 @@ LatexCommand tableofcontents
 \end_layout
 
 \begin_layout Section
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Mahout-in-core-algebraic"
+
+\end_inset
+
 Mahout in-core algebraic Scala Bindings
 \begin_inset Foot
 status collapsed
@@ -264,6 +321,18 @@ target "http://weatheringthrutechdays.blogspot.com/2013/07/scala-dsl-for-mahout-
 
 
 \end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
 
 \end_inset
 
@@ -1380,6 +1449,12 @@ m1 += 5.0 // now m is intact
 \end_layout
 
 \begin_layout Section
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Out-of-core-linalg-bindings"
+
+\end_inset
+
 Out-of-core linalg bindings
 \end_layout
 
@@ -1685,10 +1760,10 @@ Logical algebraic operators on DRM matrices
 
 \begin_layout Standard
 We will define a logical set of operators that are familiar to users of
- environments such as R, which are elementwise +, -, *, / as well as matrix
- multiplication %*% and transposition.
- General rule is that we try to do a subset of those enabled for in-core
- DSL.
+ R, which are elementwise +, -, *, / as well as matrix multiplication %*%
+ and transposition.
+ General rule is that we try to do a subset of the same things found in
+ the in-core DSL.
  In particular, since all distributed matrices are immutable, there are
  no assignment versions (e.g.
  
@@ -1696,7 +1771,7 @@ We will define a logical set of operators that are familiar to users of
 A += B
 \family default
 ).
- We also probably will have trouble to do efficient slicing.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -1764,7 +1839,7 @@ val B = drmParallelize (...)
 \end_layout
 
 \begin_layout LyX-Code
-val C = A %*% B
+val C = A %*% B.t
 \end_layout
 
 \begin_layout LyX-Code
@@ -1775,9 +1850,17 @@ val D = C.t
 val E = C.t %*% C
 \end_layout
 
+\begin_layout LyX-Code
+D.writeDRM(..path..)
+\end_layout
+
+\begin_layout LyX-Code
+E.writeDRM(..path..)
+\end_layout
+
 \begin_layout Standard
 In this example, optimizer optimizes separately 2 pipelines: 
-\begin_inset Formula $\mathbf{D}=\mathbf{A}\mathbf{B}^{\top}$
+\begin_inset Formula $\mathbf{D}=\mathbf{B}\mathbf{A}^{\top}$
 \end_inset
 
  and 
@@ -1805,7 +1888,7 @@ val B = drmParallelize (...)
 \end_layout
 
 \begin_layout LyX-Code
-val C = (A %*% B).checkpoint
+val C = (A %*% B.t).checkpoint
 \end_layout
 
 \begin_layout LyX-Code
@@ -1816,9 +1899,18 @@ val D = C.t
 val E = C.t %*% C
 \end_layout
 
+\begin_layout LyX-Code
+D.writeDRM(..path..)
+\end_layout
+
+\begin_layout LyX-Code
+E.writeDRM(..path..)
+\end_layout
+
 \begin_layout Standard
-In this case, optimizer considers 3 separate pipelines: 
-\begin_inset Formula $\mathbf{C}=\mathbf{AB}$
+In this case, which is functionally equivalent to the previous one, the
+ optimizer considers 3 separate pipelines: 
+\begin_inset Formula $\mathbf{C}=\mathbf{AB}^{\top}$
 \end_inset
 
 , 
@@ -1852,24 +1944,8 @@ E
 \series default
  will be triggered for action at different time and optimizer wouldn't be
  able to consider computational graph that includes both at the same time).
- However, in this particular case the checkpoint might be better considered
- for 
-\begin_inset Formula $\mathbf{A}\mathbf{B}^{\top}$
-\end_inset
-
- since at this point optimizer doesn't compute 
-\begin_inset Formula $\mathbf{A}\mathbf{B}$
-\end_inset
-
- directly but rather as 
-\begin_inset Formula $\mathbf{A}\left(\mathbf{B}^{\top}\right)^{\top}$
-\end_inset
-
-, i.e.
- this is an example when checkpointing will result in one extra transposition
- of arguments.
- However, even in the first example optimizer will be able to figure to
- optimize 
+ But even in the first example optimizer will be able to figure to optimize
+ 
 \begin_inset Formula $\mathbf{E}=\left(\mathbf{AB}^{\top}\right)^{\top}\left(\mathbf{AB}^{\top}\right)$
 \end_inset
 
@@ -2088,7 +2164,7 @@ Elementwise +, -, *, /
 \mathbf{M}=\left(\begin{matrix}\frac{a_{11}}{b_{11}} & \frac{a_{12}}{b_{12}} & \cdots & \frac{a_{1n}}{b_{1n}}\\
 \vdots & \vdots & \ddots & \vdots\\
 \frac{a_{m1}}{b_{m1}} & \frac{a_{m2}}{b_{m2}} & \cdots & \frac{a_{mn}}{b_{mn}}
-\end{matrix}\right)\,\,\,\mathrm{(elementwise\, deletion)}
+\end{matrix}\right)\,\,\,\mathrm{(elementwise\, division)}
 \]
 
 \end_inset
@@ -2217,7 +2293,9 @@ Same as above, when both in-core and out-of-core argumetns used, associativity
 \end_layout
 
 \begin_layout Subsubsection
-Matrix-vector multiplication %*%
+Matrix-vector multiplication 
+\family typewriter
+%*%
 \end_layout
 
 \begin_layout Standard
@@ -3539,8 +3617,27 @@ val drmUSigma = drmU %*% diagv(s)
 ...
 \end_layout
 
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Optimizer notes
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -3636,7 +3733,7 @@ Optimizer tracks identicity of partitioning of products.
 \end_layout
 
 \begin_layout Subsection
-Tracking of DRM row key values and their types
+Tracking the DRM row key values and their types
 \end_layout
 
 \begin_layout Standard
