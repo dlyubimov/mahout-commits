@@ -2897,7 +2897,7 @@ NotSerializableException
 \end_layout
 
 \begin_layout LyX-Code
-val v:Int = ...
+val v:Vector = ...
  
 \end_layout
 
@@ -2907,7 +2907,11 @@ val drm2 = drm1.mapBlock() {
 
 \begin_deeper
 \begin_layout LyX-Code
-case (keys, block) => block -= v
+case (keys, block) => 
+\end_layout
+
+\begin_layout LyX-Code
+for (row <- 0 until block.nrow) block(row,::) -= v
 \end_layout
 
 \begin_layout LyX-Code
@@ -2935,7 +2939,7 @@ broadcast
 \end_layout
 
 \begin_layout LyX-Code
-val v:Int = ...
+val v:Vector = ...
  
 \end_layout
 
@@ -2949,7 +2953,11 @@ val drm2 = drm1.mapBlock() {
 
 \begin_deeper
 \begin_layout LyX-Code
-case (keys, block) => block -= bcastV
+case (keys, block) => 
+\end_layout
+
+\begin_layout LyX-Code
+for (row <- 0 until block.nrow) block(row,::) -= bcastV
 \end_layout
 
 \begin_layout LyX-Code
