@@ -44,7 +44,6 @@ object At {
     val ncol = operator.ncol
 
     // Validity of this conversion must be checked at logical operator level.
-    val nrow = operator.nrow.toInt
     val atRdd = drmRdd
         // Split
         .flatMap({

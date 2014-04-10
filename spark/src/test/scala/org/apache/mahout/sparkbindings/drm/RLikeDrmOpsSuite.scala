@@ -38,15 +38,50 @@ class RLikeDrmOpsSuite extends FunSuite with Matchers with MahoutLocalContext {
 
   test("A.t") {
 
-    val inCoreA = dense((1, 2, 3), (3, 4, 5))
+    val inCoreA = dense(
+      (1, 2, 3),
+      (3, 4, 5),
+      (4, 5, 6),
+      (5, 7, 8)
+    )
 
-    val A = drmParallelize(inCoreA)
+    val A = drmParallelize(inCoreA,numPartitions = 2)
 
     val inCoreAt = A.t.collect
+
+    printf("A' =\n%s\n", inCoreAt)
 
     // Assert first norm of difference is less than error margin.
     (inCoreAt - inCoreA.t).norm should be < epsilon
 
+  }
+
+  test("A.t with non-unique row key aggregation") {
+    val inCoreA = dense(
+      (1, 2, 3),
+      (3, 4, 5),
+      (4, 5, 6),
+      (5, 7, 8)
+    )
+
+    val A = drmParallelize(inCoreA,numPartitions = 2)
+
+    // We map every row to index rowkey mod 2 and then apply transpose. We should get matrix with
+    // 0-th column as a sum of all even rows and 1-st column as sum of all odd rows.
+    val inCoreAt = A.mapBlock() {
+      case (keys, block) => keys.map(_ % 2) -> block
+    }
+        // Transpose and throw away stuff we don't care about
+        .t(::, 0 until 2)
+        // collect
+        .collect
+
+    printf("A' =\n%s\n", inCoreAt)
+
+    // Assert first norm of difference is less than error margin.
+    inCoreAt.ncol should equal (2)
+
+    ((inCoreA(0 until 2, ::) + inCoreA(2 until 4,::)).t - inCoreAt).norm should be < 1E-5
   }
 
   test("C = A %*% B") {
@@ -140,7 +175,7 @@ class RLikeDrmOpsSuite extends FunSuite with Matchers with MahoutLocalContext {
     }
   }
 
-  test("C = At %*% B , join") {
+  test("C = A.t %*% B , join") {
 
     val inCoreA = dense((1, 2), (3, 4),(-3, -5))
     val inCoreB = dense((3, 5), (4, 6), (0, 1))
