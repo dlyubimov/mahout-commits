@@ -16,7 +16,7 @@
  */
 package org.apache.mahout.math.scalabindings
 
-import org.apache.mahout.math.{Vector, Matrix}
+import org.apache.mahout.math.{SparseRowMatrix, SparseColumnMatrix, Vector, Matrix}
 import scala.collection.JavaConversions._
 import RLikeOps._
 
@@ -35,6 +35,12 @@ class RLikeMatrixOps(_m: Matrix) extends MatrixOps(_m) {
    * @return
    */
   def %*%(that: Vector) = m.times(that)
+
+  /**
+   * vector-matrix multimplication
+   * @param that
+   */
+  def %*%:(that:Vector) = new SparseRowMatrix(1,that.length,Array(that)).t %*% m
 
   /**
    * Hadamard product
