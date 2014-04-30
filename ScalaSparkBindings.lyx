@@ -2422,7 +2422,7 @@ A(100 to 200, 100 to 200)
 \end_layout
 
 \begin_layout Standard
-Vertical block
+Horizontal block
 \end_layout
 
 \begin_layout LyX-Code
@@ -2430,7 +2430,7 @@ A(::, 100 to 200)
 \end_layout
 
 \begin_layout Standard
-Horizontal block
+Vertical block
 \end_layout
 
 \begin_layout LyX-Code
