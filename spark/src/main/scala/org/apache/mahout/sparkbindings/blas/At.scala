@@ -22,7 +22,7 @@ import org.apache.mahout.math.scalabindings._
 import RLikeOps._
 import org.apache.spark.SparkContext._
 import org.apache.mahout.math.{DenseVector, Vector, SequentialAccessSparseVector}
-import org.apache.mahout.math.scalabindings.drm.logical.OpAt
+import org.apache.mahout.math.drm.logical.OpAt
 
 /** A' algorithms */
 object At {

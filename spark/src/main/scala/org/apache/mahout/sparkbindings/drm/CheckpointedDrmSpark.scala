@@ -23,35 +23,37 @@ import org.apache.mahout.math.scalabindings._
 import RLikeOps._
 import scala.collection.JavaConversions._
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.SparkContext._
 import reflect._
 import scala.util.Random
 import org.apache.hadoop.io.{LongWritable, Text, IntWritable, Writable}
-import org.apache.mahout.math.scalabindings.drm.{CheckpointedDrm, CacheHint}
+import org.apache.mahout.math.drm._
+import org.apache.mahout.sparkbindings._
+import org.apache.spark.SparkContext._
 
+/** Spark-specific optimizer-checkpointed DRM. */
 class CheckpointedDrmSpark[K: ClassTag](
     val rdd: DrmRdd[K],
     private var _nrow: Long = -1L,
     private var _ncol: Int = -1,
     private val _cacheStorageLevel: StorageLevel = StorageLevel.MEMORY_ONLY,
-    private[sparkbindings] val partitioningTag: Long = Random.nextLong()
-
+    override protected[mahout] val partitioningTag: Long = Random.nextLong()
     ) extends CheckpointedDrm[K] {
-
 
   lazy val nrow = if (_nrow >= 0) _nrow else computeNRow
   lazy val ncol = if (_ncol >= 0) _ncol else computeNCol
 
   private var cached: Boolean = false
+  override protected[mahout] val context: DistributedContext = rdd.context
 
 
   /**
    * Action operator -- does not necessary means Spark action; but does mean running BLAS optimizer
    * and writing down Spark graph lineage since last checkpointed DRM.
    */
-  def checkpoint(cacheHint: CacheHint.CacheHint): CheckpointedDrm[K] =
-  // We are already checkpointed in a sense that we already have Spark lineage. So just return self.
+  def checkpoint(cacheHint: CacheHint.CacheHint): CheckpointedDrm[K] = {
+    // We are already checkpointed in a sense that we already have Spark lineage. So just return self.
     this
+  }
 
   def cache() = {
     if (!cached) {
@@ -74,8 +76,8 @@ class CheckpointedDrmSpark[K: ClassTag](
     this
   }
 
-  def mapRows(mapfun: (K, Vector) => Vector): CheckpointedDrmSpark[K] =
-    new CheckpointedDrmSpark[K](rdd.map(t => (t._1, mapfun(t._1, t._2))))
+//  def mapRows(mapfun: (K, Vector) => Vector): CheckpointedDrmSpark[K] =
+//    new CheckpointedDrmSpark[K](rdd.map(t => (t._1, mapfun(t._1, t._2))))
 
 
   /**
@@ -139,7 +141,7 @@ class CheckpointedDrmSpark[K: ClassTag](
       else if (ktag.runtimeClass == classOf[Long]) (x: K) => new LongWritable(x.asInstanceOf[Long])
       else if (classOf[Writable].isAssignableFrom(ktag.runtimeClass)) (x: K) => x.asInstanceOf[Writable]
       else throw new IllegalArgumentException("Do not know how to convert class tag %s to Writable.".format(ktag))
-//    implicit def any2w(k: Any): Writable = k2wFunc(k)
+    //    implicit def any2w(k: Any): Writable = k2wFunc(k)
     rdd.saveAsSequenceFile(path)
   }
 

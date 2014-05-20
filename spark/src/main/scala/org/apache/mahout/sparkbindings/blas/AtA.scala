@@ -18,6 +18,7 @@
 package org.apache.mahout.sparkbindings.blas
 
 import org.apache.mahout.math._
+import org.apache.mahout.sparkbindings._
 import org.apache.mahout.sparkbindings.drm._
 import org.apache.mahout.math.scalabindings._
 import RLikeOps._
@@ -25,7 +26,8 @@ import collection._
 import JavaConversions._
 import org.apache.spark.SparkContext._
 import org.apache.log4j.Logger
-import org.apache.mahout.math.scalabindings.drm.logical.OpAtA
+import org.apache.mahout.math.drm.logical.OpAtA
+import SparkEngine._
 
 /**
  * Collection of algorithms to compute X' times X

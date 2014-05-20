@@ -7,6 +7,4 @@ trait DistributedContext extends Closeable {
 
   val engine:DistributedEngine
 
-  def broadcast[T <: AnyRef](value: T): BCast[T]
-
 }

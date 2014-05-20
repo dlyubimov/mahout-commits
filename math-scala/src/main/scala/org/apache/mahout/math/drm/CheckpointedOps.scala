@@ -30,10 +30,10 @@ class CheckpointedOps[K: ClassTag](val drm: CheckpointedDrm[K]) {
 
 
   /** Column sums. At this point this runs on checkpoint and collects in-core vector. */
-  def colSums(): Vector = drm.engine.colSums(drm)
+  def colSums(): Vector = drm.context.colSums(drm)
 
   /** Column Means */
-  def colMeans(): Vector = drm.engine.colMeans(drm)
+  def colMeans(): Vector = drm.context.colMeans(drm)
 
 }
 

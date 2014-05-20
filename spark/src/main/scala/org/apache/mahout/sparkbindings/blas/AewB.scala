@@ -23,7 +23,7 @@ import org.apache.spark.SparkContext._
 import org.apache.mahout.math.scalabindings._
 import RLikeOps._
 import org.apache.mahout.math.{Matrix, Vector}
-import org.apache.mahout.math.scalabindings.drm.logical.{OpAewScalar, OpAewB}
+import org.apache.mahout.math.drm.logical.{OpAewScalar, OpAewB}
 
 /** Elementwise drm-drm operators */
 object AewB {

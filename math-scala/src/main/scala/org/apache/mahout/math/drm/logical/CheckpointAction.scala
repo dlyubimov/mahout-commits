@@ -26,8 +26,7 @@ abstract class CheckpointAction[K: ClassTag] extends DrmLike[K] {
 
   protected[mahout] lazy val partitioningTag: Long = Random.nextLong()
 
-  private var cp:Option[CheckpointedDrm[K]] = None
-
+  private[mahout] var cp:Option[CheckpointedDrm[K]] = None
 
   def isIdenticallyPartitioned(other:DrmLike[_]) =
     partitioningTag!= 0L && partitioningTag == other.partitioningTag
@@ -36,12 +35,13 @@ abstract class CheckpointAction[K: ClassTag] extends DrmLike[K] {
    * Action operator -- does not necessary means Spark action; but does mean running BLAS optimizer
    * and writing down Spark graph lineage since last checkpointed DRM.
    */
-  def checkpoint(cacheHint: CacheHint.CacheHint): CheckpointedDrm[K] =
-    this.engine.toPhysical(this.engine.optimizerRewrite(this), cacheHint)
+  def checkpoint(cacheHint: CacheHint.CacheHint): CheckpointedDrm[K] = cp match {
+    case None =>
+      val physPlan = context.toPhysical(context.optimizerRewrite(this), cacheHint)
+      cp = Some(physPlan)
+      physPlan
+    case Some(cp) => cp
+  }
 
 }
 
-object CheckpointAction {
-
-
-}

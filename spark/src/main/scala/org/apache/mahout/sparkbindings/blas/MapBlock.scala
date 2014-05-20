@@ -1,14 +1,15 @@
 package org.apache.mahout.sparkbindings.blas
 
 import org.apache.mahout.sparkbindings.drm.DrmRddInput
+import org.apache.mahout.math.drm.BlockMapFunc
+import org.apache.mahout.math.scalabindings.RLikeOps._
+import scala.reflect.ClassTag
 
 object MapBlock {
 
-  def exec[S, R](src: DrmRddInput[S]): DrmRddInput[R] = {
+  def exec[S, R:ClassTag](src: DrmRddInput[S], ncol:Int, bmf:BlockMapFunc[S,R]): DrmRddInput[R] = {
 
     // We can't use attributes to avoid putting the whole this into closure.
-    val bmf = this.bmf
-    val ncol = this.ncol
 
     val rdd = src.toBlockifiedDrmRdd()
         .map(blockTuple => {

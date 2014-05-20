@@ -7,7 +7,7 @@ import org.apache.mahout.sparkbindings.drm._
 import org.apache.mahout.sparkbindings.drm.DrmRddInput
 import scala.reflect.ClassTag
 import org.apache.mahout.math.DiagonalMatrix
-import org.apache.mahout.math.scalabindings.drm.logical.OpTimesRightMatrix
+import org.apache.mahout.math.drm.logical.OpTimesRightMatrix
 
 /** Matrix product with one of operands an in-core matrix */
 object AinCoreB {

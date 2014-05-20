@@ -40,22 +40,21 @@ package object drm {
     x.toInt
   }
 
-  def drmBroadcast(m:Matrix)(implicit ctx:DistributedContext):BCast[Matrix] = ctx.broadcast(m)
+  def drmBroadcast(m:Matrix)(implicit ctx:DistributedContext):BCast[Matrix] = ctx.drmBroadcast(m)
 
-  def drmBroadcast(v:Vector)(implicit ctx:DistributedContext):BCast[Vector] = ctx.broadcast(v)
+  def drmBroadcast(v:Vector)(implicit ctx:DistributedContext):BCast[Vector] = ctx.drmBroadcast(v)
 
   implicit def bcast2val[T](bcast:BCast[T]):T = bcast.value
 
-  private[drm] implicit def m2c(m: DrmLike[_]): DistributedContext = m.context
-
-  private[drm] implicit def m2e(m: DrmLike[_]): DistributedEngine = m.context.engine
-
-  private[drm] implicit def c2e(c: DistributedContext): DistributedEngine = c.engine
+  /** Just throw all engine operations into context as well. */
+  implicit def ctx2engine(ctx:DistributedContext):DistributedEngine = ctx.engine
 
   implicit def drm2drmCpOps[K: ClassTag](drm: CheckpointedDrm[K]): CheckpointedOps[K] =
     new CheckpointedOps[K](drm)
 
   implicit def drm2Checkpointed[K](drm: DrmLike[K]): CheckpointedDrm[K] = drm.checkpoint()
+
+
 
   // ============== Decompositions ===================
 

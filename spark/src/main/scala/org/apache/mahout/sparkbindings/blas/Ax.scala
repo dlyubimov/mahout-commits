@@ -6,7 +6,7 @@ import RLikeOps._
 import org.apache.mahout.sparkbindings.drm._
 import org.apache.mahout.sparkbindings.drm.DrmRddInput
 import scala.reflect.ClassTag
-import org.apache.mahout.math.scalabindings.drm.logical.{OpAx, OpAtx}
+import org.apache.mahout.math.drm.logical.{OpAx, OpAtx}
 
 
 /** Matrix product with one of operands an in-core matrix */
