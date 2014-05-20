@@ -4,9 +4,9 @@ import org.apache.mahout.math.scalabindings._
 import RLikeOps._
 
 import org.apache.mahout.sparkbindings.drm._
-import org.apache.mahout.sparkbindings.drm.plan.{OpAtx, OpAx, OpTimesRightMatrix}
 import org.apache.mahout.sparkbindings.drm.DrmRddInput
 import scala.reflect.ClassTag
+import org.apache.mahout.math.scalabindings.drm.logical.{OpAx, OpAtx}
 
 
 /** Matrix product with one of operands an in-core matrix */

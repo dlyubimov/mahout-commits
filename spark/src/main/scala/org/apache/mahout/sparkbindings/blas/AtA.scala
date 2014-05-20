@@ -23,9 +23,9 @@ import org.apache.mahout.math.scalabindings._
 import RLikeOps._
 import collection._
 import JavaConversions._
-import org.apache.mahout.sparkbindings.drm.plan.OpAtA
 import org.apache.spark.SparkContext._
 import org.apache.log4j.Logger
+import org.apache.mahout.math.scalabindings.drm.logical.OpAtA
 
 /**
  * Collection of algorithms to compute X' times X

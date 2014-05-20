@@ -27,6 +27,10 @@ import org.apache.spark.SparkContext._
 import org.apache.hadoop.io.Writable
 import org.apache.spark.storage.StorageLevel
 import scala.util.Random
+import org.apache.mahout.math.scalabindings.drm.{CheckpointedDrm, CacheHint, DrmLike}
+import org.apache.mahout.math.scalabindings.drm.logical._
+import org.apache.mahout.math.scalabindings.drm.logical.OpTimesRightMatrix
+import scala.Some
 
 /** Implementation of distributed expression checkpoint and optimizer. */
 abstract class CheckpointAction[K: ClassTag] extends DrmLike[K] {
@@ -48,7 +52,7 @@ abstract class CheckpointAction[K: ClassTag] extends DrmLike[K] {
     // if it is unsupported, instead of failing.
     val plan = optimize(this)
     val rdd = exec(plan)
-    val newcp = new CheckpointedDrmBase(
+    val newcp = new CheckpointedDrmSpark(
       rdd = rdd,
       _nrow = nrow,
       _ncol = ncol,

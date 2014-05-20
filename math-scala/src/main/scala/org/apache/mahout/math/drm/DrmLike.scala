@@ -15,35 +15,34 @@
  * limitations under the License.
  */
 
-package org.apache.mahout.sparkbindings.blas
+package org.apache.mahout.math.drm
 
-import org.scalatest.FunSuite
-import org.apache.mahout.sparkbindings.test.MahoutLocalContext
-import org.apache.mahout.math.scalabindings._
-import RLikeOps._
-import org.apache.mahout.sparkbindings._
-import drm._
-import org.apache.spark.SparkContext._
-import org.apache.mahout.math.scalabindings.drm.logical.OpAtA
 
-/** Tests for {@link XtX} */
-class AtASuite extends FunSuite with MahoutLocalContext {
+/**
+ *
+ * Basic spark DRM trait.
+ *
+ * Since we already call the package "sparkbindings", I will not use stem "spark" with classes in
+ * this package. Spark backing is already implied.
+ *
+ */
+trait DrmLike[K] {
 
-  test("AtA slim") {
+  protected[mahout] def partitioningTag:Long
 
-    val inCoreA = dense((1, 2), (2, 3))
-    val drmA = drmParallelize(inCoreA)
+  protected[mahout] val context:DistributedContext
 
-    val operator = new OpAtA[Int](A = drmA)
-    val inCoreAtA = AtA.at_a_slim(operator = operator, srcRdd = drmA.rdd)
-    println(inCoreAtA)
 
-    val expectedAtA = inCoreA.t %*% inCoreA
-    println(expectedAtA)
+  /** R-like syntax for number of rows. */
+  def nrow: Long
 
-    assert(expectedAtA === inCoreAtA)
+  /** R-like syntax for number of columns */
+  def ncol: Int
 
-  }
-
+  /**
+   * Action operator -- does not necessary means Spark action; but does mean running BLAS optimizer
+   * and writing down Spark graph lineage since last checkpointed DRM.
+   */
+  def checkpoint(cacheHint: CacheHint.CacheHint = CacheHint.MEMORY_ONLY): CheckpointedDrm[K]
 
 }

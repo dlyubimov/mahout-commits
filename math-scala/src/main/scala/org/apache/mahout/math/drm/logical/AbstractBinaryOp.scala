@@ -15,35 +15,23 @@
  * limitations under the License.
  */
 
-package org.apache.mahout.sparkbindings.blas
+package org.apache.mahout.math.drm.logical
 
-import org.scalatest.FunSuite
-import org.apache.mahout.sparkbindings.test.MahoutLocalContext
-import org.apache.mahout.math.scalabindings._
-import RLikeOps._
-import org.apache.mahout.sparkbindings._
-import drm._
-import org.apache.spark.SparkContext._
-import org.apache.mahout.math.scalabindings.drm.logical.OpAtA
+import scala.reflect.ClassTag
+import org.apache.mahout.math.drm.{DistributedContext, DrmLike}
 
-/** Tests for {@link XtX} */
-class AtASuite extends FunSuite with MahoutLocalContext {
+abstract class AbstractBinaryOp[A: ClassTag, B: ClassTag, K: ClassTag]
+    extends CheckpointAction[K] with DrmLike[K] {
 
-  test("AtA slim") {
+  protected[drm] var A: DrmLike[A]
+  protected[drm] var B: DrmLike[B]
+  protected[mahout] lazy val context: DistributedContext = A.context
 
-    val inCoreA = dense((1, 2), (2, 3))
-    val drmA = drmParallelize(inCoreA)
+  // These are explicit evidence export. Sometimes scala falls over to figure that on its own.
+  def classTagA: ClassTag[A] = implicitly[ClassTag[A]]
 
-    val operator = new OpAtA[Int](A = drmA)
-    val inCoreAtA = AtA.at_a_slim(operator = operator, srcRdd = drmA.rdd)
-    println(inCoreAtA)
+  def classTagB: ClassTag[B] = implicitly[ClassTag[B]]
 
-    val expectedAtA = inCoreA.t %*% inCoreA
-    println(expectedAtA)
-
-    assert(expectedAtA === inCoreAtA)
-
-  }
-
+  def classTagK: ClassTag[K] = implicitly[ClassTag[K]]
 
 }

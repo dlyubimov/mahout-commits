@@ -15,33 +15,27 @@
  * limitations under the License.
  */
 
-package org.apache.mahout.sparkbindings.blas
+package org.apache.mahout.math.drm.logical
 
-import org.scalatest.FunSuite
-import org.apache.mahout.sparkbindings.test.MahoutLocalContext
+import scala.reflect.ClassTag
 import org.apache.mahout.math.scalabindings._
 import RLikeOps._
-import org.apache.mahout.sparkbindings._
-import drm._
-import org.apache.spark.SparkContext._
-import org.apache.mahout.math.scalabindings.drm.logical.OpAt
+import org.apache.mahout.math.drm.{BlockMapFunc, DrmLike}
 
-/** Tests for A' algorithms */
-class AtSuite extends FunSuite with MahoutLocalContext {
-
-  test("At") {
-    val inCoreA = dense((1, 2, 3), (2, 3, 4), (3, 4, 5))
-    val A = drmParallelize(m=inCoreA, numPartitions = 2)
-
-    val op = new OpAt(A)
-    val AtDrm = new CheckpointedDrmSpark(rdd= At.at(op,srcA=A),_nrow=op.nrow,_ncol=op.ncol)
-    val inCoreAt = AtDrm.collect
-    val inCoreControlAt = inCoreA.t
-
-    println(inCoreAt)
-    assert((inCoreAt - inCoreControlAt).norm < 1E-5)
+class OpMapBlock[S: ClassTag, R: ClassTag](
+    override var A: DrmLike[S],
+    val bmf: BlockMapFunc[S, R],
+    val _ncol: Int = -1,
+    val _nrow: Long = -1
+    ) extends AbstractUnaryOp[S, R] {
 
 
+  override protected[mahout] lazy val partitioningTag: Long = A.partitioningTag
 
-  }
+  /** R-like syntax for number of rows. */
+  def nrow: Long = if (_nrow >= 0) _nrow else A.nrow
+
+  /** R-like syntax for number of columns */
+  def ncol: Int = if (_ncol >= 0) _ncol else A.ncol
+
 }

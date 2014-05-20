@@ -15,35 +15,24 @@
  * limitations under the License.
  */
 
-package org.apache.mahout.sparkbindings.blas
+package org.apache.mahout.math.drm.logical
 
-import org.scalatest.FunSuite
-import org.apache.mahout.sparkbindings.test.MahoutLocalContext
-import org.apache.mahout.math.scalabindings._
-import RLikeOps._
-import org.apache.mahout.sparkbindings._
-import drm._
-import org.apache.spark.SparkContext._
-import org.apache.mahout.math.scalabindings.drm.logical.OpAtA
+import scala.reflect.ClassTag
+import org.apache.mahout.math.drm.DrmLike
 
-/** Tests for {@link XtX} */
-class AtASuite extends FunSuite with MahoutLocalContext {
+/** Operator denoting expressions like 5.0 - A or A * 5.6 */
+case class OpAewScalar[K: ClassTag](
+    override var A: DrmLike[K],
+    val scalar: Double,
+    val op: String
+    ) extends AbstractUnaryOp[K,K] {
 
-  test("AtA slim") {
+  override protected[mahout] lazy val partitioningTag: Long = A.partitioningTag
 
-    val inCoreA = dense((1, 2), (2, 3))
-    val drmA = drmParallelize(inCoreA)
+  /** R-like syntax for number of rows. */
+  def nrow: Long = A.nrow
 
-    val operator = new OpAtA[Int](A = drmA)
-    val inCoreAtA = AtA.at_a_slim(operator = operator, srcRdd = drmA.rdd)
-    println(inCoreAtA)
-
-    val expectedAtA = inCoreA.t %*% inCoreA
-    println(expectedAtA)
-
-    assert(expectedAtA === inCoreAtA)
-
-  }
-
+  /** R-like syntax for number of columns */
+  def ncol: Int = A.ncol
 
 }

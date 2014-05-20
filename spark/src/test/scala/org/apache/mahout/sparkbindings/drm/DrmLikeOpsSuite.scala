@@ -20,6 +20,7 @@ package org.apache.mahout.sparkbindings.drm
 
 import org.apache.mahout.math.scalabindings._
 import RLikeOps._
+import org.apache.mahout.math.scalabindings.drm.RLikeDrmOps
 import RLikeDrmOps._
 import org.scalatest.{Matchers, FunSuite}
 import org.apache.mahout.sparkbindings.test.MahoutLocalContext

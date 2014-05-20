@@ -22,8 +22,8 @@ import org.apache.mahout.sparkbindings.test.MahoutLocalContext
 import org.apache.mahout.math.scalabindings._
 import RLikeOps._
 import org.apache.mahout.sparkbindings.drm._
-import org.apache.mahout.sparkbindings.drm.plan.OpAewB
 import org.apache.spark.SparkContext._
+import org.apache.mahout.math.scalabindings.drm.logical.OpAewB
 
 /** Elementwise matrix operation tests */
 class AewBSuite extends FunSuite with MahoutLocalContext {
@@ -36,7 +36,7 @@ class AewBSuite extends FunSuite with MahoutLocalContext {
 
     val op = new OpAewB(A, B, '*')
 
-    val M = new CheckpointedDrmBase(AewB.a_hadamard_b(op, srcA = A, srcB = B), op.nrow, op.ncol)
+    val M = new CheckpointedDrmSpark(AewB.a_hadamard_b(op, srcA = A, srcB = B), op.nrow, op.ncol)
 
     val inCoreM = M.collect
     val inCoreMControl = inCoreA * inCoreB
@@ -53,7 +53,7 @@ class AewBSuite extends FunSuite with MahoutLocalContext {
 
     val op = new OpAewB(A, B, '+')
 
-    val M = new CheckpointedDrmBase(AewB.a_plus_b(op, srcA = A, srcB = B), op.nrow, op.ncol)
+    val M = new CheckpointedDrmSpark(AewB.a_plus_b(op, srcA = A, srcB = B), op.nrow, op.ncol)
 
     val inCoreM = M.collect
     val inCoreMControl = inCoreA + inCoreB
@@ -70,7 +70,7 @@ class AewBSuite extends FunSuite with MahoutLocalContext {
 
     val op = new OpAewB(A, B, '-')
 
-    val M = new CheckpointedDrmBase(AewB.a_minus_b(op, srcA = A, srcB = B), op.nrow, op.ncol)
+    val M = new CheckpointedDrmSpark(AewB.a_minus_b(op, srcA = A, srcB = B), op.nrow, op.ncol)
 
     val inCoreM = M.collect
     val inCoreMControl = inCoreA - inCoreB
@@ -87,7 +87,7 @@ class AewBSuite extends FunSuite with MahoutLocalContext {
 
     val op = new OpAewB(A, B, '/')
 
-    val M = new CheckpointedDrmBase(AewB.a_eldiv_b(op, srcA = A, srcB = B), op.nrow, op.ncol)
+    val M = new CheckpointedDrmSpark(AewB.a_eldiv_b(op, srcA = A, srcB = B), op.nrow, op.ncol)
 
     val inCoreM = M.collect
     val inCoreMControl = inCoreA / inCoreB

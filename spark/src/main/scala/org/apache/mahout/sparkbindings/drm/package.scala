@@ -29,21 +29,16 @@ import org.apache.mahout.math.scalabindings._
 import RLikeOps._
 import SparkContext._
 import org.apache.spark.broadcast.Broadcast
-import org.apache.mahout.sparkbindings.drm.decompositions.{DSPCA, DSSVD, DQR}
+import org.apache.mahout.math.scalabindings.drm.{CheckpointedOps, DrmLike, BlockifiedDrmTuple, DrmTuple}
+import org.apache.mahout.math.drm.decompositions.{DSSVD, DSPCA, DQR}
 
 
 package object drm {
 
   private[drm] final val log = Logger.getLogger("org.apache.mahout.sparkbindings");
 
-  /** Drm row-wise tuple */
-  type DrmTuple[K] = (K, Vector)
-
   /** Row-wise organized DRM rdd type */
   type DrmRdd[K] = RDD[DrmTuple[K]]
-
-  /** Drm block-wise tuple: Array of row keys and the matrix block. */
-  type BlockifiedDrmTuple[K] = (Array[K], _ <: Matrix)
 
   /**
    * Blockifed DRM rdd (keys of original DRM are grouped into array corresponding to rows of Matrix
@@ -51,11 +46,6 @@ package object drm {
    */
   type BlockifiedDrmRdd[K] = RDD[BlockifiedDrmTuple[K]]
 
-  /** Block-map func */
-  type BlockMapFunc[S, R] = BlockifiedDrmTuple[S] => BlockifiedDrmTuple[R]
-
-  /** CacheHint type */
-//  type CacheHint = CacheHint.CacheHint
 
   implicit def input2drmRdd[K](input: DrmRddInput[K]): DrmRdd[K] = input.toDrmRdd()
 
@@ -64,16 +54,9 @@ package object drm {
   implicit def cpDrm2DrmRddInput[K: ClassTag](cp: CheckpointedDrm[K]): DrmRddInput[K] =
     new DrmRddInput(rowWiseSrc = Some(cp.ncol -> cp.rdd))
 
-  implicit def drm2drmOps[K <% Writable : ClassTag](drm: CheckpointedDrmBase[K]): CheckpointedOps[K] =
+  implicit def drm2drmOps[K <% Writable : ClassTag](drm: CheckpointedDrmSpark[K]): CheckpointedOps[K] =
     new CheckpointedOps[K](drm)
 
-  implicit def v2Writable(v: Vector): VectorWritable = new VectorWritable(v)
-
-  implicit def m2Writable(m: Matrix): MatrixWritable = new MatrixWritable(m)
-
-  implicit def vw2v(vw: VectorWritable): Vector = vw.get()
-
-  implicit def mw2m(mw: MatrixWritable): Matrix = mw.get()
 
   implicit def drmLike2Checkpointed[K](drm: DrmLike[K]): CheckpointedDrm[K] = drm.checkpoint()
 
@@ -91,7 +74,7 @@ package object drm {
    *
    * @return DRM[Any] where Any is automatically translated to value type
    */
-  def drmFromHDFS (path: String)(implicit sc: SparkContext): CheckpointedDrmBase[_] = {
+  def drmFromHDFS (path: String)(implicit sc: SparkContext): CheckpointedDrmSpark[_] = {
     val rdd = sc.sequenceFile(path, classOf[Writable], classOf[VectorWritable]).map(t => (t._1, t._2.get()))
 
     val key = rdd.map(_._1).take(1)(0)
@@ -120,7 +103,7 @@ package object drm {
 
     {
       implicit def getWritable(x: Any): Writable = val2key()
-      new CheckpointedDrmBase(rdd.map(t => (key2val(t._1), t._2)))(km.asInstanceOf[ClassTag[Any]])
+      new CheckpointedDrmSpark(rdd.map(t => (key2val(t._1), t._2)))(km.asInstanceOf[ClassTag[Any]])
     }
   }
 
@@ -134,7 +117,7 @@ package object drm {
       (implicit sc: SparkContext)
   : CheckpointedDrm[Int] = {
 
-    new CheckpointedDrmBase(parallelizeInCore(m, numPartitions))
+    new CheckpointedDrmSpark(parallelizeInCore(m, numPartitions))
   }
 
   private[sparkbindings] def parallelizeInCore(m: Matrix, numPartitions: Int = 1)
@@ -148,7 +131,7 @@ package object drm {
   /** Parallelize in-core matrix as spark distributed matrix, using row labels as a data set keys. */
   def drmParallelizeWithRowLabels(m: Matrix, numPartitions: Int = 1)
       (implicit sc: SparkContext)
-  : CheckpointedDrmBase[String] = {
+  : CheckpointedDrmSpark[String] = {
 
 
     // In spark 0.8, I have patched ability to parallelize kryo objects directly, so no need to
@@ -157,7 +140,7 @@ package object drm {
     val p = for (i: String <- rb.keySet().toIndexedSeq) yield i -> m(rb(i), ::)
 
 
-    new CheckpointedDrmBase(sc.parallelize(p, numPartitions))
+    new CheckpointedDrmSpark(sc.parallelize(p, numPartitions))
   }
 
   /** This creates an empty DRM with specified number of partitions and cardinality. */
@@ -170,11 +153,11 @@ package object drm {
 
       for (i <- partStart until partEnd) yield (i, new RandomAccessSparseVector(ncol): Vector)
     })
-    new CheckpointedDrmBase[Int](rdd, nrow, ncol)
+    new CheckpointedDrmSpark[Int](rdd, nrow, ncol)
   }
 
   def drmParallelizeEmptyLong(nrow: Long, ncol: Int, numPartitions: Int = 10)
-      (implicit sc: SparkContext): CheckpointedDrmBase[Long] = {
+      (implicit sc: SparkContext): CheckpointedDrmSpark[Long] = {
     val rdd = sc.parallelize(0 to numPartitions, numPartitions).flatMap(part => {
       val partNRow = (nrow - 1) / numPartitions + 1
       val partStart = partNRow * part
@@ -182,7 +165,7 @@ package object drm {
 
       for (i <- partStart until partEnd) yield (i, new RandomAccessSparseVector(ncol): Vector)
     })
-    new CheckpointedDrmBase[Long](rdd, nrow, ncol)
+    new CheckpointedDrmSpark[Long](rdd, nrow, ncol)
   }
 
   def drmWrap[K : ClassTag](
@@ -190,7 +173,7 @@ package object drm {
       nrow: Int = -1,
       ncol: Int = -1
       ): CheckpointedDrm[K] =
-    new CheckpointedDrmBase[K](
+    new CheckpointedDrmSpark[K](
       rdd = rdd,
       _nrow = nrow,
       _ncol = ncol
@@ -202,11 +185,6 @@ package object drm {
 
   /** Broadcast in-core Mahout matrix. Use this instead of closure. */
   def drmBroadcast(m: Matrix)(implicit sc: SparkContext): Broadcast[Matrix] = sc.broadcast(m)
-
-  def safeToNonNegInt(x: Long): Int = {
-    assert(x == x << -31 >>> -31, "transformation from long to Int is losing signficant bits, or is a negative number")
-    x.toInt
-  }
 
   def blockify[K: ClassTag](rdd: DrmRdd[K], blockncol: Int): BlockifiedDrmRdd[K] = {
 
@@ -246,46 +224,6 @@ package object drm {
 
     })
 
-  // ============== Decompositions ===================
-
-  /**
-   * Distributed _thin_ QR. A'A must fit in a memory, i.e. if A is m x n, then n should be pretty
-   * controlled (<5000 or so). <P>
-   *
-   * It is recommended to checkpoint A since it does two passes over it. <P>
-   *
-   * It also guarantees that Q is partitioned exactly the same way (and in same key-order) as A, so
-   * their RDD should be able to zip successfully.
-   */
-  def dqrThin[K: ClassTag](A: DrmLike[K], checkRankDeficiency: Boolean = true): (DrmLike[K], Matrix) =
-    DQR.dqrThin(A, checkRankDeficiency)
-
-  /**
-   * Distributed Stochastic Singular Value decomposition algorithm.
-   *
-   * @param A input matrix A
-   * @param k request SSVD rank
-   * @param p oversampling parameter
-   * @param q number of power iterations
-   * @return (U,V,s). Note that U, V are non-checkpointed matrices (i.e. one needs to actually use them
-   *         e.g. save them to hdfs in order to trigger their computation.
-   */
-  def dssvd[K: ClassTag](A: DrmLike[K], k: Int, p: Int = 15, q: Int = 0):
-  (DrmLike[K], DrmLike[Int], Vector) = DSSVD.dssvd(A, k, p, q)
-
-  /**
-   * Distributed Stochastic PCA decomposition algorithm. A logical reflow of the "SSVD-PCA options.pdf"
-   * document of the MAHOUT-817.
-   *
-   * @param A input matrix A
-   * @param k request SSVD rank
-   * @param p oversampling parameter
-   * @param q number of power iterations (hint: use either 0 or 1)
-   * @return (U,V,s). Note that U, V are non-checkpointed matrices (i.e. one needs to actually use them
-   *         e.g. save them to hdfs in order to trigger their computation.
-   */
-  def dspca[K: ClassTag](A: DrmLike[K], k: Int, p: Int = 15, q: Int = 0):
-  (DrmLike[K], DrmLike[Int], Vector) = DSPCA.dspca(A, k, p, q)
 
 
 }

@@ -1,7 +1,7 @@
 package org.apache.mahout.sparkbindings.blas
 
-import org.apache.mahout.sparkbindings.drm.plan.OpRowRange
 import org.apache.mahout.sparkbindings.drm.DrmRddInput
+import org.apache.mahout.math.scalabindings.drm.logical.OpRowRange
 
 object Slicing {
 

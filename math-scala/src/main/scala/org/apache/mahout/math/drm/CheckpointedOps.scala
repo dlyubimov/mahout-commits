@@ -15,35 +15,25 @@
  * limitations under the License.
  */
 
-package org.apache.mahout.sparkbindings.blas
+package org.apache.mahout.math.drm
 
-import org.scalatest.FunSuite
-import org.apache.mahout.sparkbindings.test.MahoutLocalContext
-import org.apache.mahout.math.scalabindings._
-import RLikeOps._
-import org.apache.mahout.sparkbindings._
-import drm._
-import org.apache.spark.SparkContext._
-import org.apache.mahout.math.scalabindings.drm.logical.OpAtA
+import scala.reflect.ClassTag
+import org.apache.mahout.math.Vector
 
-/** Tests for {@link XtX} */
-class AtASuite extends FunSuite with MahoutLocalContext {
 
-  test("AtA slim") {
+/**
+ * Additional experimental operations over CheckpointedDRM implementation. I will possibly move them up to
+ * the DRMBase once they stabilize.
+ *
+ */
+class CheckpointedOps[K: ClassTag](val drm: CheckpointedDrm[K]) {
 
-    val inCoreA = dense((1, 2), (2, 3))
-    val drmA = drmParallelize(inCoreA)
 
-    val operator = new OpAtA[Int](A = drmA)
-    val inCoreAtA = AtA.at_a_slim(operator = operator, srcRdd = drmA.rdd)
-    println(inCoreAtA)
+  /** Column sums. At this point this runs on checkpoint and collects in-core vector. */
+  def colSums(): Vector = drm.engine.colSums(drm)
 
-    val expectedAtA = inCoreA.t %*% inCoreA
-    println(expectedAtA)
-
-    assert(expectedAtA === inCoreAtA)
-
-  }
-
+  /** Column Means */
+  def colMeans(): Vector = drm.engine.colMeans(drm)
 
 }
+

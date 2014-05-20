@@ -15,35 +15,28 @@
  * limitations under the License.
  */
 
-package org.apache.mahout.sparkbindings.blas
+package org.apache.mahout.math.drm.logical
 
-import org.scalatest.FunSuite
-import org.apache.mahout.sparkbindings.test.MahoutLocalContext
-import org.apache.mahout.math.scalabindings._
-import RLikeOps._
-import org.apache.mahout.sparkbindings._
-import drm._
-import org.apache.spark.SparkContext._
-import org.apache.mahout.math.scalabindings.drm.logical.OpAtA
+import scala.reflect.ClassTag
+import org.apache.mahout.math.drm.DrmLike
 
-/** Tests for {@link XtX} */
-class AtASuite extends FunSuite with MahoutLocalContext {
+/** Logical A'B */
+case class OpAtB[A: ClassTag](
+    override var A: DrmLike[A],
+    override var B: DrmLike[A])
+    extends AbstractBinaryOp[A, A, Int] {
 
-  test("AtA slim") {
+  assert(A.nrow == B.nrow, "Incompatible operand geometry")
 
-    val inCoreA = dense((1, 2), (2, 3))
-    val drmA = drmParallelize(inCoreA)
+  /** R-like syntax for number of rows. */
+  def nrow: Long = A.ncol
 
-    val operator = new OpAtA[Int](A = drmA)
-    val inCoreAtA = AtA.at_a_slim(operator = operator, srcRdd = drmA.rdd)
-    println(inCoreAtA)
+  /** R-like syntax for number of columns */
+  def ncol: Int = B.ncol
 
-    val expectedAtA = inCoreA.t %*% inCoreA
-    println(expectedAtA)
-
-    assert(expectedAtA === inCoreAtA)
-
-  }
-
+  /** Non-zero element count */
+  def nNonZero: Long =
+  // TODO: for purposes of cost calculation, approximate based on operands
+    throw new UnsupportedOperationException
 
 }

@@ -15,18 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.mahout.sparkbindings.drm
+package org.apache.mahout.math.drm
 
 import scala.reflect.ClassTag
-import org.apache.mahout.math.scalabindings.drm.{RLikeDrmOps, BlockMapFunc, DrmLike}
-import RLikeDrmOps._
 import org.apache.mahout.math.scalabindings._
-import RLikeOps._
-import org.apache.mahout.math.scalabindings.drm.{BlockMapFunc, DrmLike}
-import org.apache.mahout.math.scalabindings.drm.logical.{OpMapBlock, OpRowRange}
+import org.apache.mahout.math.drm.logical.{OpMapBlock, OpRowRange}
 
 /** Common Drm ops */
-class DrmLikeOps[K: ClassTag](protected[drm] val drm: DrmLike[K]) {
+class DrmLikeOps[K : ClassTag](protected[drm] val drm: DrmLike[K]) {
 
   /**
    * Map matrix block-wise vertically. Blocks of the new matrix can be modified original block
@@ -40,7 +36,7 @@ class DrmLikeOps[K: ClassTag](protected[drm] val drm: DrmLike[K]) {
    * @tparam R
    * @return
    */
-  def mapBlock[R: ClassTag](ncol: Int = -1)
+  def mapBlock[R : ClassTag](ncol: Int = -1)
       (bmf: BlockMapFunc[K, R]): DrmLike[R] =
     new OpMapBlock[K, R](A = drm, bmf = bmf, _ncol = ncol)
 
@@ -58,6 +54,8 @@ class DrmLikeOps[K: ClassTag](protected[drm] val drm: DrmLike[K]) {
    */
   def apply(rowRange: Range, colRange: Range): DrmLike[K] = {
 
+    import RLikeDrmOps._
+    import RLikeOps._
 
     val rowSrc: DrmLike[K] = if (rowRange != ::) {
 

@@ -21,13 +21,16 @@ import org.scalatest.{Matchers, FunSuite}
 import org.apache.mahout.sparkbindings.test.MahoutLocalContext
 import org.apache.mahout.math.scalabindings._
 import org.apache.mahout.sparkbindings.drm._
+import org.apache.mahout.math.scalabindings.drm.{RLikeDrmOps, CacheHint}
 import RLikeDrmOps._
-import org.apache.mahout.sparkbindings.drm.plan.{OpAtx, OpAtB, OpAtA, CheckpointAction}
+import org.apache.mahout.sparkbindings.drm.plan.{CheckpointAction}
 import org.apache.spark.SparkContext
 import scala.collection.mutable.ArrayBuffer
 import org.apache.mahout.math.Matrices
 import org.apache.mahout.sparkbindings.blas
 import org.apache.spark.storage.StorageLevel
+import org.apache.mahout.math.scalabindings.drm.CacheHint
+import org.apache.mahout.math.scalabindings.drm.logical.{OpAtx, OpAtB, OpAtA}
 
 /** R-like DRM DSL operation tests */
 class RLikeDrmOpsSuite extends FunSuite with Matchers with MahoutLocalContext {

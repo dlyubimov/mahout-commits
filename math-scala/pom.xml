@@ -167,6 +167,17 @@
       <artifactId>mahout-math</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.mahout</groupId>
+      <artifactId>mahout-mrlegacy</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>asm</groupId>
+          <artifactId>asm</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
 
     <!--  3rd-party -->
     <dependency>

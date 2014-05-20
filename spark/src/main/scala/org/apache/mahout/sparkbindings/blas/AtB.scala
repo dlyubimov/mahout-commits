@@ -23,8 +23,8 @@ import org.apache.spark.rdd.RDD
 import org.apache.mahout.math.scalabindings._
 import RLikeOps._
 import org.apache.spark.SparkContext._
-import org.apache.mahout.sparkbindings.drm.plan.{OpAtB}
 import org.apache.log4j.Logger
+import org.apache.mahout.math.scalabindings.drm.logical.OpAtB
 
 object AtB {
 

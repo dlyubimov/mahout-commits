@@ -17,15 +17,12 @@
 
 package org.apache.mahout
 
-import org.apache.spark.rdd.RDD
-import org.apache.mahout.math.{Matrix, Vector}
-import scala.reflect.ClassTag
 import org.apache.spark.{SparkConf, SparkContext}
 import java.io._
 import scala.collection.mutable.ArrayBuffer
 import org.apache.mahout.common.IOUtils
 import org.apache.log4j.Logger
-import org.apache.mahout.sparkbindings.drm.DrmLike
+import org.apache.mahout.math.scalabindings.drm.DrmLike
 
 package object sparkbindings {
 
@@ -42,7 +39,7 @@ package object sparkbindings {
       customJars: TraversableOnce[String] = Nil,
       sparkConf: SparkConf = new SparkConf(),
       addMahoutJars: Boolean = true
-      ): SparkContext = {
+      ): SparkDistributedContext = {
     val closeables = new java.util.ArrayDeque[Closeable]()
 
     try {
@@ -125,13 +122,15 @@ package object sparkbindings {
         sparkConf.setSparkHome(System.getenv("SPARK_HOME"))
       }
 
-      new SparkContext(config = sparkConf)
+      new SparkDistributedContext(new SparkContext(config = sparkConf))
 
     } finally {
       IOUtils.close(closeables)
     }
-
   }
 
+  implicit def sdc2sc(sdc: SparkDistributedContext): SparkContext = sdc.sc
+
+  implicit def sc2sdc(sc: SparkContext): SparkDistributedContext = new SparkDistributedContext(sc)
 
 }

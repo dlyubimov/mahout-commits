@@ -22,9 +22,11 @@ import org.apache.mahout.sparkbindings.test.MahoutLocalContext
 import org.apache.mahout.math.scalabindings._
 import RLikeOps._
 import org.apache.mahout.sparkbindings.drm._
+import org.apache.mahout.math.scalabindings.drm.{RLikeDrmOps, CacheHint}
 import RLikeDrmOps._
 import org.apache.mahout.math.{Matrices, SparseRowMatrix}
 import org.apache.mahout.common.RandomUtils
+import org.apache.mahout.math.scalabindings.drm.CacheHint
 
 class MathSuite extends FunSuite with Matchers with MahoutLocalContext {
 

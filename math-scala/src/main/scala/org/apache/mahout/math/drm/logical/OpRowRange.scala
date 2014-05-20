@@ -15,35 +15,22 @@
  * limitations under the License.
  */
 
-package org.apache.mahout.sparkbindings.blas
+package org.apache.mahout.math.drm.logical
 
-import org.scalatest.FunSuite
-import org.apache.mahout.sparkbindings.test.MahoutLocalContext
-import org.apache.mahout.math.scalabindings._
-import RLikeOps._
-import org.apache.mahout.sparkbindings._
-import drm._
-import org.apache.spark.SparkContext._
-import org.apache.mahout.math.scalabindings.drm.logical.OpAtA
+import org.apache.mahout.math.drm.DrmLike
 
-/** Tests for {@link XtX} */
-class AtASuite extends FunSuite with MahoutLocalContext {
+/** Logical row-range slicing */
+case class OpRowRange(
+    override var A: DrmLike[Int],
+    val rowRange: Range
+    ) extends AbstractUnaryOp[Int, Int] {
 
-  test("AtA slim") {
+  assert(rowRange.head >= 0 && rowRange.last < A.nrow, "row range out of range")
 
-    val inCoreA = dense((1, 2), (2, 3))
-    val drmA = drmParallelize(inCoreA)
+  /** R-like syntax for number of rows. */
+  def nrow: Long = rowRange.length
 
-    val operator = new OpAtA[Int](A = drmA)
-    val inCoreAtA = AtA.at_a_slim(operator = operator, srcRdd = drmA.rdd)
-    println(inCoreAtA)
-
-    val expectedAtA = inCoreA.t %*% inCoreA
-    println(expectedAtA)
-
-    assert(expectedAtA === inCoreAtA)
-
-  }
-
+  /** R-like syntax for number of columns */
+  def ncol: Int = A.ncol
 
 }
