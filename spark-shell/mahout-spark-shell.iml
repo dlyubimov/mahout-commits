@@ -121,6 +121,7 @@
     <orderEntry type="library" name="Maven: org.apache.lucene:lucene-analyzers-common:4.6.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.mahout.commons:commons-cli:2.0-mahout" level="project" />
     <orderEntry type="library" name="Maven: org.apache.solr:solr-commons-csv:3.5.0" level="project" />
+    <orderEntry type="library" name="Maven: commons-cli:commons-cli:1.2" level="project" />
     <orderEntry type="module" module-name="mahout-math-scala" scope="TEST" production-on-test="" />
     <orderEntry type="library" name="Maven: org.apache.spark:spark-repl_2.10:0.9.1" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: org.apache.spark:spark-bagel_2.10:0.9.1" level="project" />
