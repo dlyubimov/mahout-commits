@@ -27,6 +27,8 @@ import scala.reflect.ClassTag
 import org.apache.mahout.sparkbindings.drm.{SparkBCast, CheckpointedDrmSparkOps, CheckpointedDrmSpark}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.broadcast.Broadcast
+import org.apache.mahout.math.{VectorWritable, Vector, MatrixWritable, Matrix}
+import org.apache.hadoop.io.Writable
 
 /** Public api for Spark-specific operators */
 package object sparkbindings {
@@ -160,6 +162,14 @@ package object sparkbindings {
     new CheckpointedDrmSparkOps[K](drm)
 
   implicit def drm2cpDrmSparkOps[K:ClassTag](drm:DrmLike[K]):CheckpointedDrmSparkOps[K] = drm:CheckpointedDrm[K]
+
+  private[sparkbindings] implicit def m2w(m: Matrix): MatrixWritable = new MatrixWritable(m)
+
+  private[sparkbindings] implicit def w2m(w: MatrixWritable): Matrix = w.get()
+
+  private[sparkbindings] implicit def v2w(v: Vector): VectorWritable = new VectorWritable(v)
+
+  private[sparkbindings] implicit def w2v(w:VectorWritable):Vector = w.get()
 
   def drmWrap[K : ClassTag](
       rdd: DrmRdd[K],

@@ -17,7 +17,7 @@
 
 package org.apache.mahout.sparkbindings.drm
 
-import org.apache.mahout.math.{SparseMatrix, DenseMatrix, Matrix, Vector}
+import org.apache.mahout.math._
 import math._
 import org.apache.mahout.math.scalabindings._
 import RLikeOps._
@@ -141,7 +141,7 @@ class CheckpointedDrmSpark[K: ClassTag](
       else if (ktag.runtimeClass == classOf[Long]) (x: K) => new LongWritable(x.asInstanceOf[Long])
       else if (classOf[Writable].isAssignableFrom(ktag.runtimeClass)) (x: K) => x.asInstanceOf[Writable]
       else throw new IllegalArgumentException("Do not know how to convert class tag %s to Writable.".format(ktag))
-    //    implicit def any2w(k: Any): Writable = k2wFunc(k)
+
     rdd.saveAsSequenceFile(path)
   }
 

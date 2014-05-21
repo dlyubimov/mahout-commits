@@ -43,15 +43,6 @@ package object drm {
   private[sparkbindings] implicit def cpDrm2DrmRddInput[K: ClassTag](cp: CheckpointedDrm[K]): DrmRddInput[K] =
     new DrmRddInput(rowWiseSrc = Some(cp.ncol -> cp.rdd))
 
-  private[sparkbindings] implicit def m2w(m: Matrix): Writable = new MatrixWritable(m)
-
-  private[sparkbindings] implicit def w2m(w: MatrixWritable): Matrix = w.get()
-
-  private[sparkbindings] implicit def v2w(v:Vector):Writable = new VectorWritable(v)
-
-  private[sparkbindings] implicit def w2v(w:VectorWritable):Vector = w.get()
-
-
 //  /** Broadcast vector (Mahout vectors are not closure-friendly, use this instead. */
 //  private[sparkbindings] def drmBroadcast(x: Vector)(implicit sc: SparkContext): Broadcast[Vector] = sc.broadcast(x)
 //

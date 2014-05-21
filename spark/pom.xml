@@ -262,13 +262,6 @@
   </profiles>
 
   <dependencies>
-    <!-- spark stuff -->
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_${scala.major}</artifactId>
-      <version>${spark.version}</version>
-    </dependency>
-
 
     <dependency>
       <groupId>org.apache.mahout</groupId>
@@ -295,7 +288,12 @@
 
 
     <!--  3rd-party -->
-
+    <!-- spark stuff -->
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-core_${scala.major}</artifactId>
+      <version>${spark.version}</version>
+    </dependency>
 
     <!-- scala stuff -->
 
