@@ -52,11 +52,11 @@ package object drm {
   private[sparkbindings] implicit def w2v(w:VectorWritable):Vector = w.get()
 
 
-  /** Broadcast vector (Mahout vectors are not closure-friendly, use this instead. */
-  private[sparkbindings] def drmBroadcast(x: Vector)(implicit sc: SparkContext): Broadcast[Vector] = sc.broadcast(x)
-
-  /** Broadcast in-core Mahout matrix. Use this instead of closure. */
-  private[sparkbindings] def drmBroadcast(m: Matrix)(implicit sc: SparkContext): Broadcast[Matrix] = sc.broadcast(m)
+//  /** Broadcast vector (Mahout vectors are not closure-friendly, use this instead. */
+//  private[sparkbindings] def drmBroadcast(x: Vector)(implicit sc: SparkContext): Broadcast[Vector] = sc.broadcast(x)
+//
+//  /** Broadcast in-core Mahout matrix. Use this instead of closure. */
+//  private[sparkbindings] def drmBroadcast(m: Matrix)(implicit sc: SparkContext): Broadcast[Matrix] = sc.broadcast(m)
 
   /** Implicit broadcast cast for Spark physical op implementations. */
   private[sparkbindings] implicit def bcast2val[K](bcast:Broadcast[K]):K = bcast.value

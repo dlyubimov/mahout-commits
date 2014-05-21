@@ -110,13 +110,8 @@ object SparkEngine extends DistributedEngine {
     }
   }
 
-  /** Shortcut to parallelizing matrices with indices, ignore row labels. */
-  private[sparkbindings] def drmParallelize(m: Matrix, numPartitions: Int = 1)
-      (implicit sc: DistributedContext) =
-    drmParallelizeWithRowIndices(m, numPartitions)(sc)
-
   /** Parallelize in-core matrix as spark distributed matrix, using row ordinal indices as data set keys. */
-  private[sparkbindings] def drmParallelizeWithRowIndices(m: Matrix, numPartitions: Int = 1)
+  def drmParallelizeWithRowIndices(m: Matrix, numPartitions: Int = 1)
       (implicit sc: DistributedContext)
   : CheckpointedDrm[Int] = {
     new CheckpointedDrmSpark(rdd = parallelizeInCore(m, numPartitions))
@@ -131,9 +126,9 @@ object SparkEngine extends DistributedEngine {
   }
 
   /** Parallelize in-core matrix as spark distributed matrix, using row labels as a data set keys. */
-  private[sparkbindings] def drmParallelizeWithRowLabels(m: Matrix, numPartitions: Int = 1)
+  def drmParallelizeWithRowLabels(m: Matrix, numPartitions: Int = 1)
       (implicit sc: DistributedContext)
-  : CheckpointedDrmSpark[String] = {
+  : CheckpointedDrm[String] = {
 
     val rb = m.getRowLabelBindings
     val p = for (i: String <- rb.keySet().toIndexedSeq) yield i -> m(rb(i), ::)
@@ -142,7 +137,7 @@ object SparkEngine extends DistributedEngine {
   }
 
   /** This creates an empty DRM with specified number of partitions and cardinality. */
-  private[sparkbindings] def drmParallelizeEmpty(nrow: Int, ncol: Int, numPartitions: Int = 10)
+  def drmParallelizeEmpty(nrow: Int, ncol: Int, numPartitions: Int = 10)
       (implicit sc: DistributedContext): CheckpointedDrm[Int] = {
     val rdd = sc.parallelize(0 to numPartitions, numPartitions).flatMap(part => {
       val partNRow = (nrow - 1) / numPartitions + 1
@@ -154,8 +149,8 @@ object SparkEngine extends DistributedEngine {
     new CheckpointedDrmSpark[Int](rdd, nrow, ncol)
   }
 
-  private[sparkbindings] def drmParallelizeEmptyLong(nrow: Long, ncol: Int, numPartitions: Int = 10)
-      (implicit sc: DistributedContext): CheckpointedDrmSpark[Long] = {
+  def drmParallelizeEmptyLong(nrow: Long, ncol: Int, numPartitions: Int = 10)
+      (implicit sc: DistributedContext): CheckpointedDrm[Long] = {
     val rdd = sc.parallelize(0 to numPartitions, numPartitions).flatMap(part => {
       val partNRow = (nrow - 1) / numPartitions + 1
       val partStart = partNRow * part

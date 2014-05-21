@@ -37,6 +37,24 @@ trait DistributedEngine {
   /** Broadcast support */
   def drmBroadcast(m: Matrix)(implicit dc: DistributedContext): BCast[Matrix]
 
+  /** Load DRM from hdfs (as in Mahout DRM format) */
+  def drmFromHDFS (path: String)(implicit sc: DistributedContext): CheckpointedDrm[_]
+
+  /** Parallelize in-core matrix as spark distributed matrix, using row ordinal indices as data set keys. */
+  def drmParallelizeWithRowIndices(m: Matrix, numPartitions: Int = 1)
+      (implicit sc: DistributedContext): CheckpointedDrm[Int]
+
+  /** Parallelize in-core matrix as spark distributed matrix, using row labels as a data set keys. */
+  def drmParallelizeWithRowLabels(m: Matrix, numPartitions: Int = 1)
+      (implicit sc: DistributedContext): CheckpointedDrm[String]
+
+  /** This creates an empty DRM with specified number of partitions and cardinality. */
+  def drmParallelizeEmpty(nrow: Int, ncol: Int, numPartitions: Int = 10)
+      (implicit sc: DistributedContext): CheckpointedDrm[Int]
+
+  /** Creates empty DRM with non-trivial height */
+  def drmParallelizeEmptyLong(nrow: Long, ncol: Int, numPartitions: Int = 10)
+      (implicit sc: DistributedContext): CheckpointedDrm[Long]
 }
 
 object DistributedEngine {

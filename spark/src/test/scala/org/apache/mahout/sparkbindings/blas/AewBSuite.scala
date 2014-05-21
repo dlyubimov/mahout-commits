@@ -21,9 +21,11 @@ import org.scalatest.FunSuite
 import org.apache.mahout.sparkbindings.test.MahoutLocalContext
 import org.apache.mahout.math.scalabindings._
 import RLikeOps._
-import org.apache.mahout.sparkbindings.drm._
+import org.apache.mahout.math.drm._
+import RLikeDrmOps._
 import org.apache.spark.SparkContext._
-import org.apache.mahout.math.scalabindings.drm.logical.OpAewB
+import org.apache.mahout.math.drm.logical.OpAewB
+import org.apache.mahout.sparkbindings.drm.CheckpointedDrmSpark
 
 /** Elementwise matrix operation tests */
 class AewBSuite extends FunSuite with MahoutLocalContext {

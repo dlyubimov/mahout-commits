@@ -159,6 +159,8 @@ package object sparkbindings {
   implicit def cpDrm2cpDrmSparkOps[K: ClassTag](drm: CheckpointedDrm[K]): CheckpointedDrmSparkOps[K] =
     new CheckpointedDrmSparkOps[K](drm)
 
+  implicit def drm2cpDrmSparkOps[K:ClassTag](drm:DrmLike[K]):CheckpointedDrmSparkOps[K] = drm:CheckpointedDrm[K]
+
   def drmWrap[K : ClassTag](
       rdd: DrmRdd[K],
       nrow: Int = -1,
