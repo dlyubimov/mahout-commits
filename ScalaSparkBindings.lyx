@@ -467,7 +467,11 @@ The following two scala imports are typically used to enable Mahout Scala
 \end_layout
 
 \begin_layout LyX-Code
-import org.apache.mahout.math.scalabindings._
+import org.apache.mahout.math._
+\end_layout
+
+\begin_layout LyX-Code
+import scalabindings._
 \end_layout
 
 \begin_layout LyX-Code
@@ -1529,7 +1533,7 @@ Once loaded into spark, DRM is represented by Spark partitions initially
 \begin_layout Standard
 Here and on, I will denote spark-backed DRM references as 
 \family typewriter
-A
+drmA
 \family default
 , whereas in-core matrices as 
 \family typewriter
@@ -1556,16 +1560,10 @@ lly prepped Spark context:
 
 \begin_layout LyX-Code
 
-\series bold
-import org.apache.mahout.sparkbindings._
 \end_layout
 
 \begin_layout LyX-Code
-
-\end_layout
-
-\begin_layout LyX-Code
-
+ 
 \end_layout
 
 \begin_layout LyX-Code
@@ -1627,27 +1625,63 @@ Always do
 \end_layout
 
 \begin_layout LyX-Code
-// Mahout context stuff:
+// Import matrix, vector types, etc.
 \end_layout
 
 \begin_layout LyX-Code
 
 \series bold
-import org.apache.mahout.sparkbindings._
+import org.apache.mahout.math._
 \end_layout
 
 \begin_layout LyX-Code
-
+ 
 \end_layout
 
 \begin_layout LyX-Code
-// Spark Bindings DRM linalg:
+// Import scala bindings operations
 \end_layout
 
 \begin_layout LyX-Code
 
 \series bold
-import org.apache.mahout.sparkbindings.drm._
+import scalabindings._
+\end_layout
+
+\begin_layout LyX-Code
+ 
+\end_layout
+
+\begin_layout LyX-Code
+// Enable R-like dialect in scala bindings
+\end_layout
+
+\begin_layout LyX-Code
+
+\series bold
+import RLikeOps._
+\end_layout
+
+\begin_layout LyX-Code
+ 
+\end_layout
+
+\begin_layout LyX-Code
+// Import distributed matrix apis
+\end_layout
+
+\begin_layout LyX-Code
+
+\series bold
+import drm._
+\end_layout
+
+\begin_layout LyX-Code
+ 
+\end_layout
+
+\begin_layout LyX-Code
+// Import R-like distributed dialect
 \end_layout
 
 \begin_layout LyX-Code
@@ -1657,27 +1691,29 @@ import RLikeDrmOps._
 \end_layout
 
 \begin_layout LyX-Code
-
+ 
 \end_layout
 
 \begin_layout LyX-Code
-// Scala Bindings DRM linalg:
+// Those are needed for Spark-specific 
+\end_layout
+
+\begin_layout LyX-Code
+// operations such as context creation
 \end_layout
 
 \begin_layout LyX-Code
 
 \series bold
-import org.apache.mahout.math.scalabindings._
-\end_layout
-
-\begin_layout LyX-Code
-
-\series bold
-import RLikeOps._
+import org.apache.mahout.sparkbindings._
 \end_layout
 
 \begin_layout Standard
 All subsequent snippets assume the relevant packages are imported.
+\end_layout
+
+\begin_layout Standard
+Mahout shell does all these imports automatically.
 \end_layout
 
 \begin_layout Subsection
@@ -3182,12 +3218,28 @@ The source of this method as of the time of this writing is extremely simple
 
 \end_deeper
 \begin_layout LyX-Code
+ 
+\end_layout
+
+\begin_layout LyX-Code
     if (A.ncol > 5000)
 \end_layout
 
 \begin_layout LyX-Code
-      s_log.warn("A is too fat.
+      log.warn("A is too fat.
  A'A must fit in memory and easily broadcasted.")
+\end_layout
+
+\begin_layout LyX-Code
+ 
+\end_layout
+
+\begin_layout LyX-Code
+    implicit val ctx = A.context
+\end_layout
+
+\begin_layout LyX-Code
+ 
 \end_layout
 
 \begin_layout LyX-Code
@@ -3199,7 +3251,19 @@ The source of this method as of the time of this writing is extremely simple
 \end_layout
 
 \begin_layout LyX-Code
-    implicit val sc = AtA.rdd.sparkContext
+ 
+\end_layout
+
+\begin_layout LyX-Code
+    if (log.isDebugEnabled) log.debug("A'A=
+\backslash
+n%s
+\backslash
+n".format(inCoreAtA))
+\end_layout
+
+\begin_layout LyX-Code
+ 
 \end_layout
 
 \begin_layout LyX-Code
@@ -3211,6 +3275,22 @@ The source of this method as of the time of this writing is extremely simple
 \end_layout
 
 \begin_layout LyX-Code
+ 
+\end_layout
+
+\begin_layout LyX-Code
+    if (log.isDebugEnabled) log.debug("R=
+\backslash
+n%s
+\backslash
+n".format(inCoreR))
+\end_layout
+
+\begin_layout LyX-Code
+ 
+\end_layout
+
+\begin_layout LyX-Code
     if (checkRankDeficiency && !ch.isPositiveDefinite)
 \end_layout
 
@@ -3219,7 +3299,29 @@ The source of this method as of the time of this writing is extremely simple
 \end_layout
 
 \begin_layout LyX-Code
-    val bcastAtA = sc.broadcast(inCoreAtA)
+ 
+\end_layout
+
+\begin_layout LyX-Code
+    val bcastAtA = drmBroadcast(inCoreAtA)
+\end_layout
+
+\begin_layout LyX-Code
+ 
+\end_layout
+
+\begin_layout LyX-Code
+    // Unfortunately, I don't think Cholesky decomposition is serializable
+ to backend.
+ So we re-
+\end_layout
+
+\begin_layout LyX-Code
+    // decompose A'A in the backend again.
+\end_layout
+
+\begin_layout LyX-Code
+ 
 \end_layout
 
 \begin_layout LyX-Code
@@ -3239,11 +3341,19 @@ The source of this method as of the time of this writing is extremely simple
 \end_layout
 
 \begin_layout LyX-Code
+ 
+\end_layout
+
+\begin_layout LyX-Code
     Q -> inCoreR
 \end_layout
 
 \begin_layout LyX-Code
   }
+\end_layout
+
+\begin_layout LyX-Code
+
 \end_layout
 
 \begin_layout LyX-Code
@@ -3349,6 +3459,10 @@ Source (for those who likes counting lines):
 \end_layout
 
 \begin_layout LyX-Code
+ 
+\end_layout
+
+\begin_layout LyX-Code
     val drmA = A.checkpoint()
 \end_layout
 
@@ -3361,11 +3475,23 @@ Source (for those who likes counting lines):
 \end_layout
 
 \begin_layout LyX-Code
+ 
+\end_layout
+
+\begin_layout LyX-Code
     assert(k <= (m min n), "k cannot be greater than smaller of m, n.")
 \end_layout
 
 \begin_layout LyX-Code
+ 
+\end_layout
+
+\begin_layout LyX-Code
     val pfxed = safeToNonNegInt((m min n) - k min p)
+\end_layout
+
+\begin_layout LyX-Code
+ 
 \end_layout
 
 \begin_layout LyX-Code
@@ -3377,11 +3503,19 @@ Source (for those who likes counting lines):
 \end_layout
 
 \begin_layout LyX-Code
+ 
+\end_layout
+
+\begin_layout LyX-Code
     // We represent Omega by its seed.
 \end_layout
 
 \begin_layout LyX-Code
     val omegaSeed = Random.nextInt()
+\end_layout
+
+\begin_layout LyX-Code
+ 
 \end_layout
 
 \begin_layout LyX-Code
@@ -3411,7 +3545,15 @@ Source (for those who likes counting lines):
 \end_layout
 
 \begin_layout LyX-Code
+ 
+\end_layout
+
+\begin_layout LyX-Code
     var drmQ = dqrThin(drmY.checkpoint())._1
+\end_layout
+
+\begin_layout LyX-Code
+ 
 \end_layout
 
 \begin_layout LyX-Code
@@ -3420,6 +3562,10 @@ Source (for those who likes counting lines):
 
 \begin_layout LyX-Code
     if (q==0) drmQ = drmQ.checkpoint()
+\end_layout
+
+\begin_layout LyX-Code
+ 
 \end_layout
 
 \begin_layout LyX-Code
@@ -3439,11 +3585,19 @@ Source (for those who likes counting lines):
 \end_layout
 
 \begin_layout LyX-Code
+ 
+\end_layout
+
+\begin_layout LyX-Code
     // Checkpoint B' if last iteration
 \end_layout
 
 \begin_layout LyX-Code
     if (q==0) drmBt = drmBt.checkpoint()
+\end_layout
+
+\begin_layout LyX-Code
+ 
 \end_layout
 
 \begin_layout LyX-Code
@@ -3459,6 +3613,10 @@ Source (for those who likes counting lines):
 \end_layout
 
 \begin_layout LyX-Code
+ 
+\end_layout
+
+\begin_layout LyX-Code
       // Checkpoint Q if last iteration
 \end_layout
 
@@ -3467,7 +3625,15 @@ Source (for those who likes counting lines):
 \end_layout
 
 \begin_layout LyX-Code
+ 
+\end_layout
+
+\begin_layout LyX-Code
       drmBt = drmA.t %*% drmQ
+\end_layout
+
+\begin_layout LyX-Code
+ 
 \end_layout
 
 \begin_layout LyX-Code
@@ -3623,6 +3789,72 @@ val drmUSigma = drmU %*% diagv(s)
 
 \begin_layout LyX-Code
 ...
+\end_layout
+
+\begin_layout Subsection
+Mahout shell for Spark
+\end_layout
+
+\begin_layout Standard
+Use something of the following to run Mahout Spark shell:
+\end_layout
+
+\begin_layout LyX-Code
+MASTER=<spark-master-url> mahout/bin spark-shell
+\end_layout
+
+\begin_layout Standard
+Assuming startup has completed successfully, all necessary imports are already
+ done, and implicit instance of 
+\family typewriter
+DistributedContext
+\family default
+ is already created (sdc).
+\end_layout
+
+\begin_layout Standard
+See 
+\begin_inset CommandInset href
+LatexCommand href
+name "simple.mscala"
+target "https://github.com/apache/mahout/blob/master/spark-shell/src/test/mahout/simple.mscala"
+
+\end_inset
+
+ for an example of script/script invocation.
+\end_layout
+
+\begin_layout Standard
+Prerequisites to run Mahout Spark shell:
+\end_layout
+
+\begin_layout Itemize
+Spark is installed, compiled and SPARK_HOME is set.
+ 
+\bar under
+Spark version should be that of what Mahout has been compiled with
+\bar default
+
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+as of time of this writing, spark-0.9.1
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Mahout is compiled, and MAHOUT_HOME is set.
+\end_layout
+
+\begin_layout Itemize
+Other usual Spark requirements (e.g.
+ it is not easy, if possible at all, to run Spark shell from behind NAT,
+ etc.) 
 \end_layout
 
 \begin_layout Standard
