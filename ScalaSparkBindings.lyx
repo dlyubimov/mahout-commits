@@ -3796,7 +3796,7 @@ Mahout shell for Spark
 \end_layout
 
 \begin_layout Standard
-Use something of the following to run Mahout Spark shell:
+Use something like the following to run Mahout Spark shell:
 \end_layout
 
 \begin_layout LyX-Code
@@ -3821,7 +3821,7 @@ target "https://github.com/apache/mahout/blob/master/spark-shell/src/test/mahout
 
 \end_inset
 
- for an example of script/script invocation.
+ for an example of test script/script invocation.
 \end_layout
 
 \begin_layout Standard
