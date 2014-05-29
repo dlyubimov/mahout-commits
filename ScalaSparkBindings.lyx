@@ -1533,7 +1533,7 @@ Once loaded into spark, DRM is represented by Spark partitions initially
 \begin_layout Standard
 Here and on, I will denote spark-backed DRM references as 
 \family typewriter
-drmA
+A
 \family default
 , whereas in-core matrices as 
 \family typewriter
