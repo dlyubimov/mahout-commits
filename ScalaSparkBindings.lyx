@@ -2112,7 +2112,7 @@ nously) if desired, e.g.:
 \end_layout
 
 \begin_layout LyX-Code
-val drmA = (/*..drm expression..*/).checkpoint(StorageLevel.MEMORY_AND_DISK)
+val drmA = (/*..drm expression..*/).checkpoint(CacheHint.MEMORY_AND_DISK)
 \end_layout
 
 \begin_layout LyX-Code
@@ -2898,7 +2898,7 @@ val drm2 = drm1.mapBlock() {
 
 \begin_deeper
 \begin_layout LyX-Code
-case( keys, block) => block *= factor
+case (keys, block) => block *= factor
 \end_layout
 
 \begin_layout LyX-Code
@@ -3079,6 +3079,14 @@ status open
 \end_inset
 
 
+\end_layout
+
+\begin_layout Subsubsection
+Matrix norm
+\end_layout
+
+\begin_layout LyX-Code
+val rmse = (A - U %*% V.t).norm / sqrt(A.nrow * A.ncol)
 \end_layout
 
 \begin_layout LyX-Code
