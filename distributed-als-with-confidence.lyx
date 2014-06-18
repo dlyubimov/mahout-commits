@@ -1145,7 +1145,7 @@ reference "eq:item-update-c0"
 \end_layout
 
 \begin_layout Standard
-We proceed doing alternative updates until we either achieve maximum iterations
+We proceed doing alternating updates until we either achieve maximum iterations
  parameter, or convergence test (if requested) doesn't yield any significant
  improvement.
  Convergence test condition looks like 
@@ -1419,7 +1419,6 @@ The idea is to send every row
 \end_inset
 
 -th row of 
-
 \begin_inset Formula $\left(\mathbf{U|A}\right)$
 \end_inset
 
