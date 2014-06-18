@@ -312,7 +312,7 @@ user-item confidence matrix
 \end_inset
 
 .
- This can be sparse where confidence is 0
+ 
 \end_layout
 
 \begin_layout Standard
@@ -947,7 +947,7 @@ end{multicols}
 \end_layout
 
 \begin_layout Section*
-Spark mapping notes.
+Implementation working notes.
 \end_layout
 
 \begin_layout Standard
@@ -963,193 +963,529 @@ height "1pt"
 \end_layout
 
 \begin_layout Subsection*
-Precompute steps.
+Overview
 \end_layout
 
-\begin_layout Itemize
+\begin_layout Paragraph
+Input encoding.
+\end_layout
 
-\series bold
-\begin_inset Formula $\mathbf{U}$
+\begin_layout Standard
+We don't consider any particular feature encoding scheme from ratings 
+\begin_inset Formula $r$
+\end_inset
+
+ into 
+\begin_inset Formula $\left(p,c\right)$
+\end_inset
+
+ (preference/confidence) pairs as given in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Koren-Volinsky"
+
+\end_inset
+
+, directly.
+ Instead, we leave it to the user.
+ Crossvalidation of preference and confidence encoding scheme parameters
+ is left outside of MAHOUT-1365 scope as well.
+ 
+\end_layout
+
+\begin_layout Standard
+Formally, we consider input to be two matrices -- preferences 
+\begin_inset Formula $\mathbf{P}$
+\end_inset
+
+ and confidence of observations 
+\begin_inset Formula $\mathbf{C}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\mathbf{P}\in\left\{ 0,1\right\} ^{m\times n}$
+\end_inset
+
+ is already sparse.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\mathbf{C}\in\mathbb{R}^{m\times n}$
+\end_inset
+
+ in its pristine form is dense, since we assume that entries corresponding
+ to no observations contain some baseline non-negative confidence 
+\begin_inset Formula $c_{0}$
+\end_inset
+
+.
+ We also assume that any matrix entry where we did observe an interaction,
+ we have confidence greater than baseline (i.e.
+ 
+\begin_inset Formula $\mathbf{C}_{i,j}\geq c_{o}\,\forall i,j$
+\end_inset
+
+).
+ 
+\end_layout
+
+\begin_layout Standard
+We assume the following encoding of input 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ elements: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+a_{ij}=\begin{cases}
+c_{ij}-c_{0}, & p_{ij}=1.0;\\
+c_{0}-c_{ij}, & p_{ij}=0.
+\end{cases}
+\]
+
 \end_inset
 
 
-\series default
+\end_layout
+
+\begin_layout Standard
+Thus, input 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+ captures both matrices, 
+\begin_inset Formula $\mathbf{P}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{C}$
+\end_inset
+
+ in one matrix, and it is also sparse, since all non-observation entries
+ 
+\begin_inset Formula $\left(p=0,\, c=c_{0}\right)$
+\end_inset
+
+ will evaluate to 0.
+ Here, we assume that input 
+\begin_inset Formula $\left(p=1,\, c=c_{0}\right)$
+\end_inset
+
+ is never occuring (i.e we always consider no-observation to correspond to
+ no-preference by default, albeit with least confidence).
+\end_layout
+
+\begin_layout Paragraph
+Commonalities.
+\end_layout
+
+\begin_layout Standard
+In both in-core and distributed versions, we first preallocate dense matrices
+ 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
  and 
 \begin_inset Formula $\mathbf{V}$
 \end_inset
 
- initialized with random small numbers and presented as Spark-based DRM.
-\end_layout
-
-\begin_layout Itemize
-Next, every row in 
-\begin_inset Formula $\mathbf{U}$
-\end_inset
-
- (
+ and initialize 
 \begin_inset Formula $\mathbf{V}$
 \end_inset
 
-) is connected with corresponded sparse vectors 
-\begin_inset Formula $\mathbf{c}^{\left(u\right)}=\mathbf{C}_{u,*}^{*}$
+ with small numbers.
+\end_layout
+
+\begin_layout Standard
+Subsequently, we use alternating updates to 
+\begin_inset Formula $\mathbf{U}$
 \end_inset
 
- (
-\begin_inset Formula $\mathbf{c}^{\left(i\right)}=\mathbf{C}_{*,i}^{*}$
+ and 
+\begin_inset Formula $\mathbf{V}$
 \end_inset
 
-) and 
-\begin_inset Formula $\mathbf{p}^{\left(u\right)}=\mathbf{P}_{u,*}$
+ per formulas 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:user-update-c0"
+
 \end_inset
 
- (
-\begin_inset Formula $\mathbf{p}^{\left(i\right)}=\mathbf{P}_{*,i}$
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:item-update-c0"
+
 \end_inset
 
-).
- So what we have in the end are two spark RDDs of Bagel vertices containing
- (id=
-\begin_inset Formula $u|i$
+.
+ Note that there, component 
+\begin_inset Formula $c_{0}\mathbf{V}^{\top}\mathbf{V}$
 \end_inset
 
-, 
-\begin_inset Formula $\mathbf{U}_{u,*}|\mathbf{V}_{*,i}$
-\end_inset
-
- , 
-\begin_inset Formula $\mathbf{c}^{\left(u\right)}|\mathbf{c}^{\left(i\right)}$
-\end_inset
-
-, 
+ is the same for all updates of rows of 
 \series bold
 
-\begin_inset Formula $\mathbf{p}^{\left(u\right)}|\mathbf{p}^{\left(i\right)}$
+\begin_inset Formula $\mathbf{U}$
 \end_inset
 
 
 \series default
-).
+.
+ Consequently, it is computed once for all updates.
+\end_layout
+
+\begin_layout Standard
+We proceed doing alternative updates until we either achieve maximum iterations
+ parameter, or convergence test (if requested) doesn't yield any significant
+ improvement.
+ Convergence test condition looks like 
+\begin_inset Formula 
+\[
+\frac{\mathrm{rmse}^{\left(i-1\right)}-\mathrm{rmse}^{\left(i\right)}}{\mathrm{rmse}^{\left(i-1\right)}}\leq\mathrm{convergenceThreshold},
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+i.e.
+ parameter `convergenceThreshold` is minimum acceptable improvement fraction
+ in rmse so that we can consider further iterations to be a bona-fide investment.
+ 
 \end_layout
 
 \begin_layout Subsection*
-Iteration steps.
+In-core implicit ALS details
 \end_layout
 
-\begin_layout Itemize
-\begin_inset Formula $\mathbf{V}^{\top}\mathbf{V}$
+\begin_layout Standard
+Alternating row updates of 
+\begin_inset Formula $\mathbf{U}$
 \end_inset
 
- precomputed in distributed way for each iteration and broadcast.
- Since this matrix has tiny 
-\begin_inset Formula $k\times k$
-\end_inset
-
- geometry, collecting and broadcasting it should not be a problem.
-\end_layout
-
-\begin_layout Itemize
-Form Bagel messages from current 
+ and 
 \begin_inset Formula $\mathbf{V}$
 \end_inset
 
- side : each vector 
-\begin_inset Formula $\mathbf{V}_{i}\mbox{ }$
-\end_inset
-
- is sent to two sets of user vertices: (1) users for which 
-\begin_inset Formula $c_{u,i}\neq0$
-\end_inset
-
-; (2) users for which 
-\begin_inset Formula $p_{u,i}\neq0$
-\end_inset
-
-.
- (obviously if group 1 and group 2 share a vertex, no need to send row of
- 
-\begin_inset Formula $\mathbf{V}$
-\end_inset
-
- twice to that vertex).
-\end_layout
-
-\begin_layout Itemize
-During Bagel's compute() it can be seen that rows sent as group (1) is essential
- to compute 
-\begin_inset Formula $\mathbf{V}^{\top}\mathbf{D}^{*\left(u\right)}\mathbf{V}$
-\end_inset
-
-; group (2) is essential to compute 
-\begin_inset Formula $\mathbf{V}^{\top}\mathbf{p}^{\left(u\right)}$
-\end_inset
-
-.
- Update 
-\begin_inset Formula $\mathbf{U}_{u,*}$
-\end_inset
-
- per 
+ are symmetrical and are verbatim encoding of the formulas 
 \begin_inset CommandInset ref
 LatexCommand eqref
 reference "eq:user-update-c0"
 
 \end_inset
 
-.
+ and 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:item-update-c0"
+
+\end_inset
+
+ which in Mahout's DSL looks like the following (in case of updating 
+\begin_inset Formula $\mathbf{U}_{i,*}$
+\end_inset
+
+):
 \end_layout
 
-\begin_deeper
-\begin_layout Itemize
-Use Cholesky to solve 
-\begin_inset Formula $\mathbf{AX=B}$
-\end_inset
-
- by applying 
-\begin_inset Formula $\mathbf{A}=\mathbf{L}\mathbf{L}^{\top}\Rightarrow\mathbf{X}=\left(\mathbf{L}^{\top}\right)^{-1}\mathbf{L}^{-1}\mathbf{B}$
-\end_inset
-
- which is 
-\begin_inset Newline newline
-\end_inset
-
-
-\family typewriter
-chol(
-\begin_inset Formula $\mathbf{A}$
-\end_inset
-
-).solveRight(
-\begin_inset Formula $\mathbf{I}$
-\end_inset
-
-) %*% chol(
-\begin_inset Formula $\mathbf{A}$
-\end_inset
-
-).solveRight(
-\begin_inset Formula $\mathbf{B}$
-\end_inset
-
-).
+\begin_layout LyX-Code
+inCoreU(i, ::) = solve(
 \end_layout
 
-\end_deeper
+\begin_layout LyX-Code
+        a = c0vtv + (inCoreV.t %*%: diagv(inCoreD(i, ::))) %*% 
+\end_layout
+
+\begin_layout LyX-Code
+            inCoreV + diag(n_u * lambda, k),
+\end_layout
+
+\begin_layout LyX-Code
+        b = (inCoreV.t %*%: diagv(d_i + c0)) %*% p_i
+\end_layout
+
+\begin_layout LyX-Code
+      )
+\end_layout
+
+\begin_layout Subsection*
+Distributed implicit ALS details
+\end_layout
+
 \begin_layout Standard
-Iteration updating 
+We are constructing two matrices in the form
+\begin_inset Formula $\left(\mathbf{U|A}\right)\triangleq\mathrm{cbind}\left(\mathbf{U},\mathbf{A}\right)$
+\end_inset
+
+ and 
+\begin_inset Formula $\left(\mathbf{V}|\mathbf{A}^{\top}\right)\triangleq\mathrm{cbind}\left(\mathbf{V},\mathbf{A}^{\top}\right)$
+\end_inset
+
+.
+ This approach requires us to impose Int-keyed restriction on input A.
+ Additionally, 
 \begin_inset Formula $\mathbf{V}$
 \end_inset
 
- is symmetrical.
+ is initialized with small random numbers just like in the in-core version
+ while it is being built side-by-side.
 \end_layout
 
 \begin_layout Standard
+The update (of say 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+) goes as following.
+ 
+\end_layout
+
+\begin_layout Standard
+Component 
+\begin_inset Formula $c_{0}\mathbf{V}^{\top}\mathbf{V}$
+\end_inset
+
+ is computed and broadcasted trivially using Mahout DRM DSL: 
+\end_layout
+
+\begin_layout LyX-Code
+    val c0vtvBcast = drmBroadcast((drmV.t %*% drmV).collect * c0)
+\end_layout
+
+\begin_layout Standard
+Next, we start sending data from 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $\left(\mathbf{V}|\mathbf{A}^{\top}\right)$
+\end_inset
+
+ to 
+\begin_inset Formula $\left(\mathbf{U|A}\right)$
+\end_inset
+
+ and apply updates to the 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+ part of the 
+\begin_inset Formula $\left(\mathbf{U|A}\right)$
+\end_inset
+
+.
+
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+ 
+\end_layout
+
+\begin_layout Standard
+The idea is to send every row 
+\begin_inset Formula $\mathbf{V}_{i,*}$
+\end_inset
+
+ to rows 
+\begin_inset Formula $j$
+\end_inset
+
+ of 
+\begin_inset Formula $\mathbf{U}$
+\end_inset
+
+ for which either 
+\begin_inset Formula $\mathbf{P}_{j,i}=1.0$
+\end_inset
+
+ or 
+\begin_inset Formula $\mathbf{C}_{j,i}>c_{o}$
+\end_inset
+
+.
+ By the way of encoding of 
+\begin_inset Formula $\mathbf{A}$
+\end_inset
+
+, it is always true iff 
+\begin_inset Formula $a_{j,i}\neq0$
+\end_inset
+
+.
+ Every row of 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ is being sent to (i.e.
+ co-grouped with) rows of 
+\begin_inset Formula $\left(\mathbf{U|A}\right)$
+\end_inset
+
+ for which there's a non-zero element in corresponding row of 
+\begin_inset Formula $\mathbf{A}^{\top}$
+\end_inset
+
+.
+ Since rows of 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{A}^{\top}$
+\end_inset
+
+ are collocated in 
+\begin_inset Formula $\left(\mathbf{V}|\mathbf{A}^{\top}\right)$
+\end_inset
+
+, this makes message generation routine effective.
+ Payload of the messages to rows of 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $\left(\mathbf{U|A}\right)$
+\end_inset
+
+ is formatted as 
+\begin_inset Formula $\left(i\to\mathbf{v}_{i}\right)$
+\end_inset
+
+pairs.
+\end_layout
+
+\begin_layout Standard
+Stream of those messages is used to compile two terms in 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:user-update-c0"
+
+\end_inset
+
+: (a) 
+\begin_inset Formula $\mathbf{V}^{\top}\mathbf{D}^{*\left(u\right)}\mathbf{V}$
+\end_inset
+
+ and (b) 
+\begin_inset Formula $\mathbf{V}^{\top}\left(c_{0}\mathbf{I}+\mathbf{D}^{*\left(u\right)}\right)\mathbf{p}^{\left(u\right)}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+For computing term (a), we notice that diagonal of 
+\begin_inset Formula $\mathbf{D}^{*\left(u\right)}$
+\end_inset
+
+ is readily available as 
+\begin_inset Formula $\left|a_{u,i}\right|$
+\end_inset
+
+ which we already have collocated in 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+the destination row of 
+\begin_inset Formula $\mathbf{\left(\mathbf{U|A}\right)}$
+\end_inset
+
+.
+ In other words, we iteratively compute the term 
+\begin_inset Formula $\mathbf{V}^{\top}\mathbf{D}^{*\left(u\right)}\mathbf{V}$
+\end_inset
+
+ as 
 \begin_inset Formula 
 \[
+\mathbf{V}^{\top}\mathbf{D}^{*\left(u\right)}\mathbf{V}=\sum_{i}a_{u,i}\mathbf{v}_{i}\mathbf{v}_{i}^{\top}
 \]
 
 \end_inset
 
+.
+\end_layout
 
+\begin_layout Standard
+For computing term (b), we notice that 
+\begin_inset Formula $\mathbf{p}_{i}^{\left(u\right)}=1.0$
+\end_inset
+
+ whenever 
+\begin_inset Formula $\mathbf{A}_{u,i}>0$
+\end_inset
+
+.
+ Again, row 
+\begin_inset Formula $\mathbf{A}_{u,*}$
+\end_inset
+
+ is conveniently collocated in the destination matrix 
+\begin_inset Formula $\left(\mathbf{U|A}\right)$
+\end_inset
+
+.
+ Therefore, the term 
+\begin_inset Formula $\mathbf{V}^{\top}\left(c_{0}\mathbf{I}+\mathbf{D}^{*\left(u\right)}\right)\mathbf{p}^{\left(u\right)}$
+\end_inset
+
+ can be computed simply as 
+\begin_inset Formula 
+\[
+\mathbf{V}^{\top}\left(c_{0}\mathbf{I}+\mathbf{D}^{*\left(u\right)}\right)\mathbf{p}^{\left(u\right)}=\sum_{i}^{a_{u,i}>0}\left(c_{0}+a_{u,i}\right)\mathbf{v}_{i}
+\]
+
+\end_inset
+
+thus filtering elements of summation by 
+\begin_inset Formula $a_{u,i}>0$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
