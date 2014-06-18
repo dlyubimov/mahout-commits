@@ -1058,7 +1058,7 @@ c_{0}-c_{ij}, & p_{ij}=0.
 
 \begin_layout Standard
 Thus, input 
-\begin_inset Formula $\mathbf{A}$
+\begin_inset Formula $\mathbf{A}\in\mathbb{R}^{m\times n}$
 \end_inset
 
  captures both matrices, 
@@ -1069,8 +1069,8 @@ Thus, input
 \begin_inset Formula $\mathbf{C}$
 \end_inset
 
- in one matrix, and it is also sparse, since all non-observation entries
- 
+, in one matrix; and that matrix is also sparse, since all non-observation
+ entries 
 \begin_inset Formula $\left(p=0,\, c=c_{0}\right)$
 \end_inset
 
@@ -1248,7 +1248,11 @@ The update (of say
 \begin_inset Formula $\mathbf{U}$
 \end_inset
 
-) goes as following.
+ part of 
+\begin_inset Formula $\left(\mathbf{U}|\mathbf{A}\right)$
+\end_inset
+
+ ) proceeds as following.
  
 \end_layout
 
@@ -1315,19 +1319,43 @@ The idea is to send every row
 \end_inset
 
  to rows 
-\begin_inset Formula $j$
+\begin_inset Formula $u$
 \end_inset
 
  of 
-\begin_inset Formula $\mathbf{U}$
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $\left(\mathbf{U|A}\right)$
 \end_inset
 
+
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
  for which either 
-\begin_inset Formula $\mathbf{P}_{j,i}=1.0$
+\begin_inset Formula $\mathbf{P}_{u,i}=1.0$
 \end_inset
 
  or 
-\begin_inset Formula $\mathbf{C}_{j,i}>c_{o}$
+\begin_inset Formula $\mathbf{C}_{u,i}>c_{o}$
 \end_inset
 
 .
@@ -1336,21 +1364,7 @@ The idea is to send every row
 \end_inset
 
 , it is always true iff 
-\begin_inset Formula $a_{j,i}\neq0$
-\end_inset
-
-.
- Every row of 
-\begin_inset Formula $\mathbf{V}$
-\end_inset
-
- is being sent to (i.e.
- co-grouped with) rows of 
-\begin_inset Formula $\left(\mathbf{U|A}\right)$
-\end_inset
-
- for which there's a non-zero element in corresponding row of 
-\begin_inset Formula $\mathbf{A}^{\top}$
+\begin_inset Formula $a_{u,i}\neq0$
 \end_inset
 
 .
@@ -1366,7 +1380,15 @@ The idea is to send every row
 \begin_inset Formula $\left(\mathbf{V}|\mathbf{A}^{\top}\right)$
 \end_inset
 
-, this makes message generation routine effective.
+, this provides enough information to generate destination indices 
+\begin_inset Formula $u$
+\end_inset
+
+ for any 
+\begin_inset Formula $\mathbf{v}_{i}$
+\end_inset
+
+ payload.
  Payload of the messages to rows of 
 \family roman
 \series medium
@@ -1387,11 +1409,55 @@ The idea is to send every row
 \begin_inset Formula $\left(i\to\mathbf{v}_{i}\right)$
 \end_inset
 
-pairs.
+ pairs.
+ We will call a set of 
+\begin_inset Formula $i$
+\end_inset
+
+'s arriving at 
+\begin_inset Formula $u$
+\end_inset
+
+-th row of 
+
+\begin_inset Formula $\left(\mathbf{U|A}\right)$
+\end_inset
+
+ as 
+\begin_inset Formula $S^{\left(u\right)}$
+\end_inset
+
+.
+ By construction, therefore, 
+\begin_inset Formula $S^{\left(u\right)}$
+\end_inset
+
+ are indices 
+\begin_inset Formula $i$
+\end_inset
+
+ such that 
+\begin_inset Formula $a_{u,i}\neq0$
+\end_inset
+
+.
+ 
 \end_layout
 
 \begin_layout Standard
-Stream of those messages is used to compile two terms in 
+Once messages with 
+\begin_inset Formula $\left(i\to\mathbf{v}_{i}\right)$
+\end_inset
+
+ payloads arrive at 
+\begin_inset Formula $u$
+\end_inset
+
+-th row of 
+\begin_inset Formula $\left(\mathbf{U|A}\right)$
+\end_inset
+
+, they are used to compile two most difficult terms in 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "eq:user-update-c0"
@@ -1410,7 +1476,10 @@ reference "eq:user-update-c0"
 \end_layout
 
 \begin_layout Standard
-For computing term (a), we notice that diagonal of 
+\begin_inset Formula $\bullet$
+\end_inset
+
+ For computing term (a), we notice that diagonal of 
 \begin_inset Formula $\mathbf{D}^{*\left(u\right)}$
 \end_inset
 
@@ -1441,17 +1510,78 @@ the destination row of
 
  as 
 \begin_inset Formula 
-\[
-\mathbf{V}^{\top}\mathbf{D}^{*\left(u\right)}\mathbf{V}=\sum_{i}a_{u,i}\mathbf{v}_{i}\mathbf{v}_{i}^{\top}
-\]
+\begin{equation}
+\mathbf{V}^{\top}\mathbf{D}^{*\left(u\right)}\mathbf{V}=\sum_{i\in S^{\left(u\right)}}a_{u,i}\mathbf{v}_{i}\mathbf{v}_{i}^{\top}.\label{eq:term-1}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Since all necessary 
+\begin_inset Formula $\mathbf{v}_{i}$
+\end_inset
+
+ such that 
+\begin_inset Formula $i\in S^{\left(u\right)}$
+\end_inset
+
+are in the message stream sent to 
+\begin_inset Formula $u$
+\end_inset
+
+-th row of 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $\left(\mathbf{U|A}\right)$
+\end_inset
+
+, we have all necessary information to compute 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:term-1"
 
 \end_inset
 
 .
+ We preallocate dense 
+\begin_inset Formula $k\times k$
+\end_inset
+
+ accumulator to add 
+\begin_inset Formula $\left(a_{u,i}\mathbf{v}_{i}\right)\mathbf{v}_{i}^{\top}$
+\end_inset
+
+ for every new message 
+\begin_inset Formula $\mathbf{v}_{i}$
+\end_inset
+
+ seen in the incoming message sequence.
+ At the end of message processing loop the accumulator will contain the
+ result sought.
+\begin_inset Formula $\blacksquare$
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-For computing term (b), we notice that 
+\begin_inset Formula $\bullet$
+\end_inset
+
+ For computing term (b), we notice that 
 \begin_inset Formula $\mathbf{p}_{i}^{\left(u\right)}=1.0$
 \end_inset
 
@@ -1469,23 +1599,78 @@ For computing term (b), we notice that
 \end_inset
 
 .
- Therefore, the term 
+ Let denote set of indices 
+\begin_inset Formula $i$
+\end_inset
+
+ such that 
+\begin_inset Formula $a_{u,i}>0$
+\end_inset
+
+ as 
+\begin_inset Formula $S'^{\left(u\right)}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Therefore, the term 
 \begin_inset Formula $\mathbf{V}^{\top}\left(c_{0}\mathbf{I}+\mathbf{D}^{*\left(u\right)}\right)\mathbf{p}^{\left(u\right)}$
 \end_inset
 
  can be computed simply as 
 \begin_inset Formula 
-\[
-\mathbf{V}^{\top}\left(c_{0}\mathbf{I}+\mathbf{D}^{*\left(u\right)}\right)\mathbf{p}^{\left(u\right)}=\sum_{i}^{a_{u,i}>0}\left(c_{0}+a_{u,i}\right)\mathbf{v}_{i}
-\]
+\begin{equation}
+\mathbf{V}^{\top}\left(c_{0}\mathbf{I}+\mathbf{D}^{*\left(u\right)}\right)\mathbf{p}^{\left(u\right)}=\sum_{i\in S'^{\left(u\right)}}\left(c_{0}+a_{u,i}\right)\mathbf{v}_{i}.\label{eq:term-2}
+\end{equation}
 
 \end_inset
 
-thus filtering elements of summation by 
-\begin_inset Formula $a_{u,i}>0$
+
+\end_layout
+
+\begin_layout Standard
+Since, by construction, 
+\begin_inset Formula $S'^{\left(u\right)}\subseteq S^{\left(u\right)}$
 \end_inset
 
-.
+, all necessary 
+\begin_inset Formula $\mathbf{v}_{i}$
+\end_inset
+
+ to compute term 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:term-2"
+
+\end_inset
+
+ are also in the incoming stream of 
+\begin_inset Formula $\mathbf{v}_{i}$
+\end_inset
+
+ (we just need to apply 
+\begin_inset Formula $i\in S'^{\left(u\right)}$
+\end_inset
+
+ filter while accumulating the term from incoming messages).
+\begin_inset Formula $\blacksquare$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Updating 
+\begin_inset Formula $\mathbf{V}$
+\end_inset
+
+ part of the 
+\begin_inset Formula $\left(\mathbf{V}|\mathbf{A}^{\top}\right)$
+\end_inset
+
+ matrix is a symmetric reflection of the process above.
 \end_layout
 
 \begin_layout Standard
