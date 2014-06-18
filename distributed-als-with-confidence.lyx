@@ -1410,7 +1410,7 @@ The idea is to send every row
 \end_inset
 
  pairs.
- We will call a set of 
+ We will denote a set of 
 \begin_inset Formula $i$
 \end_inset
 
@@ -1458,7 +1458,7 @@ Once messages with
 
 , they are used to compile two most difficult terms in 
 \begin_inset CommandInset ref
-LatexCommand ref
+LatexCommand eqref
 reference "eq:user-update-c0"
 
 \end_inset
