@@ -1026,6 +1026,39 @@ In-core SSVD
 val (U, V, s) = ssvd(A, k=50, p=15, q=1)
 \end_layout
 
+\begin_layout Paragraph
+Solving linear equation systems and matrix inversion
+\end_layout
+
+\begin_layout Standard
+This is fully similar to R semantics.
+ There are three forms of invocation: 
+\end_layout
+
+\begin_layout LyX-Code
+solve(A, B) // solves 
+\begin_inset Formula $\mathbf{AX}=\mathbf{B}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout LyX-Code
+solve(A, b) // solves 
+\begin_inset Formula $\mathbf{Ax}=\mathbf{b}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout LyX-Code
+solve(A)    // computes inverse 
+\begin_inset Formula $\mathbf{A}^{-1}$
+\end_inset
+
+
+\end_layout
+
 \begin_layout LyX-Code
 
 \end_layout
