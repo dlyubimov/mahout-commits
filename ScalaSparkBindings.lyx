@@ -196,8 +196,8 @@ Unlike many other environments, Mahout model was targeting both dense and
 \begin_layout Abstract
 In this work we are trying to bring semantic explicitness to Mahout's in-core
  and out-of-core linear algebra subroutines, while adding benefits of strong
- programming environment of scala, and captializing on great scalability
- benefits of Spark and GraphX.
+ programming environment of scala, and captializing on scalability benefits
+ of Spark and GraphX.
  
 \begin_inset Newline newline
 \end_inset
@@ -2491,6 +2491,81 @@ Int
 \end_layout
 
 \begin_layout Subsection
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
+Stitching (cbind)
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
+We can stitch two matrices side by side (cbind R semantics) :
+\end_layout
+
+\begin_layout LyX-Code
+val drmAnextToB = drmA cbind drmB
+\end_layout
+
+\begin_layout Standard
+Or, which is the same in Scala, 
+\end_layout
+
+\begin_layout LyX-Code
+val drmAnextToB = drmA.cbind(drmB)
+\end_layout
+
+\begin_layout Standard
+Obviously, our variation of 
+\family typewriter
+cbind
+\family default
+ is accepting only two arguments, but we can stitch more matrices by chaining
+ the operation.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
 Custom pipelines on blocks
 \end_layout
 
@@ -3797,6 +3872,67 @@ val drmUSigma = drmU %*% diagv(s)
 
 \begin_layout LyX-Code
 ...
+\end_layout
+
+\begin_layout Subsection
+Adjusting parallelism of computations 
+\end_layout
+
+\begin_layout Standard
+Sometimes there's a need to adjust parallelism of computations.
+ For most part it happens when we want to increase parallelism of computations.
+ With Spark Bindings, parallelism value is construed as the number of splits.
+\end_layout
+
+\begin_layout Standard
+First, minimum parallelism can be established by passing 
+\family typewriter
+parMin
+\family default
+ parameter to 
+\family typewriter
+drmFromHdfs()
+\family default
+ during load from DFS.
+ 
+\end_layout
+
+\begin_layout Standard
+Second, parallelism operators could be inserted into expressions.
+ 
+\end_layout
+
+\begin_layout LyX-Code
+
+\family typewriter
+drmA.par(min = 100)
+\end_layout
+
+\begin_layout Standard
+will establish minimum parallelism for ougoing computations of 
+\family typewriter
+drmA
+\family default
+.
+ 
+\end_layout
+
+\begin_layout LyX-Code
+drmA.par(exact = 100) 
+\end_layout
+
+\begin_layout Standard
+will establish exact parallelism; and 
+\end_layout
+
+\begin_layout LyX-Code
+drmA.par(auto = true) 
+\end_layout
+
+\begin_layout Standard
+will try to do engine-specific automatic parallelism adjustment (with Spark,
+ it is based on current default parallelism property for Spark).
+ Auto parallelism will not decrease already established parallelism though.
 \end_layout
 
 \begin_layout Subsection
