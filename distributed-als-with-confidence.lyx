@@ -1510,7 +1510,7 @@ the destination row of
  as 
 \begin_inset Formula 
 \begin{equation}
-\mathbf{V}^{\top}\mathbf{D}^{*\left(u\right)}\mathbf{V}=\sum_{i\in S^{\left(u\right)}}a_{u,i}\mathbf{v}_{i}\mathbf{v}_{i}^{\top}.\label{eq:term-1}
+\mathbf{V}^{\top}\mathbf{D}^{*\left(u\right)}\mathbf{V}=\sum_{i\in S^{\left(u\right)}}\left|a_{u,i}\right|\mathbf{v}_{i}\mathbf{v}_{i}^{\top}.\label{eq:term-1}
 \end{equation}
 
 \end_inset
