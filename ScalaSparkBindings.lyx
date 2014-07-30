@@ -188,9 +188,18 @@ y defined mathematical problems.
 \end_layout
 
 \begin_layout Abstract
-Unlike many other environments, Mahout model was targeting both dense and
- sparse data structures from the very beginning both in type modeling and
- cost-based optimized computations.
+Unlike many other environments, Mahout-math Matrix model
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+initially, an adaptation of Colt linear algebra library
+\end_layout
+
+\end_inset
+
+ was targeting both dense and sparse data structures from the very beginning
+ both in type modeling and cost-based optimized computations.
 \end_layout
 
 \begin_layout Abstract
@@ -1120,6 +1129,292 @@ val b = a cloned
 \end_layout
 
 \begin_layout Subsection
+Random matrices
+\end_layout
+
+\begin_layout Standard
+See org.apache.mahout.math.Matrices for up-to-date information
+\end_layout
+
+\begin_layout Subsubsection
+Functional matrix views.
+ 
+\end_layout
+
+\begin_layout Standard
+On Mahout-math side (i.e.
+ java side) there is a concept of a 
+\begin_inset Quotes eld
+\end_inset
+
+functional view
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Java side has a type, 
+\family typewriter
+Int
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Int
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Func
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+tion
+\family default
+.
+ An argument of that functional type could be provided to constuct a (dense)
+ matrix readonly view via 
+\family typewriter
+Mat
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+rices.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+func
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+tion
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+al
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Mat
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+rix
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+View(m, n, gf, denseLike)
+\family default
+.
+ `gf` function is expected to be idempotent (i.e.
+ return the same matrix element for the same combination of indices.
+ Specialization of the functional views are used for a transposed matrix
+ view, as well as the following random matrices views.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+\begin_inset Formula $U\left(0,1\right)$
+\end_inset
+
+ random matrix view
+\end_layout
+
+\begin_layout LyX-Code
+val inCoreA = Matrices.uniformView(m, n, seed)
+\end_layout
+
+\begin_layout Subsubsection
+\begin_inset Formula $U\left(-1,1\right)$
+\end_inset
+
+ random matrix view 
+\end_layout
+
+\begin_layout LyX-Code
+val inCoreA = Matrices.symmetricUniformView(m, n, seed)
+\end_layout
+
+\begin_layout Subsubsection
+Univariate 
+\begin_inset Formula $\mathcal{N}\left(0,1\right)$
+\end_inset
+
+ matrix view
+\end_layout
+
+\begin_layout LyX-Code
+val inCoreA = Matrices.gaussianView(m, n, seed)
+\end_layout
+
+\begin_layout Subsection
+Iterators 
+\end_layout
+
+\begin_layout Standard
+Mahout-math already exposes a number of iterators.
+ Scala code just needs to import collection.JavaConversions._ to enable implicit
+ conversions to scala iterators.
+ 
+\end_layout
+
+\begin_layout LyX-Code
+import collection._
+\end_layout
+
+\begin_layout LyX-Code
+import JavaConversions._
+\end_layout
+
+\begin_layout Subsubsection
+Iterating over rows in a matrix
+\end_layout
+
+\begin_layout LyX-Code
+for (row <- m) {
+\end_layout
+
+\begin_layout LyX-Code
+  ...
+ do something with row
+\end_layout
+
+\begin_layout LyX-Code
+}
+\end_layout
+
+\begin_layout Subsubsection
+Iterating over non-zero and all elements of a vector or matrix 
+\end_layout
+
+\begin_layout Standard
+Note that Vector.Element also has some implicit syntactic sure, e.g.
+ to add 5.0 to every non-zero element the following code may be used:
+\end_layout
+
+\begin_layout LyX-Code
+for (row <- m; el <- row.nonZero) el = 5.0 + el
+\end_layout
+
+\begin_layout LyX-Code
+...
+ or 
+\end_layout
+
+\begin_layout LyX-Code
+for (row <- m; el <- row.nonZero) el := 5.0 + el
+\end_layout
+
+\begin_layout Standard
+Similarly, 
+\family typewriter
+row.all 
+\family default
+produces iterator over all elements in a row (vector).
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout Subsection
 Bringing it all together: in-core SSVD
 \end_layout
 
@@ -1787,6 +2082,28 @@ Collecting to driver's jvm in-core
 
 \begin_layout LyX-Code
 val inCoreA = A.collect()
+\end_layout
+
+\begin_layout Standard
+Warning: collection of distributed matrices are now implicit conversion
+ whenever conversion to in-core (o.a.m.math.Matrix) type is required:
+\end_layout
+
+\begin_layout LyX-Code
+val inCoreA:Matrix = ...
+\end_layout
+
+\begin_layout LyX-Code
+val drmB:DrmLike[Int] = ..
+ 
+\end_layout
+
+\begin_layout LyX-Code
+val inCoreC:Matrix = inCoreA %*% drmB 
+\end_layout
+
+\begin_layout LyX-Code
+// implied: (incoreA %*%) drmB).collect
 \end_layout
 
 \begin_layout Subsubsection
@@ -2524,25 +2841,12 @@ Int
 \end_layout
 
 \begin_layout Subsection
+Stitching (cbind and rbind)
 \begin_inset ERT
 status open
 
 \begin_layout Plain Layout
 
-{
-\backslash
-color{tentative}
-\end_layout
-
-\end_inset
-
-Stitching (cbind)
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-}
 \end_layout
 
 \end_inset
@@ -2551,18 +2855,6 @@ status open
 \end_layout
 
 \begin_layout Standard
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-{
-\backslash
-color{tentative}
-\end_layout
-
-\end_inset
-
 We can stitch two matrices side by side (cbind R semantics) :
 \end_layout
 
@@ -2585,17 +2877,15 @@ cbind
 \family default
  is accepting only two arguments, but we can stitch more matrices by chaining
  the operation.
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-}
 \end_layout
 
-\end_inset
-
-
+\begin_layout Standard
+Analogously, vertical distributed concatenation is available since MAHOUT-1596
+ via 
+\family typewriter
+rbind
+\family default
+.
 \end_layout
 
 \begin_layout Subsection
@@ -3207,6 +3497,22 @@ val rmse = (A - U %*% V.t).norm / sqrt(A.nrow * A.ncol)
 
 \begin_layout Subsection
 Distributed Decompositions
+\end_layout
+
+\begin_layout Subsubsection
+Imports for decompositions package
+\end_layout
+
+\begin_layout LyX-Code
+import org.apache.mahout.math._
+\end_layout
+
+\begin_layout LyX-Code
+...
+\end_layout
+
+\begin_layout LyX-Code
+import decompositions._
 \end_layout
 
 \begin_layout Subsubsection
@@ -3905,6 +4211,46 @@ val drmUSigma = drmU %*% diagv(s)
 
 \begin_layout LyX-Code
 ...
+\end_layout
+
+\begin_layout Subsubsection
+Distributed regularized ALS
+\end_layout
+
+\begin_layout Standard
+It is extremely easy now to alternate regularized ALS in distributed way
+ now: 
+\end_layout
+
+\begin_layout LyX-Code
+drmV = (drmAt %*% drmU %*% solve(drmU.t %*% drmU -: diag(lambda, k))).checkpoint()
+\end_layout
+
+\begin_layout LyX-Code
+drmU = (drmA %*% drmV %*% solve(drmV.t %*% drmV -: diag(lambda, k))).checkpoint()
+\end_layout
+
+\begin_layout Standard
+Actual implementation is doing a tad more than just alternations, of course.
+ To run (see scaladoc): 
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Code untested for performance at this point
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout LyX-Code
+val (drmU, drmV, _) = dals(A, ...).toTuple
+\end_layout
+
+\begin_layout LyX-Code
+
 \end_layout
 
 \begin_layout Subsection
