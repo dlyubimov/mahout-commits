@@ -1160,7 +1160,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -1174,7 +1173,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -1188,7 +1186,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -1208,7 +1205,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -1222,7 +1218,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -1236,7 +1231,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -1250,7 +1244,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -1264,7 +1257,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -1278,7 +1270,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -1292,7 +1283,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -1945,11 +1935,7 @@ Recommended imports for Scala & Spark Bindings
 \end_layout
 
 \begin_layout Standard
-
-\bar under
-Always do
-\bar default
- for seamless in-core, out-of-core DSL:
+For seamless in-core & distributed algebraic DSL:
 \end_layout
 
 \begin_layout LyX-Code
@@ -2027,13 +2013,49 @@ import RLikeDrmOps._
 \end_layout
 
 \begin_layout LyX-Code
-// operations such as context creation
+// operations such as context creation.
+\end_layout
+
+\begin_layout LyX-Code
+// 100% engine-agnostic code does not 
+\end_layout
+
+\begin_layout LyX-Code
+// require these.
 \end_layout
 
 \begin_layout LyX-Code
 
 \series bold
 import org.apache.mahout.sparkbindings._
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout LyX-Code
+// A good idea when working with mixed 
+\end_layout
+
+\begin_layout LyX-Code
+// scala/java iterators and collections
+\end_layout
+
+\begin_layout LyX-Code
+
+\series bold
+import collection._
+\end_layout
+
+\begin_layout LyX-Code
+
+\series bold
+import JavaConversions._
 \end_layout
 
 \begin_layout Standard
@@ -2085,7 +2107,7 @@ val inCoreA = A.collect()
 \end_layout
 
 \begin_layout Standard
-Warning: collection of distributed matrices are now implicit conversion
+Warning: Collection of distributed matrices is now happening implicitly
  whenever conversion to in-core (o.a.m.math.Matrix) type is required:
 \end_layout
 
@@ -4218,21 +4240,97 @@ Distributed regularized ALS
 \end_layout
 
 \begin_layout Standard
-It is extremely easy now to alternate regularized ALS in distributed way
- now: 
+It is extremely easy now to alternate regularized ALS in distributed way:
+ 
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Here, note that rightmost term of the expression 
 \end_layout
 
 \begin_layout LyX-Code
-drmV = (drmAt %*% drmU %*% solve(drmU.t %*% drmU -: diag(lambda, k))).checkpoint()
+drmV.t %*% drmV -: diag(lambda, k)
+\end_layout
+
+\begin_layout Plain Layout
+is an in-core matrix, so expression 
+\family typewriter
+drmV.t %*% drmV
+\family default
+ is computed in distributed way, but matrix subtraction and solving the
+ linear system 
+\family typewriter
+solve(...)
+\family default
+ is performed in the front-end.
+ This is because matrix subtraction is associated with right hand side operand
+ 
+\family typewriter
+diag(lambda, k)
+\family default
+ which is an in-core matrix and requires an in-core left operand; so implicit
+ matrix collection kicks in before doing subtraction.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+If we used just `-` then operation of subtraction would have been associated
+ with a tiny but distributed matrix product 
+\begin_inset Formula $\mathbf{V}^{\top}\mathbf{V}$
+\end_inset
+
+ and be carried in distributed way, which, given tiny size of the operands,
+ would actually be just a waste of time communicating to machine nodes.
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout LyX-Code
-drmU = (drmA %*% drmV %*% solve(drmV.t %*% drmV -: diag(lambda, k))).checkpoint()
+for (i <- 0 until maxIterations) { 
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout LyX-Code
+  ..
+\end_layout
+
+\begin_layout LyX-Code
+  drmV = (drmAt %*% drmU %*% solve(drmU.t %*% drmU -: diag(lambda, k))).checkpoint
+()
+\end_layout
+
+\begin_layout LyX-Code
+  drmU = (drmA %*% drmV %*% solve(drmV.t %*% drmV -: diag(lambda, k))).checkpoint(
+)
+\end_layout
+
+\begin_layout LyX-Code
+  ..
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout LyX-Code
+}
 \end_layout
 
 \begin_layout Standard
 Actual implementation is doing a tad more than just alternations, of course.
- To run (see scaladoc): 
+ To run convenience implementation of distributed ALS in Mahout (see scaladoc),
+ use 
+\family typewriter
+dals(...)
+\family default
+: 
 \begin_inset Foot
 status collapsed
 
