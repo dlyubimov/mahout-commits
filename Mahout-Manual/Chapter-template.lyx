@@ -259,11 +259,11 @@ chapterimage{Pictures/chapter_head_1.pdf}
 \end_layout
 
 \begin_layout Chapter
-Chapter name
+Style guidelines
 \end_layout
 
 \begin_layout Section
-Introduction
+Introduction 
 \end_layout
 
 \begin_layout Standard
@@ -284,7 +284,7 @@ Explain with formula:
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-\mathbf{m}^{\left(y+1\right)}=\frac{\sum_{i=1}^{n}\kappa\left(\boldsymbol{x}_{i},\mathbf{m}^{\left(y\right)},h\right)\boldsymbol{x}_{i}}{\sum_{i=1}^{n}\kappa\left(\boldsymbol{x}_{i},\mathbf{m}^{\left(y\right)},h\right)}
+\mathbf{m}^{\left(y+1\right)}=\frac{\sum_{i=1}^{n}\kappa\left(\bm{x}_{i},\mathbf{m}^{\left(y\right)},h\right)^{\beta}\bm{x}_{i}}{\sum_{i=1}^{n}\kappa\left(\boldsymbol{x}_{i},\mathbf{m}^{\left(y\right)},h\right)^{\beta}}
 \end{equation}
 
 \end_inset
@@ -313,7 +313,11 @@ begin{code}
 \end_layout
 
 \begin_layout Standard
-Hello, world: use 
+
+\series bold
+Hello, world
+\series default
+: use 
 \begin_inset Quotes eld
 \end_inset
 
@@ -325,11 +329,19 @@ LyX code
 \end_layout
 
 \begin_layout LyX-Code
- object HelloWorld {
+ 
+\series bold
+object
+\series default
+ HelloWorld {
 \end_layout
 
 \begin_layout LyX-Code
-    def main(args: Array[String]) {
+    
+\series bold
+def
+\series default
+ main(args: Array[String]) {
 \end_layout
 
 \begin_layout LyX-Code
@@ -358,6 +370,772 @@ end{code}
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+Note that 
+\family typewriter
+
+\backslash
+boldsymbol
+\family default
+\emph on
+ 
+\emph default
+instruction doesn't work in formulas for latin italic symbols (apparently,
+ this font doesn't provide it).
+ To fall back to AMS bold symbols, use 
+\family typewriter
+
+\backslash
+bm
+\family default
+.
+ E.g.
+ 
+\begin_inset Formula 
+\[
+\bm{x}=\left(\begin{matrix}x_{1}\\
+x_{2}\\
+\vdots\\
+x_{k}
+\end{matrix}\right),
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+which is 
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{code}
+\end_layout
+
+\end_inset
+
+
+\series bold
+Latex with 
+\emph on
+
+\backslash
+bm
+\emph default
+:
+\end_layout
+
+\begin_layout LyX-Code
+
+\backslash
+[
+\end_layout
+
+\begin_layout LyX-Code
+
+\backslash
+bm{x}_{i}=
+\backslash
+left(
+\backslash
+begin{matrix}x_{1}
+\backslash
+
+\backslash
+
+\end_layout
+
+\begin_layout LyX-Code
+x_{2}
+\backslash
+
+\backslash
+
+\end_layout
+
+\begin_layout LyX-Code
+
+\backslash
+vdots
+\backslash
+
+\backslash
+
+\end_layout
+
+\begin_layout LyX-Code
+x_{k}
+\end_layout
+
+\begin_layout LyX-Code
+
+\backslash
+end{matrix}
+\backslash
+right)
+\end_layout
+
+\begin_layout LyX-Code
+
+\backslash
+]
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{code}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Math is activated by alt-M M.
+ Formula number is added by alt-M N.
+\end_layout
+
+\begin_layout Standard
+LyX code style is activated by Alt-P,C.
+\end_layout
+
+\begin_layout Standard
+To enter tex directly, like 
+\backslash
+begin{code} command, use ctrl-L.
+\end_layout
+
+\begin_layout Standard
+If you need 
+\family typewriter
+embedded code
+\family default
+ symbols, use ctrl-shft-P.
+ Embedded code symbols will not split for carry-over automatically, needs
+ 
+\backslash
+- hyphens in order to show where carryover may occur, e.g.
+ 
+\family typewriter
+real
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+ly
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+long
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+co
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+dewordthatneeds
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+to
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+becar
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+riedreal
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+ly
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+long
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+co
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+dewordthatneeds
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+to
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+becar
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+riedreal
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+ly
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+long
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+co
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+dewordthatneeds
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+to
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+becar
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+ried
+\family default
+.
+\end_layout
+
+\begin_layout Standard
+Section symbol 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+S
+\end_layout
+
+\end_inset
+
+: ctrl-L, 
+\backslash
+S.
+\end_layout
+
+\begin_layout Section
+Math notation conventions.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\bm{x},\,\bm{\mu}$
+\end_inset
+
+: vectors are in bold.
+ for Latin characters both 
+\begin_inset Formula $\bm{x}$
+\end_inset
+
+ (
+\backslash
+bm) and 
+\begin_inset Formula $\mathbf{x}$
+\end_inset
+
+ (ctrl-B) typesets are admissible.
+ For Greek characters, use 
+\backslash
+bm: 
+\begin_inset Formula $\bm{\xi}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $x_{i},\,\mu_{i}$
+\end_inset
+
+: vector elements (regular, italic math font).
+ Note the difference: 
+\begin_inset Formula $\mathbf{x}_{i}$
+\end_inset
+
+ or 
+\begin_inset Formula $\bm{x}_{i}$
+\end_inset
+
+ means 
+\begin_inset Quotes eld
+\end_inset
+
+
+\emph on
+i
+\emph default
+-th vector in a set
+\begin_inset Quotes erd
+\end_inset
+
+, whereas 
+\begin_inset Formula $x_{i}$
+\end_inset
+
+ means 
+\begin_inset Quotes eld
+\end_inset
+
+i-th element of vector 
+\begin_inset Formula $\bm{x}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{X,}\,\bm{\Xi}$
+\end_inset
+
+: matrices are in bold, capital letters (ctrl-B).
+ Either Greek or Latin is admissible (but usually there's no compelling
+ reason ot switch to Greek if Latin are enough).
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\underset{y}{\mathrm{argmin}}f\left(y\right)$
+\end_inset
+
+: predefined function names are in 
+\family typewriter
+
+\backslash
+mathrm
+\family default
+ (math roman).
+ don't use italics for predefined function names.
+ 
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{X}\in\mathbb{R}^{m\times n}$
+\end_inset
+
+: Matrix of 
+\begin_inset Formula $m\times n$
+\end_inset
+
+ geometry.
+ LaTeX: 
+\family typewriter
+
+\backslash
+mathbf{X}
+\backslash
+in
+\backslash
+mathbb{R}^{m
+\backslash
+times n}
+\end_layout
+
+\begin_layout Description
+
+\series bold
+\begin_inset Formula $\mathbf{x}^{\top}\mathbf{x}$
+\end_inset
+
+: 
+\series default
+this notation of dot-product is preferred over 
+\begin_inset Formula $\left\langle \mathbf{x},\mathbf{x}\right\rangle $
+\end_inset
+
+ notation (seems to be in more recent books and papers).
+ Outer product, respectively, is 
+\begin_inset Formula $\mathbf{x}\mathbf{x}^{\top}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{X}^{\top}$
+\end_inset
+
+: transposition symbol, use 
+\family typewriter
+
+\backslash
+top
+\family default
+, not 
+\series bold
+
+\begin_inset Formula $\mathbf{X}'$
+\end_inset
+
+ 
+\series default
+
+\begin_inset Formula $\mathbf{X}^{*}$
+\end_inset
+
+ please.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{X}_{i*}$
+\end_inset
+
+ row of 
+\begin_inset Formula $\mathbf{X}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{X}_{*j}$
+\end_inset
+
+ column of 
+\begin_inset Formula $\mathbf{X}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{X}_{i,j}$
+\end_inset
+
+
+\begin_inset space \space{}
+\end_inset
+
+or
+\begin_inset space \space{}
+\end_inset
+
+
+\begin_inset Formula $\mathbf{X}_{ij}$
+\end_inset
+
+ Absent of any other clarification, this is always a 
+\begin_inset Formula $i$
+\end_inset
+
+-row, 
+\begin_inset Formula $j$
+\end_inset
+
+-column element of 
+\begin_inset Formula $\mathbf{X}$
+\end_inset
+
+.
+ Could be block sometimes, in which case it should be explicitly given in
+ the context of discussion by introducing something like 
+\begin_inset Formula $\mathbf{A}=\left(\begin{matrix}\mathbf{A}_{1,1} & \cdots & \mathbf{A}_{1,n}\\
+\vdots & \ddots & \vdots\\
+\mathbf{A}_{m,1} & \cdots & \mathbf{A}_{m,n}
+\end{matrix}\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{X}_{i}$
+\end_inset
+
+ despite what quite a bit of people often imply, this is in fact not a row
+ or column of 
+\begin_inset Formula $\mathbf{X}$
+\end_inset
+
+, but rather 
+\begin_inset Formula $i$
+\end_inset
+
+-th vertical or horizontal block of matrix 
+\begin_inset Formula $\mathbf{X}$
+\end_inset
+
+.
+ Again, which one, should be given by definition similar to above.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathbf{x}_{i}\triangleq\mathbf{X}_{i*}$
+\end_inset
+
+ means '
+\begin_inset Formula $\mathbf{x}_{i}$
+\end_inset
+
+ is defined as row of matrix 
+\begin_inset Formula $\mathbf{X}$
+\end_inset
+
+ where 
+\begin_inset Formula $i$
+\end_inset
+
+ goes between 1 and m'.
+
+\family typewriter
+ 
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\mathcal{S},\,\mathcal{P}$
+\end_inset
+
+ for sets, use 
+\backslash
+mathcal typeset, capital latin letters.
+ (a bit screwed in this template IMO).
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\forall,\exists$
+\end_inset
+
+ `forall`, `exists`...
+ etc.
+ 
 \end_layout
 
 \end_body
